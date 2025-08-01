@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .link {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+        .image {
+            max-width: 200px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Webview Test Page</h1>
+        
+        <div class="test-section">
+            <h2>Context Menu Test</h2>
+            <p>Right-click on any of these elements to test the context menu:</p>
+            
+            <h3>Text Selection</h3>
+            <p>This is some text you can select and right-click on. Try selecting this text and right-clicking to see the context menu.</p>
+            
+            <h3>Links</h3>
+            <p>Here are some test links: <a href="https://example.com" class="link">Example.com</a> and <a href="https://httpbin.org" class="link">HTTPBin.org</a></p>
+            
+            <h3>Images</h3>
+            <p>Right-click on this image: <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRlc3QgSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=" alt="Test Image" class="image"></p>
+            
+            <h3>Buttons</h3>
+            <button onclick="alert('Button clicked!')">Click Me</button>
+            <button onclick="console.log('Context menu test')">Console Log</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Navigation Test</h2>
+            <p>Try navigating to different URLs using the address bar above.</p>
+            <p>Some URLs that should work:</p>
+            <ul>
+                <li><a href="https://example.com" class="link">example.com</a></li>
+                <li><a href="https://httpbin.org" class="link">httpbin.org</a></li>
+                <li><a href="https://jsonplaceholder.typicode.com" class="link">JSONPlaceholder</a></li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>Console Test</h2>
+            <p>Open the developer console to see webview messages.</p>
+            <button onclick="console.log('Hello from webview!')">Log Message</button>
+            <button onclick="console.log('electronAPI available:', typeof window.electronAPI !== 'undefined')">Check electronAPI</button>
+        </div>
+    </div>
+    
+    <script>
+        console.log('=== WEBVIEW CONTENT LOADED ===');
+        console.log('electron-context-menu will handle context menus automatically');
+        
+        // Test if electronAPI is available
+        if (typeof window.electronAPI !== 'undefined') {
+            console.log('electronAPI is available:', window.electronAPI);
+        } else {
+            console.log('electronAPI not available');
+        }
+    </script>
+</body>
+</html> 
