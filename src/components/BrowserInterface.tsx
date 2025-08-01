@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BrowserInterfaceProps } from '../types';
-import Webview from './Webview';
+import BrowserViewComponent from './BrowserView';
 
 const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
   activeTab,
@@ -10,7 +10,7 @@ const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
   const [url, setUrl] = useState(activeTab.url);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
-  const webviewRef = useRef<any>(null);
+  const browserViewRef = useRef<any>(null);
 
   useEffect(() => {
     setUrl(activeTab.url);
@@ -29,9 +29,9 @@ const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
   };
 
   const handleGoBack = () => {
-    if (webviewRef.current && canGoBack) {
+    if (browserViewRef.current && canGoBack) {
       try {
-        webviewRef.current.goBack();
+        browserViewRef.current.goBack();
       } catch (error) {
         console.error('Error going back:', error);
       }
@@ -39,9 +39,9 @@ const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
   };
 
   const handleGoForward = () => {
-    if (webviewRef.current && canGoForward) {
+    if (browserViewRef.current && canGoForward) {
       try {
-        webviewRef.current.goForward();
+        browserViewRef.current.goForward();
       } catch (error) {
         console.error('Error going forward:', error);
       }
@@ -61,10 +61,10 @@ const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
     // We don't need to prevent default here as we want the context menu to show
   };
 
-  const handleWebviewLoad = (event: any) => {
-    const webview = event.target;
-    setCanGoBack(webview.canGoBack());
-    setCanGoForward(webview.canGoForward());
+  const handleBrowserViewLoad = (event: any) => {
+    const browserView = event.target;
+    setCanGoBack(browserView.canGoBack());
+    setCanGoForward(browserView.canGoForward());
   };
 
   return (
@@ -118,15 +118,15 @@ const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
         </button>
       </div>
 
-      {/* Webview Container */}
+      {/* BrowserView Container */}
       <div className="flex-1 relative">
-        <Webview
-          ref={webviewRef}
+        <BrowserViewComponent
+          ref={browserViewRef}
           url={activeTab.url}
           onNavigate={handleNavigate}
           onTitleChange={handleTitleChange}
           onContextMenu={handleContextMenu}
-          onLoad={handleWebviewLoad}
+          onLoad={handleBrowserViewLoad}
         />
       </div>
     </div>

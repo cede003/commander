@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain, session, Menu } from 'electron';
+import { app, BrowserWindow, BrowserView, ipcMain, session, Menu } from 'electron';
 import * as path from 'path';
 import { initialize, enable } from '@electron/remote/main';
 
 let mainWindow: BrowserWindow | null = null;
+let browserView: BrowserView | null = null;
 
 function createWindow() {
   // Create the browser window
@@ -15,8 +16,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false, // Allow external content
       allowRunningInsecureContent: true, // Allow mixed content
-      webviewTag: true, // Enable webview tag
-      sandbox: false, // Disable sandbox for webview compatibility
+      // Remove webviewTag since we're using BrowserView instead
+      sandbox: false, // Disable sandbox for compatibility
       experimentalFeatures: true, // Enable experimental features
     },
     titleBarStyle: 'hiddenInset', // macOS style
@@ -30,7 +31,7 @@ function createWindow() {
   console.log('app.isPackaged:', app.isPackaged);
   
   if (isDev) {
-          console.log('Loading URL: http://localhost:5174');
+    console.log('Loading URL: http://localhost:5174');
     mainWindow.loadURL('http://localhost:5174');
     mainWindow.webContents.openDevTools();
   } else {
@@ -59,44 +60,190 @@ function createWindow() {
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null;
+    browserView = null;
   });
 
-  // Configure webview session
-  const webviewSession = session.fromPartition('persist:commander');
-  webviewSession.setPreloads([path.join(__dirname, 'webview-preload.js')]);
+
+
+  // Configure session for BrowserView (replaces webview session)
+  const browserViewSession = session.fromPartition('persist:commander');
   
-  // Allow all permissions for webview
-  webviewSession.setPermissionRequestHandler((webContents, permission, callback) => {
+  // Allow all permissions for BrowserView
+  browserViewSession.setPermissionRequestHandler((webContents, permission, callback) => {
     console.log('Permission requested:', permission);
     callback(true);
   });
   
-  // Set webview session permissions
-  webviewSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+  // Set BrowserView session permissions
+  browserViewSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
     console.log('Permission check:', permission, 'from:', requestingOrigin);
     return true;
   });
 
-  // Handle webview navigation
-  webviewSession.webRequest.onBeforeRequest((details, callback) => {
-    console.log('Webview navigation:', details.url);
-    
-    // Allow all requests but log them
-    if (details.url.includes('google.com')) {
-      console.log('Google request detected - may be blocked by X-Frame-Options');
-    }
-    
+  // Handle BrowserView navigation
+  browserViewSession.webRequest.onBeforeRequest((details, callback) => {
+    console.log('BrowserView navigation:', details.url);
     callback({});
   });
 
-  // Handle webview navigation errors
-  webviewSession.webRequest.onErrorOccurred((details) => {
+  // Handle BrowserView navigation errors
+  browserViewSession.webRequest.onErrorOccurred((details) => {
     if (details.error === 'ERR_ABORTED') {
       console.log('Navigation aborted (common for embedded content):', details.url);
     } else {
-      console.log('Webview navigation error:', details.error, 'for URL:', details.url);
+      console.log('BrowserView navigation error:', details.error, 'for URL:', details.url);
     }
   });
+}
+
+// Function to create and manage BrowserView
+function createBrowserView(url: string) {
+  if (!mainWindow) return;
+
+  // Remove existing BrowserView if any
+  if (browserView) {
+    mainWindow.removeBrowserView(browserView);
+    browserView = null;
+  }
+
+  // Create new BrowserView
+  browserView = new BrowserView({
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: false, // Required for context menu to work
+      webSecurity: false,
+      allowRunningInsecureContent: true,
+      session: session.fromPartition('persist:commander'),
+    }
+  });
+
+  // Set up BrowserView event listeners
+  browserView.webContents.on('did-navigate', (event, navigationUrl) => {
+    console.log('BrowserView navigated to:', navigationUrl);
+    // Notify renderer process of navigation
+    mainWindow?.webContents.send('browser-view-navigated', navigationUrl);
+  });
+
+  browserView.webContents.on('page-title-updated', (event, title) => {
+    console.log('BrowserView title updated:', title);
+    // Notify renderer process of title change
+    mainWindow?.webContents.send('browser-view-title-changed', title);
+  });
+
+  browserView.webContents.on('did-finish-load', () => {
+    console.log('BrowserView finished loading');
+    // Notify renderer process that loading is complete
+    mainWindow?.webContents.send('browser-view-loaded');
+  });
+
+  browserView.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('BrowserView failed to load:', validatedURL, 'Error code:', errorCode);
+    // Notify renderer process of load failure
+    mainWindow?.webContents.send('browser-view-load-failed', { errorCode, errorDescription, validatedURL });
+  });
+
+  // Handle context menu for BrowserView
+  browserView.webContents.on('contextmenu' as any, (event: any, params: any) => {
+    event.preventDefault();
+    
+    const template: any[] = [
+      {
+        label: 'Back',
+        enabled: browserView?.webContents.canGoBack(),
+        click: () => browserView?.webContents.goBack()
+      },
+      {
+        label: 'Forward',
+        enabled: browserView?.webContents.canGoForward(),
+        click: () => browserView?.webContents.goForward()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Reload',
+        click: () => browserView?.webContents.reload()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Copy',
+        role: 'copy',
+        accelerator: 'CmdOrCtrl+C'
+      },
+      {
+        label: 'Paste',
+        role: 'paste',
+        accelerator: 'CmdOrCtrl+V'
+      },
+      {
+        label: 'Select All',
+        role: 'selectall',
+        accelerator: 'CmdOrCtrl+A'
+      }
+    ];
+
+    // Add link-specific menu items
+    if (params.linkURL) {
+      template.unshift(
+        {
+          label: 'Open Link in Current Tab',
+          click: () => {
+            browserView?.webContents.loadURL(params.linkURL);
+          }
+        },
+        {
+          label: 'Copy Link Address',
+          click: () => {
+            require('electron').clipboard.writeText(params.linkURL);
+          }
+        },
+        { type: 'separator' as const }
+      );
+    }
+
+    // Add image-specific menu items
+    if (params.srcURL) {
+      template.unshift(
+        {
+          label: 'Copy Image',
+          click: () => {
+            require('electron').clipboard.writeImage(params.srcURL);
+          }
+        },
+        {
+          label: 'Copy Image Address',
+          click: () => {
+            require('electron').clipboard.writeText(params.srcURL);
+          }
+        },
+        { type: 'separator' as const }
+      );
+    }
+
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup({ window: mainWindow! });
+  });
+
+  // Add BrowserView to main window
+  mainWindow.addBrowserView(browserView);
+
+  // Set BrowserView bounds (this will be updated by renderer)
+  const bounds = mainWindow.getBounds();
+  browserView.setBounds({ x: 0, y: 100, width: bounds.width, height: bounds.height - 100 });
+  browserView.setAutoResize({ width: true, height: true });
+
+  // Load the URL
+  console.log('Loading URL in BrowserView:', url);
+  browserView.webContents.loadURL(url, {
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  });
+}
+
+// Function to update BrowserView bounds
+function updateBrowserViewBounds() {
+  if (!mainWindow || !browserView) return;
+
+  const bounds = mainWindow.getBounds();
+  // Account for URL bar height (approximately 100px)
+  browserView.setBounds({ x: 0, y: 100, width: bounds.width, height: bounds.height - 100 });
 }
 
 // This method will be called when Electron has finished initialization
@@ -152,23 +299,75 @@ ipcMain.handle('get-platform', () => {
   return process.platform;
 });
 
+// New IPC handlers for BrowserView management
+ipcMain.handle('create-browser-view', (event, url: string) => {
+  console.log('Creating BrowserView for URL:', url);
+  createBrowserView(url);
+});
+
+ipcMain.handle('load-url-in-browser-view', (event, url: string) => {
+  if (browserView) {
+    console.log('Loading URL in BrowserView:', url);
+    browserView.webContents.loadURL(url, {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    });
+  }
+});
+
+ipcMain.handle('go-back-in-browser-view', () => {
+  if (browserView && browserView.webContents.canGoBack()) {
+    browserView.webContents.goBack();
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('go-forward-in-browser-view', () => {
+  if (browserView && browserView.webContents.canGoForward()) {
+    browserView.webContents.goForward();
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('reload-browser-view', () => {
+  if (browserView) {
+    browserView.webContents.reload();
+  }
+});
+
+ipcMain.handle('get-browser-view-can-go-back', () => {
+  return browserView ? browserView.webContents.canGoBack() : false;
+});
+
+ipcMain.handle('get-browser-view-can-go-forward', () => {
+  return browserView ? browserView.webContents.canGoForward() : false;
+});
+
+ipcMain.handle('update-browser-view-bounds', () => {
+  updateBrowserViewBounds();
+});
+
+
+
+// Handle context menu for main window (legacy support)
 ipcMain.handle('show-context-menu', async (event, x: number, y: number, params: any) => {
   console.log('Context menu requested:', { x, y, params });
   const template: any[] = [
     {
       label: 'Back',
-      enabled: event.sender.canGoBack(),
-      click: () => event.sender.goBack()
+      enabled: browserView?.webContents.canGoBack(),
+      click: () => browserView?.webContents.goBack()
     },
     {
       label: 'Forward',
-      enabled: event.sender.canGoForward(),
-      click: () => event.sender.goForward()
+      enabled: browserView?.webContents.canGoForward(),
+      click: () => browserView?.webContents.goForward()
     },
     { type: 'separator' as const },
     {
       label: 'Reload',
-      click: () => event.sender.reload()
+      click: () => browserView?.webContents.reload()
     },
     { type: 'separator' as const },
     {
@@ -199,7 +398,7 @@ ipcMain.handle('show-context-menu', async (event, x: number, y: number, params: 
       {
         label: 'Open Link in Current Tab',
         click: () => {
-          event.sender.loadURL(params.linkURL);
+          browserView?.webContents.loadURL(params.linkURL);
         }
       },
       {
@@ -236,178 +435,5 @@ ipcMain.handle('show-context-menu', async (event, x: number, y: number, params: 
   menu.popup({ window: mainWindow!, x, y });
 });
 
-// Webview session management
-ipcMain.handle('create-webview-session', () => {
-  const partition = 'persist:commander';
-  return session.fromPartition(partition);
-});
-
-// Handle new window requests from webview
-app.on('web-contents-created', (event, contents) => {
-  contents.on('will-navigate', (event: any, navigationUrl: string) => {
-    // Handle navigation requests
-    console.log('Navigation requested:', navigationUrl);
-  });
-
-  // Handle context menu for webview
-  contents.on('contextmenu' as any, (event: any, params: any) => {
-    event.preventDefault();
-    
-    const template: any[] = [
-      {
-        label: 'Back',
-        enabled: contents.canGoBack(),
-        click: () => contents.goBack()
-      },
-      {
-        label: 'Forward',
-        enabled: contents.canGoForward(),
-        click: () => contents.goForward()
-      },
-      { type: 'separator' as const },
-      {
-        label: 'Reload',
-        click: () => contents.reload()
-      },
-      { type: 'separator' as const },
-      {
-        label: 'Copy',
-        role: 'copy',
-        accelerator: 'CmdOrCtrl+C'
-      },
-      {
-        label: 'Paste',
-        role: 'paste',
-        accelerator: 'CmdOrCtrl+V'
-      },
-      {
-        label: 'Select All',
-        role: 'selectall',
-        accelerator: 'CmdOrCtrl+A'
-      }
-    ];
-
-    // Add link-specific menu items
-    if (params.linkURL) {
-      template.unshift(
-        {
-          label: 'Open Link in Current Tab',
-          click: () => {
-            contents.loadURL(params.linkURL);
-          }
-        },
-        {
-          label: 'Copy Link Address',
-          click: () => {
-            require('electron').clipboard.writeText(params.linkURL);
-          }
-        },
-        { type: 'separator' }
-      );
-    }
-
-    // Add image-specific menu items
-    if (params.srcURL) {
-      template.unshift(
-        {
-          label: 'Copy Image',
-          click: () => {
-            require('electron').clipboard.writeImage(params.srcURL);
-          }
-        },
-        {
-          label: 'Copy Image Address',
-          click: () => {
-            require('electron').clipboard.writeText(params.srcURL);
-          }
-        },
-        { type: 'separator' }
-      );
-    }
-
-    const menu = Menu.buildFromTemplate(template);
-    menu.popup({ window: mainWindow! });
-  });
-
-  // Handle webview-specific context menu events
-  contents.on('ipc-message', (event: any, channel: string, ...args: any[]) => {
-    if (channel === 'webview-context-menu') {
-      const { x, y, params } = args[0];
-      
-      const template: any[] = [
-        {
-          label: 'Back',
-          enabled: contents.canGoBack(),
-          click: () => contents.goBack()
-        },
-        {
-          label: 'Forward',
-          enabled: contents.canGoForward(),
-          click: () => contents.goForward()
-        },
-        { type: 'separator' as const },
-        {
-          label: 'Reload',
-          click: () => contents.reload()
-        },
-        { type: 'separator' as const },
-        {
-          label: 'Copy',
-          role: 'copy',
-          accelerator: 'CmdOrCtrl+C'
-        },
-        {
-          label: 'Paste',
-          role: 'paste',
-          accelerator: 'CmdOrCtrl+V'
-        },
-        {
-          label: 'Select All',
-          role: 'selectall',
-          accelerator: 'CmdOrCtrl+A'
-        }
-      ];
-
-      // Add link-specific menu items
-      if (params && params.linkURL) {
-        template.unshift(
-          {
-            label: 'Open Link in Current Tab',
-            click: () => {
-              contents.loadURL(params.linkURL);
-            }
-          },
-          {
-            label: 'Copy Link Address',
-            click: () => {
-              require('electron').clipboard.writeText(params.linkURL);
-            }
-          },
-          { type: 'separator' as const }
-        );
-      }
-
-      // Add image-specific menu items
-      if (params && params.srcURL) {
-        template.unshift(
-          {
-            label: 'Copy Image',
-            click: () => {
-              require('electron').clipboard.writeImage(params.srcURL);
-            }
-          },
-          {
-            label: 'Copy Image Address',
-            click: () => {
-              require('electron').clipboard.writeText(params.srcURL);
-            }
-          },
-          { type: 'separator' as const }
-        );
-      }
-
-      const menu = Menu.buildFromTemplate(template);
-      menu.popup({ window: mainWindow!, x, y });
-    }
-  });
-}); 
+// Remove webview-specific handlers since we're using BrowserView now
+// The BrowserView event handlers are set up in the createBrowserView function 
