@@ -1,15 +1,5 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
 
-// Extend Window interface for electronAPI
-declare global {
-  interface Window {
-    electronAPI?: {
-      showContextMenu?: (x: number, y: number, params: any) => Promise<void>;
-      sendToHost?: (channel: string, ...args: any[]) => void;
-    };
-  }
-}
-
 interface WebviewProps {
   url: string;
   onNavigate: (url: string) => void;

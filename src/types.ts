@@ -1,29 +1,43 @@
-export interface Tab {
+export interface Workflow {
   id: string;
+  name: string;
+  description: string;
   url: string;
-  title: string;
   isActive: boolean;
-  thumbnail?: string;
+  createdAt: Date;
+  lastAccessed: Date;
 }
 
-export interface TabSection {
+export interface BrowserState {
+  url: string;
+  title: string;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  isLoading: boolean;
+  history: string[];
+  currentHistoryIndex: number;
+}
+
+export interface WorkflowSection {
   id: string;
   title: string;
-  tabs: Tab[];
+  workflows: Workflow[];
 }
 
 export interface BrowserInterfaceProps {
-  activeTab: Tab;
-  onTabUpdate: (tabId: string, updates: Partial<Tab>) => void;
-  onNewTab: () => void;
+  browserState: BrowserState;
+  onNavigate: (url: string) => void;
+  onGoBack: () => void;
+  onGoForward: () => void;
+  onReload: () => void;
 }
 
 export interface SidebarProps {
-  currentTabs: Tab[];
-  closedTabs: Tab[];
-  onTabActivate: (tabId: string) => void;
-  onTabClose: (tabId: string) => void;
-  onTabReopen: (tabId: string) => void;
+  currentWorkflows: Workflow[];
+  onWorkflowActivate: (workflowId: string) => void;
+  onWorkflowCreate: () => void;
+  onWorkflowDelete: (workflowId: string) => void;
+  onWorkflowRename: (workflowId: string, newName: string) => void;
 }
 
 export interface BrowserViewProps {
@@ -32,6 +46,7 @@ export interface BrowserViewProps {
   onTitleChange: (title: string) => void;
   onContextMenu: (event: any) => void;
   onLoad: (event: any) => void;
+  onLoadingStateChange: (isLoading: boolean) => void;
 }
 
 // Global window interface for electronAPI
@@ -49,15 +64,18 @@ declare global {
       updateBrowserViewBounds?: () => Promise<any>;
       
       // BrowserView event listeners
-      onBrowserViewNavigated?: (callback: (url: string) => void) => void;
-      onBrowserViewTitleChanged?: (callback: (title: string) => void) => void;
-      onBrowserViewLoaded?: (callback: () => void) => void;
-      onBrowserViewLoadFailed?: (callback: (error: any) => void) => void;
+      onBrowserViewNavigated?: (callback: (data: { url: string }) => void) => void;
+      onBrowserViewTitleChanged?: (callback: (data: { title: string }) => void) => void;
+      onBrowserViewLoaded?: (callback: (data: {}) => void) => void;
+      onBrowserViewLoadFailed?: (callback: (data: { error: any }) => void) => void;
+      onBrowserViewLoadingStateChanged?: (callback: (data: { isLoading: boolean }) => void) => void;
       
-      // Legacy APIs
+      // Context menu and workflow management
+      openLinkInNewTab?: (url: string) => Promise<any>;
       showContextMenu?: (x: number, y: number, params: any) => Promise<void>;
       getAppVersion?: () => Promise<string>;
       getPlatform?: () => Promise<string>;
     };
+    browserViewTracker?: Map<string, any>;
   }
 } 

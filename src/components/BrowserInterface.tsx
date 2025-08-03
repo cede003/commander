@@ -1,132 +1,146 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { BrowserInterfaceProps } from '../types';
+import React, { useRef, useState } from 'react';
 import BrowserViewComponent from './BrowserView';
+import { BrowserInterfaceProps } from '../types';
 
 const BrowserInterface: React.FC<BrowserInterfaceProps> = ({
-  activeTab,
-  onTabUpdate,
-  onNewTab
+  browserState,
+  onNavigate,
+  onGoBack,
+  onGoForward,
+  onReload
 }) => {
-  const [url, setUrl] = useState(activeTab.url);
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
+  const [urlInput, setUrlInput] = useState(browserState.url);
   const browserViewRef = useRef<any>(null);
 
-  useEffect(() => {
-    setUrl(activeTab.url);
-  }, [activeTab.url]);
+  // Update URL input when browser state changes
+  React.useEffect(() => {
+    setUrlInput(browserState.url);
+  }, [browserState.url]);
 
   const handleUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let processedUrl = url;
-    
-    // Add protocol if missing
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      processedUrl = `https://${url}`;
+    if (urlInput.trim() !== browserState.url) {
+      onNavigate(urlInput.trim());
     }
-    
-    onTabUpdate(activeTab.id, { url: processedUrl });
   };
 
   const handleGoBack = () => {
-    if (browserViewRef.current && canGoBack) {
-      try {
-        browserViewRef.current.goBack();
-      } catch (error) {
-        console.error('Error going back:', error);
-      }
+    console.log(`[BUTTON DEBUG] Back button clicked`);
+    console.log(`[BUTTON DEBUG] Current browser state:`, browserState);
+    onGoBack();
+    // The BrowserView will handle the actual navigation
+    if (browserViewRef.current?.goBack) {
+      browserViewRef.current.goBack();
     }
   };
 
   const handleGoForward = () => {
-    if (browserViewRef.current && canGoForward) {
-      try {
-        browserViewRef.current.goForward();
-      } catch (error) {
-        console.error('Error going forward:', error);
-      }
+    console.log(`[BUTTON DEBUG] Forward button clicked`);
+    console.log(`[BUTTON DEBUG] Current browser state:`, browserState);
+    onGoForward();
+    // The BrowserView will handle the actual navigation
+    if (browserViewRef.current?.goForward) {
+      browserViewRef.current.goForward();
     }
   };
 
-  const handleNavigate = (newUrl: string) => {
-    onTabUpdate(activeTab.id, { url: newUrl });
+  const handleReload = () => {
+    if (browserViewRef.current?.reload) {
+      browserViewRef.current.reload();
+    }
+    onReload();
+  };
+
+  const handleNavigate = (url: string) => {
+    onNavigate(url);
   };
 
   const handleTitleChange = (title: string) => {
-    onTabUpdate(activeTab.id, { title });
+    // Title changes are handled by the BrowserView component
+    console.log(`[TITLE DEBUG] Title changed to: ${title}`);
   };
 
-  const handleContextMenu = (event: any) => {
-    // The electron-context-menu will handle the context menu
-    // We don't need to prevent default here as we want the context menu to show
+  const handleLoad = (event: any) => {
+    // Navigation state is handled by the BrowserView component
+    console.log(`[LOAD DEBUG] Browser loaded`);
   };
 
-  const handleBrowserViewLoad = (event: any) => {
-    const browserView = event.target;
-    setCanGoBack(browserView.canGoBack());
-    setCanGoForward(browserView.canGoForward());
+  const handleLoadingStateChange = (isLoading: boolean) => {
+    // Loading state is handled by the BrowserView component
+    console.log(`[LOADING DEBUG] Loading state changed: ${isLoading}`);
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* URL Bar */}
-      <div className="flex items-center p-4 border-b border-gray-200 bg-gray-50">
-        {/* Navigation Buttons */}
-        <div className="flex items-center space-x-2 mr-4">
+    <div className="flex flex-col h-full">
+      {/* Browser Toolbar */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="flex items-center space-x-2">
+          {/* Navigation Buttons */}
           <button
             onClick={handleGoBack}
-            disabled={!canGoBack}
-            className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!browserState.canGoBack}
+            className={`p-2 rounded ${browserState.canGoBack ? 'hover:bg-gray-100' : 'text-gray-400 cursor-not-allowed'}`}
             title="Go Back"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
+          
           <button
             onClick={handleGoForward}
-            disabled={!canGoForward}
-            className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!browserState.canGoForward}
+            className={`p-2 rounded ${browserState.canGoForward ? 'hover:bg-gray-100' : 'text-gray-400 cursor-not-allowed'}`}
             title="Go Forward"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+          
+          <button
+            onClick={handleReload}
+            className="p-2 rounded hover:bg-gray-100"
+            title="Reload"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+
+          {/* Loading Indicator */}
+          {browserState.isLoading && (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            </div>
+          )}
+
+          {/* URL Bar */}
+          <form onSubmit={handleUrlSubmit} className="flex-1">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter URL or search..."
+            />
+          </form>
         </div>
-
-        {/* URL Input */}
-        <form onSubmit={handleUrlSubmit} className="flex-1">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter URL or search..."
-          />
-        </form>
-
-        {/* New Tab Button */}
-        <button
-          onClick={onNewTab}
-          className="ml-4 p-2 rounded hover:bg-gray-200"
-          title="New Tab"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
       </div>
 
-      {/* BrowserView Container */}
+      {/* Browser Content */}
       <div className="flex-1 relative">
         <BrowserViewComponent
           ref={browserViewRef}
-          url={activeTab.url}
+          url={browserState.url}
           onNavigate={handleNavigate}
           onTitleChange={handleTitleChange}
-          onContextMenu={handleContextMenu}
-          onLoad={handleBrowserViewLoad}
+          onContextMenu={(event) => {
+            // Context menu is handled by the BrowserView component
+            console.log(`[CONTEXT DEBUG] Context menu event:`, event);
+          }}
+          onLoad={handleLoad}
+          onLoadingStateChange={handleLoadingStateChange}
         />
       </div>
     </div>
