@@ -80,6 +80,7 @@ declare global {
       // Context menu and workflow management
       openLinkInNewTab?: (url: string) => Promise<any>;
       showContextMenu?: (x: number, y: number, params: any) => Promise<void>;
+      showContextMenuAtPosition?: (x: number, y: number) => Promise<void>;
       getAppVersion?: () => Promise<string>;
       getPlatform?: () => Promise<string>;
       
@@ -88,6 +89,7 @@ declare global {
       navigate?: (direction: 'back' | 'forward') => Promise<void>;
       getCurrentURL?: () => Promise<string>;
       updateLayout?: () => Promise<void>;
+      initializeBrowserView?: () => Promise<void>;
       onDevToolsToggle?: (callback: () => void) => void;
     };
     browserViewTracker?: Map<string, any>;

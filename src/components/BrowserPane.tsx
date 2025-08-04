@@ -7,7 +7,6 @@ interface BrowserPaneProps {
 const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
   const [currentURL, setCurrentURL] = useState<string>('');
   const [urlInput, setUrlInput] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
   const [isBrowserReady, setIsBrowserReady] = useState<boolean>(false);
@@ -21,6 +20,11 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
   useEffect(() => {
     const initializeBrowser = async () => {
       try {
+        // Initialize BrowserView with default URL
+        if (window.electronAPI?.initializeBrowserView) {
+          await window.electronAPI.initializeBrowserView();
+        }
+        
         // Get current URL from main process
         if (window.electronAPI?.getCurrentURL) {
           const url = await window.electronAPI.getCurrentURL();
@@ -52,6 +56,7 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
   // Listen for browser navigation events
   useEffect(() => {
     const handleBrowserViewNavigated = async (data: { url: string }) => {
+      console.log('[DEBUG] BrowserView navigated:', data.url);
       setCurrentURL(data.url);
       setUrlInput(data.url);
       
@@ -67,23 +72,17 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
       }
     };
 
-    const handleLoadingStateChanged = (data: { isLoading: boolean }) => {
-      setIsLoading(data.isLoading);
-    };
-
     // Set up event listeners
     if (window.electronAPI?.onBrowserViewNavigated) {
+      console.log('[DEBUG] Setting up browser view navigated listener');
       window.electronAPI.onBrowserViewNavigated(handleBrowserViewNavigated);
-    }
-    
-    if (window.electronAPI?.onBrowserViewLoadingStateChanged) {
-      window.electronAPI.onBrowserViewLoadingStateChanged(handleLoadingStateChanged);
     }
 
     return () => {
       // Cleanup event listeners if needed
+      console.log('[DEBUG] Cleaning up event listeners');
     };
-  }, []);
+  }, []); // Keep empty dependency array
 
   // Handle window resize and DevTools events
   useEffect(() => {
@@ -126,7 +125,6 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
     }
 
     try {
-      setIsLoading(true);
       
       // Add protocol if missing
       let url = urlInput.trim();
@@ -151,14 +149,14 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
       }
     } catch (error) {
       console.error('Failed to load URL:', error);
-    } finally {
-      setIsLoading(false);
+      // Only set loading to false on error, let the event handle successful loads
     }
   };
 
   // Handle navigation
   const handleNavigate = async (direction: 'back' | 'forward') => {
     try {
+      
       if (window.electronAPI?.navigate) {
         await window.electronAPI.navigate(direction);
         
@@ -209,6 +207,19 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
     }
   };
 
+  // Handle control+click for context menu
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Send IPC event to show context menu at click position
+      if (window.electronAPI?.showContextMenuAtPosition) {
+        window.electronAPI.showContextMenuAtPosition(e.clientX, e.clientY);
+      }
+    }
+  };
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Toolbar */}
@@ -255,11 +266,7 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
         </button>
 
         {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex items-center ml-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          </div>
-        )}
+        
 
         {/* URL Input */}
         <form onSubmit={handleUrlSubmit} className="flex-1 ml-4 flex">
@@ -269,11 +276,9 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
             onChange={(e) => setUrlInput(e.target.value)}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             placeholder="Enter URL or search..."
-            disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={isLoading}
             className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Go
@@ -294,7 +299,10 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
           <div className="w-full h-full">
             {/* WebContentsView is managed by the main process */}
             {/* This div serves as a placeholder/background */}
-            <div className="w-full h-full bg-white">
+            <div 
+              className="w-full h-full bg-white"
+              onMouseDown={handleMouseDown}
+            >
               {/* The actual WebContentsView content is embedded by the main process */}
             </div>
           </div>

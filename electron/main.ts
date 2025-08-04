@@ -47,6 +47,9 @@ function createWindow() {
   // Enable @electron/remote for this window
   enable(mainWindow.webContents);
 
+  // Set up context menu for the BrowserView
+  setupBrowserViewContextMenu();
+
   // Set Content Security Policy
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
@@ -175,6 +178,9 @@ function createBrowserView(url: string) {
   // Set initial bounds
   updateBrowserViewBounds();
 
+  // Set up context menu for the BrowserView
+  setupBrowserViewContextMenu();
+
   console.log(`[DEBUG] BrowserView created and added to main window`);
 }
 
@@ -219,6 +225,92 @@ function updateBrowserViewBounds() {
   console.log(`[DEBUG] Setting BrowserView bounds:`, bounds, `DevTools open: ${isDevToolsOpen}`);
   browserView.setBounds(bounds);
   browserView.setAutoResize({ width: true, height: true });
+}
+
+function setupBrowserViewContextMenu() {
+  if (!browserView) return;
+
+  browserView.webContents.on('context-menu', (event, params) => {
+    const template: any[] = [
+      {
+        label: 'Back',
+        enabled: browserView?.webContents.canGoBack() || false,
+        click: () => browserView?.webContents.goBack()
+      },
+      {
+        label: 'Forward',
+        enabled: browserView?.webContents.canGoForward() || false,
+        click: () => browserView?.webContents.goForward()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Reload',
+        click: () => browserView?.webContents.reload()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Copy',
+        click: () => browserView?.webContents.copy()
+      },
+      {
+        label: 'Cut',
+        click: () => browserView?.webContents.cut()
+      },
+      {
+        label: 'Paste',
+        click: () => browserView?.webContents.paste()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Select All',
+        click: () => browserView?.webContents.selectAll()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Inspect Element',
+        click: () => browserView?.webContents.inspectElement(params.x, params.y)
+      }
+    ];
+
+    // Add link-specific options if clicking on a link
+    if (params.linkURL) {
+      template.unshift(
+        { type: 'separator' as const },
+        {
+          label: 'Copy Link Address',
+          click: () => {
+            require('electron').clipboard.writeText(params.linkURL);
+          }
+        }
+      );
+    }
+
+    // Add image-specific options if clicking on an image
+    if (params.srcURL) {
+      template.unshift(
+        { type: 'separator' as const },
+        {
+          label: 'Copy Image Address',
+          click: () => {
+            require('electron').clipboard.writeText(params.srcURL);
+          }
+        }
+      );
+    }
+
+    const menu = Menu.buildFromTemplate(template);
+    
+    // Get the BrowserView bounds to adjust menu position
+    const bounds = browserView?.getBounds();
+    if (bounds) {
+      // Adjust coordinates to account for BrowserView position within main window
+      const adjustedX = params.x + bounds.x;
+      const adjustedY = params.y + bounds.y;
+      menu.popup({ x: adjustedX, y: adjustedY });
+    } else {
+      menu.popup({ x: params.x, y: params.y });
+    }
+  });
 }
 
 function setupIpcHandlers() {
@@ -276,45 +368,64 @@ function setupIpcHandlers() {
     updateBrowserViewBounds();
   });
 
-
-
-  // Context menu
-  ipcMain.handle('show-context-menu', async (event, x: number, y: number, params: any) => {
+  // Handle control+click context menu
+  ipcMain.handle('show-context-menu-at-position', async (event, x: number, y: number) => {
     if (!browserView) return;
     
-         const template: any[] = [
-       {
-         label: 'Back',
-         enabled: browserView.webContents.canGoBack(),
-         click: () => browserView?.webContents.goBack()
-       },
-       {
-         label: 'Forward',
-         enabled: browserView.webContents.canGoForward(),
-         click: () => browserView?.webContents.goForward()
-       },
-       { type: 'separator' as const },
-       {
-         label: 'Reload',
-         click: () => browserView?.webContents.reload()
-       },
-       { type: 'separator' as const },
-       {
-         label: 'Copy',
-         click: () => browserView?.webContents.copy()
-       },
-       {
-         label: 'Cut',
-         click: () => browserView?.webContents.cut()
-       },
-       {
-         label: 'Paste',
-         click: () => browserView?.webContents.paste()
-       }
-     ];
+    // Get the current context menu parameters by simulating a context menu event
+    const template: any[] = [
+      {
+        label: 'Back',
+        enabled: browserView?.webContents.canGoBack() || false,
+        click: () => browserView?.webContents.goBack()
+      },
+      {
+        label: 'Forward',
+        enabled: browserView?.webContents.canGoForward() || false,
+        click: () => browserView?.webContents.goForward()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Reload',
+        click: () => browserView?.webContents.reload()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Copy',
+        click: () => browserView?.webContents.copy()
+      },
+      {
+        label: 'Cut',
+        click: () => browserView?.webContents.cut()
+      },
+      {
+        label: 'Paste',
+        click: () => browserView?.webContents.paste()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Select All',
+        click: () => browserView?.webContents.selectAll()
+      },
+      { type: 'separator' as const },
+      {
+        label: 'Inspect Element',
+        click: () => browserView?.webContents.inspectElement(x, y)
+      }
+    ];
 
     const menu = Menu.buildFromTemplate(template);
-    menu.popup({ x, y });
+    
+    // Get the BrowserView bounds to adjust menu position
+    const bounds = browserView?.getBounds();
+    if (bounds) {
+      // Adjust coordinates to account for BrowserView position within main window
+      const adjustedX = x + bounds.x;
+      const adjustedY = y + bounds.y;
+      menu.popup({ x: adjustedX, y: adjustedY });
+    } else {
+      menu.popup({ x, y });
+    }
   });
 
   // Get app version
@@ -328,6 +439,13 @@ function setupIpcHandlers() {
   });
 
   // BrowserPane API handlers
+  ipcMain.handle('initialize-browser-view', async () => {
+    console.log(`[IPC] Initializing BrowserView with default URL`);
+    if (!browserView) {
+      createBrowserView('https://www.google.com');
+    }
+  });
+
   ipcMain.handle('load-url', async (event, url: string) => {
     console.log(`[IPC] Loading URL: ${url}`);
     currentURL = url;

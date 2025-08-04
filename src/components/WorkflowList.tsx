@@ -35,6 +35,14 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     setEditName('');
   };
 
+  const handleRunWorkflow = (workflowId: string) => {
+    onWorkflowActivate(workflowId);
+  };
+
+  const handleToggleWorkflow = (workflowId: string) => {
+    onWorkflowActivate(workflowId);
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -59,7 +67,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
           {workflows.map((workflow) => (
             <div
               key={workflow.id}
-              className={`group relative p-3 rounded-lg border cursor-pointer transition-all ${
+              className={`group relative p-3 rounded-lg border transition-all ${
                 workflow.isActive
                   ? 'bg-blue-50 border-blue-200 shadow-sm'
                   : 'bg-white border-gray-200 hover:bg-gray-50'
@@ -67,7 +75,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
             >
               {/* Workflow Content */}
               <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0" onClick={() => onWorkflowActivate(workflow.id)}>
+                <div className="flex-1 min-w-0">
                   {editingWorkflowId === workflow.id ? (
                     <div className="flex items-center space-x-2">
                       <input
@@ -108,12 +116,14 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                         <span className="text-xs text-gray-400">
                           Last accessed: {formatDate(workflow.lastAccessed)}
                         </span>
-                        {workflow.isActive && (
+                      </div>
+                      {workflow.isActive && (
+                        <div className="absolute bottom-2 right-2">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                             Active
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -121,6 +131,27 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                 {/* Action Buttons */}
                 {editingWorkflowId !== workflow.id && (
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleToggleWorkflow(workflow.id)}
+                      className={`p-1 ${
+                        workflow.isActive 
+                          ? 'text-red-400 hover:text-red-600' 
+                          : 'text-gray-400 hover:text-green-600'
+                      }`}
+                      title={workflow.isActive ? 'Stop Workflow' : 'Run Workflow'}
+                    >
+                      {workflow.isActive ? (
+                        // Stop icon - solid square
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <rect x="6" y="6" width="12" height="12" />
+                        </svg>
+                      ) : (
+                        // Play icon
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5v14l11-7z" />
+                        </svg>
+                      )}
+                    </button>
                     <button
                       onClick={() => handleEditStart(workflow)}
                       className="p-1 text-gray-400 hover:text-gray-600"

@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Context menu and utility APIs
   showContextMenu: (x: number, y: number, params: any) => ipcRenderer.invoke('show-context-menu', x, y, params),
+  showContextMenuAtPosition: (x: number, y: number) => ipcRenderer.invoke('show-context-menu-at-position', x, y),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getPlatform: () => ipcRenderer.invoke('get-platform'),
   
@@ -40,6 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   navigate: (direction: 'back' | 'forward') => ipcRenderer.invoke('navigate', direction),
   getCurrentURL: () => ipcRenderer.invoke('get-current-url'),
   updateLayout: () => ipcRenderer.invoke('update-layout'),
+  initializeBrowserView: () => ipcRenderer.invoke('initialize-browser-view'),
   onDevToolsToggle: (callback: () => void) => {
     ipcRenderer.on('dev-tools-toggle', callback);
   },
@@ -63,13 +65,16 @@ declare global {
       onBrowserViewTitleChanged: (callback: (data: { title: string }) => void) => void;
       onBrowserViewLoaded: (callback: (data: {}) => void) => void;
       onBrowserViewLoadFailed: (callback: (data: { error: any }) => void) => void;
+      onBrowserViewLoadingStateChanged: (callback: (data: { isLoading: boolean }) => void) => void;
       showContextMenu: (x: number, y: number, params: any) => Promise<void>;
+      showContextMenuAtPosition: (x: number, y: number) => Promise<void>;
       
       // BrowserPane API
       loadURL: (url: string) => Promise<void>;
       navigate: (direction: 'back' | 'forward') => Promise<void>;
       getCurrentURL: () => Promise<string>;
       updateLayout: () => Promise<void>;
+      initializeBrowserView: () => Promise<void>;
       onDevToolsToggle: (callback: () => void) => void;
     };
   }

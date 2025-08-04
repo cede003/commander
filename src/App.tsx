@@ -10,18 +10,35 @@ function App() {
       name: 'Research Workflow',
       description: 'Default workflow for web research',
       url: 'https://www.google.com',
-      isActive: true,
+      isActive: false,
       createdAt: new Date(),
       lastAccessed: new Date()
     }
   ]);
 
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarVisible(!isSidebarVisible);
+  };
+
   const handleWorkflowActivate = (workflowId: string) => {
-    setCurrentWorkflows(prev => prev.map(workflow => ({
-      ...workflow,
-      isActive: workflow.id === workflowId,
-      lastAccessed: workflow.id === workflowId ? new Date() : workflow.lastAccessed
-    })));
+    setCurrentWorkflows(prev => prev.map(workflow => {
+      if (workflow.id === workflowId) {
+        // Toggle the active state for the clicked workflow
+        return {
+          ...workflow,
+          isActive: !workflow.isActive,
+          lastAccessed: new Date()
+        };
+      } else {
+        // Deactivate all other workflows
+        return {
+          ...workflow,
+          isActive: false
+        };
+      }
+    }));
   };
 
   const handleWorkflowCreate = () => {
@@ -51,15 +68,45 @@ function App() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-80 bg-white shadow-lg pt-8">
-        <Sidebar
-          currentWorkflows={currentWorkflows}
-          onWorkflowActivate={handleWorkflowActivate}
-          onWorkflowCreate={handleWorkflowCreate}
-          onWorkflowDelete={handleWorkflowDelete}
-          onWorkflowRename={handleWorkflowRename}
-        />
+      <div className={`bg-white shadow-lg pt-8 transition-all duration-300 ease-in-out ${
+        isSidebarVisible ? 'w-80' : 'w-0'
+      }`}>
+        {isSidebarVisible && (
+          <div className="relative h-full">
+            <button
+              onClick={toggleSidebar}
+              className="absolute right-2 top-4 z-50"
+              title="Hide Sidebar"
+            >
+              <span className="text-black text-xl">
+                V
+              </span>
+            </button>
+            <Sidebar
+              currentWorkflows={currentWorkflows}
+              onWorkflowActivate={handleWorkflowActivate}
+              onWorkflowCreate={handleWorkflowCreate}
+              onWorkflowDelete={handleWorkflowDelete}
+              onWorkflowRename={handleWorkflowRename}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Toggle Button - Show when sidebar is hidden */}
+      {!isSidebarVisible && (
+        <div className="relative">
+          <button
+            onClick={toggleSidebar}
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 z-50"
+            title="Show Sidebar"
+          >
+            <span className="text-black text-xl">
+              &gt;
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Main Browser Area */}
       <div className="flex-1">
