@@ -10,6 +10,7 @@ export interface Workflow {
   name: string;
   description: string;
   url: string;
+  workflowData: string;
   isActive: boolean;
   createdAt: Date;
   lastAccessed: Date;
@@ -45,6 +46,7 @@ export interface SidebarProps {
   onWorkflowCreate: () => void;
   onWorkflowDelete: (workflowId: string) => void;
   onWorkflowRename: (workflowId: string, newName: string) => void;
+  onWorkflowEdit: (workflow: Workflow) => void;
 }
 
 export interface BrowserViewProps {
@@ -91,6 +93,10 @@ declare global {
       updateLayout?: () => Promise<void>;
       updateSidebarVisibility?: (visible: boolean) => Promise<void>;
       initializeBrowserView?: () => Promise<void>;
+      openCreateWorkflowModal?: () => Promise<void>;
+      createWorkflow?: (workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => Promise<void>;
+      onWorkflowCreated?: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => void;
+      removeWorkflowCreatedListener?: () => void;
       onDevToolsToggle?: (callback: () => void) => void;
     };
     browserViewTracker?: Map<string, any>;

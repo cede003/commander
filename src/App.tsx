@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import BrowserPane from './components/BrowserPane';
 import URLBar from './components/URLBar';
@@ -11,6 +11,7 @@ function App() {
       name: 'Default Workflow',
       description: 'Default workflow for testing',
       url: 'https://www.google.com',
+      workflowData: '{"steps": []}',
       isActive: false,
       createdAt: new Date(),
       lastAccessed: new Date()
@@ -21,6 +22,7 @@ function App() {
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
+  const workflowListenerRef = useRef<boolean>(false);
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
@@ -77,18 +79,83 @@ function App() {
   };
 
   const handleWorkflowCreate = () => {
-    const newWorkflow: Workflow = {
-      id: Date.now().toString(),
-      name: `Workflow ${currentWorkflows.length + 1}`,
-      description: 'New workflow',
-      url: 'https://www.google.com',
-      isActive: false,
-      createdAt: new Date(),
-      lastAccessed: new Date()
-    };
-    
-    setCurrentWorkflows(prev => [...prev, newWorkflow]);
+    if (window.electronAPI?.openCreateWorkflowModal) {
+      window.electronAPI.openCreateWorkflowModal();
+    }
   };
+
+  const handleWorkflowEdit = (workflow: Workflow) => {
+    if (window.electronAPI?.openCreateWorkflowModal) {
+      // Store the workflow data to be edited
+      localStorage.setItem('editingWorkflow', JSON.stringify(workflow));
+      window.electronAPI.openCreateWorkflowModal();
+    }
+  };
+
+  // Listen for workflow creation from modal
+  useEffect(() => {
+    // Clean up any existing listeners first
+    if (window.electronAPI?.removeWorkflowCreatedListener) {
+      window.electronAPI.removeWorkflowCreatedListener();
+    }
+
+    const handleWorkflowCreated = (workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => {
+      if (workflow.isEditing && workflow.id) {
+        // Update existing workflow
+        setCurrentWorkflows(prev => prev.map(w => 
+          w.id === workflow.id ? {
+            ...w,
+            name: workflow.name,
+            description: workflow.description,
+            workflowData: workflow.workflowData,
+            lastAccessed: new Date()
+          } : w
+        ));
+      } else {
+        // Create new workflow
+        const workflowId = Date.now().toString();
+        
+        const newWorkflow: Workflow = {
+          id: workflowId,
+          name: workflow.name,
+          description: workflow.description,
+          url: 'https://www.google.com',
+          workflowData: workflow.workflowData,
+          isActive: false,
+          createdAt: new Date(),
+          lastAccessed: new Date()
+        };
+        
+        setCurrentWorkflows(prev => {
+          // Check if this workflow already exists (by name and description)
+          const existingWorkflow = prev.find(w => 
+            w.name === newWorkflow.name && 
+            w.description === newWorkflow.description
+          );
+          
+          if (existingWorkflow) {
+            return prev;
+          }
+          
+          return [...prev, newWorkflow];
+        });
+      }
+    };
+
+    // Listen for workflow-created event
+    if (window.electronAPI?.onWorkflowCreated) {
+      window.electronAPI.onWorkflowCreated(handleWorkflowCreated);
+      workflowListenerRef.current = true;
+    }
+
+    return () => {
+      // Clean up the event listener when component unmounts
+      if (window.electronAPI?.removeWorkflowCreatedListener) {
+        window.electronAPI.removeWorkflowCreatedListener();
+      }
+      workflowListenerRef.current = false;
+    };
+  }, []);
 
   const handleWorkflowDelete = (workflowId: string) => {
     setCurrentWorkflows(prev => prev.filter(w => w.id !== workflowId));
@@ -128,6 +195,7 @@ function App() {
                 onWorkflowCreate={handleWorkflowCreate}
                 onWorkflowDelete={handleWorkflowDelete}
                 onWorkflowRename={handleWorkflowRename}
+                onWorkflowEdit={handleWorkflowEdit}
               />
             </div>
           )}
@@ -143,6 +211,8 @@ function App() {
           />
         </div>
       </div>
+
+
     </div>
   );
 }

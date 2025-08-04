@@ -11,6 +11,7 @@ if (!app.isPackaged) {
 
 let mainWindow: BrowserWindow | null = null;
 let browserView: BrowserView | null = null;
+let modalWindow: BrowserWindow | undefined = undefined;
 let currentURL: string = 'https://www.google.com';
 let isSidebarVisible: boolean = true;
 
@@ -210,6 +211,65 @@ function createBrowserView(url: string) {
   console.log(`[DEBUG] BrowserView created and added to main window`);
 }
 
+function createModalWindow() {
+  if (!mainWindow) {
+    console.error('Main window not available for modal');
+    return;
+  }
+
+  if (modalWindow) {
+    modalWindow.focus();
+    return;
+  }
+
+  // Create the modal window
+  modalWindow = new BrowserWindow({
+    width: 900,
+    height: 800,
+    parent: mainWindow,
+    modal: true,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false,
+      allowRunningInsecureContent: true,
+      sandbox: false,
+      experimentalFeatures: true,
+    },
+    titleBarStyle: 'default',
+    show: false,
+  });
+
+  // Load the modal content
+  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  
+  if (isDev) {
+    console.log('Loading modal URL: http://localhost:5174/#/modal');
+    modalWindow.loadURL('http://localhost:5174/#/modal');
+  } else {
+    console.log('Loading modal file with hash');
+    modalWindow.loadFile(path.join(__dirname, '../renderer/index.html'), {
+      hash: '/modal'
+    });
+  }
+
+  // Show window when ready
+  modalWindow.once('ready-to-show', () => {
+    modalWindow?.show();
+  });
+
+  // Handle modal window closed
+  modalWindow.on('closed', () => {
+    modalWindow = undefined;
+  });
+
+  console.log('[Modal] Created modal window');
+}
+
 function loadURLInBrowserView(url: string) {
   if (!browserView) {
     console.error('BrowserView not available');
@@ -403,6 +463,20 @@ function setupIpcHandlers() {
   ipcMain.handle('update-sidebar-visibility', async (event, visible: boolean) => {
     isSidebarVisible = visible;
     updateBrowserViewBounds();
+  });
+
+  // Open modal window
+  ipcMain.handle('open-create-workflow-modal', async () => {
+    console.log('[IPC] Opening create workflow modal');
+    createModalWindow();
+  });
+
+  // Create workflow from modal
+  ipcMain.handle('create-workflow', async (event, workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => {
+    // Send the workflow data to the main window
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send('workflow-created', workflow);
+    }
   });
 
   // Handle control+click context menu

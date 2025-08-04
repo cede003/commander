@@ -8,7 +8,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onWorkflowActivate,
   onWorkflowCreate,
   onWorkflowDelete,
-  onWorkflowRename
+  onWorkflowRename,
+  onWorkflowEdit
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -33,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onWorkflowActivate={onWorkflowActivate}
             onWorkflowDelete={onWorkflowDelete}
             onWorkflowRename={onWorkflowRename}
+            onWorkflowEdit={onWorkflowEdit}
           />
         </div>
       </div>

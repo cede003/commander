@@ -43,7 +43,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateLayout: () => ipcRenderer.invoke('update-layout'),
   updateSidebarVisibility: (visible: boolean) => ipcRenderer.invoke('update-sidebar-visibility', visible),
   initializeBrowserView: () => ipcRenderer.invoke('initialize-browser-view'),
+  openCreateWorkflowModal: () => ipcRenderer.invoke('open-create-workflow-modal'),
+  createWorkflow: (workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => ipcRenderer.invoke('create-workflow', workflow),
   testIpc: () => ipcRenderer.invoke('test-ipc'),
+  onWorkflowCreated: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => {
+    ipcRenderer.on('workflow-created', (event, workflow) => callback(workflow));
+  },
+  removeWorkflowCreatedListener: () => {
+    ipcRenderer.removeAllListeners('workflow-created');
+  },
   onDevToolsToggle: (callback: () => void) => {
     ipcRenderer.on('dev-tools-toggle', callback);
   },
@@ -78,6 +86,7 @@ declare global {
       updateLayout: () => Promise<void>;
       updateSidebarVisibility: (visible: boolean) => Promise<void>;
       initializeBrowserView: () => Promise<void>;
+      openCreateWorkflowModal: () => Promise<void>;
       testIpc: () => Promise<string>;
       onDevToolsToggle: (callback: () => void) => void;
     };
