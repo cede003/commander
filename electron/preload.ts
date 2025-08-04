@@ -34,6 +34,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showContextMenu: (x: number, y: number, params: any) => ipcRenderer.invoke('show-context-menu', x, y, params),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getPlatform: () => ipcRenderer.invoke('get-platform'),
+  
+  // BrowserPane API
+  loadURL: (url: string) => ipcRenderer.invoke('load-url', url),
+  navigate: (direction: 'back' | 'forward') => ipcRenderer.invoke('navigate', direction),
+  getCurrentURL: () => ipcRenderer.invoke('get-current-url'),
+  updateLayout: () => ipcRenderer.invoke('update-layout'),
+  onDevToolsToggle: (callback: () => void) => {
+    ipcRenderer.on('dev-tools-toggle', callback);
+  },
 });
 
 // Type definitions for the exposed API
@@ -55,6 +64,13 @@ declare global {
       onBrowserViewLoaded: (callback: (data: {}) => void) => void;
       onBrowserViewLoadFailed: (callback: (data: { error: any }) => void) => void;
       showContextMenu: (x: number, y: number, params: any) => Promise<void>;
+      
+      // BrowserPane API
+      loadURL: (url: string) => Promise<void>;
+      navigate: (direction: 'back' | 'forward') => Promise<void>;
+      getCurrentURL: () => Promise<string>;
+      updateLayout: () => Promise<void>;
+      onDevToolsToggle: (callback: () => void) => void;
     };
   }
 } 

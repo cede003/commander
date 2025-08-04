@@ -1,3 +1,10 @@
+export interface Tab {
+  id: string;
+  title: string;
+  url: string;
+  isActive: boolean;
+}
+
 export interface Workflow {
   id: string;
   name: string;
@@ -75,6 +82,13 @@ declare global {
       showContextMenu?: (x: number, y: number, params: any) => Promise<void>;
       getAppVersion?: () => Promise<string>;
       getPlatform?: () => Promise<string>;
+      
+      // BrowserPane API
+      loadURL?: (url: string) => Promise<void>;
+      navigate?: (direction: 'back' | 'forward') => Promise<void>;
+      getCurrentURL?: () => Promise<string>;
+      updateLayout?: () => Promise<void>;
+      onDevToolsToggle?: (callback: () => void) => void;
     };
     browserViewTracker?: Map<string, any>;
   }

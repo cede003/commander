@@ -4,6 +4,7 @@ import { initialize, enable } from '@electron/remote/main';
 
 let mainWindow: BrowserWindow | null = null;
 let browserView: BrowserView | null = null;
+let currentURL: string = 'https://www.google.com';
 
 function createWindow() {
   // Create the browser window
@@ -16,7 +17,6 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false, // Allow external content
       allowRunningInsecureContent: true, // Allow mixed content
-      // Remove webviewTag since we're using BrowserView instead
       sandbox: false, // Disable sandbox for compatibility
       experimentalFeatures: true, // Enable experimental features
     },
@@ -65,18 +65,28 @@ function createWindow() {
 
   // Handle window resize to update BrowserView bounds
   mainWindow.on('resize', () => {
-    updateBrowserViewBounds();
+    if (browserView) {
+      updateBrowserViewBounds();
+    }
   });
 
-  // Handle dev tools opening/closing to update BrowserView bounds
+  // Handle DevTools toggle events
   mainWindow.webContents.on('devtools-opened', () => {
-    console.log('Dev tools opened, updating BrowserView bounds');
-    updateBrowserViewBounds();
+    console.log('[DEBUG] DevTools opened');
+    // Small delay to ensure DevTools state is updated
+    setTimeout(() => {
+      updateBrowserViewBounds();
+      mainWindow?.webContents.send('dev-tools-toggle');
+    }, 100);
   });
 
   mainWindow.webContents.on('devtools-closed', () => {
-    console.log('Dev tools closed, updating BrowserView bounds');
-    updateBrowserViewBounds();
+    console.log('[DEBUG] DevTools closed');
+    // Small delay to ensure DevTools state is updated
+    setTimeout(() => {
+      updateBrowserViewBounds();
+      mainWindow?.webContents.send('dev-tools-toggle');
+    }, 100);
   });
 
   // Configure session for BrowserView
@@ -174,7 +184,7 @@ function loadURLInBrowserView(url: string) {
     return;
   }
 
-  console.log(`[DEBUG] Loading URL in existing BrowserView: ${url}`);
+  console.log(`[DEBUG] Loading URL in BrowserView: ${url}`);
   browserView.webContents.loadURL(url);
 }
 
@@ -184,19 +194,29 @@ function updateBrowserViewBounds() {
   }
 
   const [width, height] = mainWindow.getSize();
-  const devToolsHeight = mainWindow.webContents.isDevToolsOpened() ? 400 : 0;
   
-  // Calculate bounds for the BrowserView
-  // Account for the sidebar (320px) and some padding
-  const sidebarWidth = 320;
-  const bounds = {
-    x: sidebarWidth,
-    y: 0,
-    width: width - sidebarWidth,
-    height: height - devToolsHeight
+  // Check if DevTools is open
+  const isDevToolsOpen = mainWindow.webContents.isDevToolsOpened();
+  
+  // BrowserView takes up the right side of the window
+  // Sidebar is 320px, so BrowserView starts at x=320
+  // URL bar is 80px, so BrowserView starts at y=80
+  let bounds = {
+    x: 320,
+    y: 80,
+    width: width - 320,
+    height: height - 80
   };
 
-  console.log(`[DEBUG] Setting BrowserView bounds:`, bounds);
+  // If DevTools is open, adjust bounds to account for DevTools panel
+  if (isDevToolsOpen) {
+    // DevTools typically takes up about 1/3 of the window width
+    // Adjust the BrowserView width accordingly
+    const devToolsWidth = Math.min(400, width * 0.4); // Cap at 400px or 40% of window
+    bounds.width = width - 320 - devToolsWidth;
+  }
+
+  console.log(`[DEBUG] Setting BrowserView bounds:`, bounds, `DevTools open: ${isDevToolsOpen}`);
   browserView.setBounds(bounds);
   browserView.setAutoResize({ width: true, height: true });
 }
@@ -256,6 +276,8 @@ function setupIpcHandlers() {
     updateBrowserViewBounds();
   });
 
+
+
   // Context menu
   ipcMain.handle('show-context-menu', async (event, x: number, y: number, params: any) => {
     if (!browserView) return;
@@ -303,6 +325,42 @@ function setupIpcHandlers() {
   // Get platform
   ipcMain.handle('get-platform', async () => {
     return process.platform;
+  });
+
+  // BrowserPane API handlers
+  ipcMain.handle('load-url', async (event, url: string) => {
+    console.log(`[IPC] Loading URL: ${url}`);
+    currentURL = url;
+    
+    if (browserView) {
+      browserView.webContents.loadURL(url);
+    } else {
+      createBrowserView(url);
+    }
+  });
+
+  ipcMain.handle('navigate', async (event, direction: 'back' | 'forward') => {
+    console.log(`[IPC] Navigating ${direction}`);
+    
+    if (!browserView) return;
+    
+    if (direction === 'back' && browserView.webContents.canGoBack()) {
+      browserView.webContents.goBack();
+    } else if (direction === 'forward' && browserView.webContents.canGoForward()) {
+      browserView.webContents.goForward();
+    }
+  });
+
+  ipcMain.handle('get-current-url', async () => {
+    if (browserView) {
+      return browserView.webContents.getURL();
+    }
+    return currentURL;
+  });
+
+  ipcMain.handle('update-layout', async () => {
+    console.log(`[IPC] Updating layout`);
+    updateBrowserViewBounds();
   });
 }
 
