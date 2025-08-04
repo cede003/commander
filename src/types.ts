@@ -89,6 +89,7 @@ declare global {
       navigate?: (direction: 'back' | 'forward') => Promise<void>;
       getCurrentURL?: () => Promise<string>;
       updateLayout?: () => Promise<void>;
+      updateSidebarVisibility?: (visible: boolean) => Promise<void>;
       initializeBrowserView?: () => Promise<void>;
       onDevToolsToggle?: (callback: () => void) => void;
     };

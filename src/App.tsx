@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import BrowserPane from './components/BrowserPane';
 import Sidebar from './components/Sidebar';
+import BrowserPane from './components/BrowserPane';
+import URLBar from './components/URLBar';
 import { Workflow } from './types';
 
 function App() {
   const [currentWorkflows, setCurrentWorkflows] = useState<Workflow[]>([
     {
       id: '1',
-      name: 'Research Workflow',
-      description: 'Default workflow for web research',
+      name: 'Default Workflow',
+      description: 'Default workflow for testing',
       url: 'https://www.google.com',
       isActive: false,
       createdAt: new Date(),
@@ -16,10 +17,44 @@ function App() {
     }
   ]);
 
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [currentURL, setCurrentURL] = useState<string>('');
+  const [canGoBack, setCanGoBack] = useState<boolean>(false);
+  const [canGoForward, setCanGoForward] = useState<boolean>(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
+    if (window.electronAPI?.updateSidebarVisibility) {
+      window.electronAPI.updateSidebarVisibility(!isSidebarVisible);
+    }
+  };
+
+  const handleGoBack = async () => {
+    if (window.electronAPI?.navigate) {
+      await window.electronAPI.navigate('back');
+    }
+  };
+
+  const handleGoForward = async () => {
+    if (window.electronAPI?.navigate) {
+      await window.electronAPI.navigate('forward');
+    }
+  };
+
+  const handleReload = async () => {
+    if (window.electronAPI?.loadURL && currentURL) {
+      await window.electronAPI.loadURL(currentURL);
+    }
+  };
+
+  const handleURLChange = (url: string) => {
+    console.log('[DEBUG] Browser navigated to:', url);
+    setCurrentURL(url);
+  };
+
+  const handleNavigationStateChange = (canGoBack: boolean, canGoForward: boolean) => {
+    setCanGoBack(canGoBack);
+    setCanGoForward(canGoForward);
   };
 
   const handleWorkflowActivate = (workflowId: string) => {
@@ -66,51 +101,47 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className={`bg-white shadow-lg pt-8 transition-all duration-300 ease-in-out ${
-        isSidebarVisible ? 'w-80' : 'w-0'
-      }`}>
-        {isSidebarVisible && (
-          <div className="relative h-full">
-            <button
-              onClick={toggleSidebar}
-              className="absolute right-2 top-4 z-50"
-              title="Hide Sidebar"
-            >
-              <span className="text-black text-xl">
-                V
-              </span>
-            </button>
-            <Sidebar
-              currentWorkflows={currentWorkflows}
-              onWorkflowActivate={handleWorkflowActivate}
-              onWorkflowCreate={handleWorkflowCreate}
-              onWorkflowDelete={handleWorkflowDelete}
-              onWorkflowRename={handleWorkflowRename}
-            />
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* URL Bar - Top level component */}
+      <URLBar
+        currentURL={currentURL}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
+        onReload={handleReload}
+        onToggleSidebar={toggleSidebar}
+        isSidebarVisible={isSidebarVisible}
+      />
 
-      {/* Toggle Button - Show when sidebar is hidden */}
-      {!isSidebarVisible && (
-        <div className="relative">
-          <button
-            onClick={toggleSidebar}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 z-50"
-            title="Show Sidebar"
-          >
-            <span className="text-black text-xl">
-              &gt;
-            </span>
-          </button>
+      {/* Main Content Area */}
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          isSidebarVisible ? 'w-80 border-r border-gray-200' : 'w-0'
+        }`}>
+          {isSidebarVisible && (
+            <div className="relative h-full">
+              <Sidebar
+                currentWorkflows={currentWorkflows}
+                onWorkflowActivate={handleWorkflowActivate}
+                onWorkflowCreate={handleWorkflowCreate}
+                onWorkflowDelete={handleWorkflowDelete}
+                onWorkflowRename={handleWorkflowRename}
+              />
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Main Browser Area */}
-      <div className="flex-1">
-        <BrowserPane />
+        {/* Browser Pane */}
+        <div className="flex-1">
+          <BrowserPane
+            className="h-full"
+            isSidebarVisible={isSidebarVisible}
+            onURLChange={handleURLChange}
+            onNavigationStateChange={handleNavigationStateChange}
+          />
+        </div>
       </div>
     </div>
   );

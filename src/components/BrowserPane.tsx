@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
+import URLBar from './URLBar';
 
 interface BrowserPaneProps {
   className?: string;
+  isSidebarVisible?: boolean;
+  onURLChange?: (url: string) => void;
+  onNavigationStateChange?: (canGoBack: boolean, canGoForward: boolean) => void;
 }
 
-const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
+const BrowserPane: React.FC<BrowserPaneProps> = ({ 
+  className = '', 
+  isSidebarVisible = true,
+  onURLChange,
+  onNavigationStateChange
+}) => {
   const [currentURL, setCurrentURL] = useState<string>('');
   const [urlInput, setUrlInput] = useState<string>('');
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
@@ -15,6 +24,19 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
   useEffect(() => {
     setUrlInput(currentURL);
   }, [currentURL]);
+
+  // Call parent callbacks when state changes
+  useEffect(() => {
+    if (onURLChange) {
+      onURLChange(currentURL);
+    }
+  }, [currentURL, onURLChange]);
+
+  useEffect(() => {
+    if (onNavigationStateChange) {
+      onNavigationStateChange(canGoBack, canGoForward);
+    }
+  }, [canGoBack, canGoForward, onNavigationStateChange]);
 
   // Initialize browser on mount
   useEffect(() => {
@@ -115,6 +137,18 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Update browser bounds when sidebar visibility changes
+  useEffect(() => {
+    if (isBrowserReady && window.electronAPI?.updateSidebarVisibility) {
+      // Small delay to ensure sidebar animation completes
+      setTimeout(() => {
+        if (window.electronAPI?.updateSidebarVisibility) {
+          window.electronAPI.updateSidebarVisibility(isSidebarVisible);
+        }
+      }, 350); // Match the sidebar transition duration (300ms) + buffer
+    }
+  }, [isSidebarVisible, isBrowserReady]);
 
   // Handle URL form submission
   const handleUrlSubmit = async (e: React.FormEvent) => {
@@ -222,70 +256,6 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({ className = '' }) => {
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 p-4 h-16 flex items-center space-x-2">
-        {/* Navigation Buttons */}
-        <button
-          onClick={handleGoBack}
-          disabled={!canGoBack}
-          className={`p-2 rounded transition-colors ${
-            canGoBack 
-              ? 'hover:bg-gray-100 text-gray-700' 
-              : 'text-gray-400 cursor-not-allowed'
-          }`}
-          title="Go Back"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        
-        <button
-          onClick={handleGoForward}
-          disabled={!canGoForward}
-          className={`p-2 rounded transition-colors ${
-            canGoForward 
-              ? 'hover:bg-gray-100 text-gray-700' 
-              : 'text-gray-400 cursor-not-allowed'
-          }`}
-          title="Go Forward"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-        
-        <button
-          onClick={handleReload}
-          className="p-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
-          title="Reload"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
-
-        {/* Loading Indicator */}
-        
-
-        {/* URL Input */}
-        <form onSubmit={handleUrlSubmit} className="flex-1 ml-4 flex">
-          <input
-            type="text"
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            placeholder="Enter URL or search..."
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Go
-          </button>
-        </form>
-      </div>
-
       {/* Browser Area */}
       <div className="flex-1 relative bg-gray-50">
         {!isBrowserReady ? (

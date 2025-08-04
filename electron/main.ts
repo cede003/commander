@@ -2,9 +2,17 @@ import { app, BrowserWindow, BrowserView, ipcMain, session, Menu } from 'electro
 import * as path from 'path';
 import { initialize, enable } from '@electron/remote/main';
 
+// Set consistent userData path for development
+if (!app.isPackaged) {
+  const userDataPath = path.join(__dirname, '../userData');
+  app.setPath('userData', userDataPath);
+  console.log('User data path set to:', userDataPath);
+}
+
 let mainWindow: BrowserWindow | null = null;
 let browserView: BrowserView | null = null;
 let currentURL: string = 'https://www.google.com';
+let isSidebarVisible: boolean = true;
 
 function createWindow() {
   // Create the browser window
@@ -20,7 +28,7 @@ function createWindow() {
       sandbox: false, // Disable sandbox for compatibility
       experimentalFeatures: true, // Enable experimental features
     },
-    titleBarStyle: 'hiddenInset', // macOS style
+    titleBarStyle: 'default', // Show default window controls
     show: false, // Don't show until ready
   });
 
@@ -95,6 +103,24 @@ function createWindow() {
   // Configure session for BrowserView
   const browserViewSession = session.fromPartition('persist:commander');
   
+  // Configure session to persist data and avoid clearing
+  browserViewSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    // Ensure cookies and session data are preserved
+    callback({ requestHeaders: details.requestHeaders });
+  });
+
+  // Configure session to persist cookies and cache
+  browserViewSession.setPreloads([]);
+  
+  // Ensure session data persists between app launches
+  browserViewSession.clearStorageData({
+    storages: ['filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage'],
+  }).then(() => {
+    console.log('Session storage cleared, but cookies and session data preserved');
+  }).catch((error) => {
+    console.log('Session storage clear error (expected):', error.message);
+  });
+
   // Allow all permissions for BrowserView
   browserViewSession.setPermissionRequestHandler((webContents, permission, callback) => {
     console.log('Permission requested:', permission);
@@ -204,13 +230,16 @@ function updateBrowserViewBounds() {
   // Check if DevTools is open
   const isDevToolsOpen = mainWindow.webContents.isDevToolsOpened();
   
+  // Calculate sidebar width based on visibility
+  const sidebarWidth = isSidebarVisible ? 320 : 0;
+  
   // BrowserView takes up the right side of the window
-  // Sidebar is 320px, so BrowserView starts at x=320
+  // Sidebar is 320px when visible, 0px when hidden
   // URL bar is 80px, so BrowserView starts at y=80
   let bounds = {
-    x: 320,
+    x: sidebarWidth,
     y: 80,
-    width: width - 320,
+    width: width - sidebarWidth,
     height: height - 80
   };
 
@@ -219,10 +248,10 @@ function updateBrowserViewBounds() {
     // DevTools typically takes up about 1/3 of the window width
     // Adjust the BrowserView width accordingly
     const devToolsWidth = Math.min(400, width * 0.4); // Cap at 400px or 40% of window
-    bounds.width = width - 320 - devToolsWidth;
+    bounds.width = width - sidebarWidth - devToolsWidth;
   }
 
-  console.log(`[DEBUG] Setting BrowserView bounds:`, bounds, `DevTools open: ${isDevToolsOpen}`);
+  console.log(`[DEBUG] Setting BrowserView bounds:`, bounds, `DevTools open: ${isDevToolsOpen}, Sidebar visible: ${isSidebarVisible}`);
   browserView.setBounds(bounds);
   browserView.setAutoResize({ width: true, height: true });
 }
@@ -326,6 +355,16 @@ function setupIpcHandlers() {
     loadURLInBrowserView(url);
   });
 
+  // Load URL (new handler for URL bar)
+  ipcMain.handle('load-url', async (event, url: string) => {
+    console.log(`[IPC] Loading URL: ${url}`);
+    if (browserView) {
+      browserView.webContents.loadURL(url);
+    } else {
+      createBrowserView(url);
+    }
+  });
+
   // Navigation methods
   ipcMain.handle('go-back-in-browser-view', async () => {
     if (!browserView) return false;
@@ -365,6 +404,12 @@ function setupIpcHandlers() {
 
   // Update bounds
   ipcMain.handle('update-browser-view-bounds', async () => {
+    updateBrowserViewBounds();
+  });
+
+  // Update sidebar visibility
+  ipcMain.handle('update-sidebar-visibility', async (event, visible: boolean) => {
+    isSidebarVisible = visible;
     updateBrowserViewBounds();
   });
 

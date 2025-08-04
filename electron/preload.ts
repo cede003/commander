@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   navigate: (direction: 'back' | 'forward') => ipcRenderer.invoke('navigate', direction),
   getCurrentURL: () => ipcRenderer.invoke('get-current-url'),
   updateLayout: () => ipcRenderer.invoke('update-layout'),
+  updateSidebarVisibility: (visible: boolean) => ipcRenderer.invoke('update-sidebar-visibility', visible),
   initializeBrowserView: () => ipcRenderer.invoke('initialize-browser-view'),
   onDevToolsToggle: (callback: () => void) => {
     ipcRenderer.on('dev-tools-toggle', callback);
@@ -74,6 +75,7 @@ declare global {
       navigate: (direction: 'back' | 'forward') => Promise<void>;
       getCurrentURL: () => Promise<string>;
       updateLayout: () => Promise<void>;
+      updateSidebarVisibility: (visible: boolean) => Promise<void>;
       initializeBrowserView: () => Promise<void>;
       onDevToolsToggle: (callback: () => void) => void;
     };
