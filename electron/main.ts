@@ -343,6 +343,8 @@ function setupBrowserViewContextMenu() {
 }
 
 function setupIpcHandlers() {
+  console.log('[DEBUG] Setting up IPC handlers');
+  
   // Create BrowserView
   ipcMain.handle('create-browser-view', async (event, url: string) => {
     console.log(`[IPC] Creating BrowserView for URL: ${url}`);
@@ -353,16 +355,6 @@ function setupIpcHandlers() {
   ipcMain.handle('load-url-in-browser-view', async (event, url: string) => {
     console.log(`[IPC] Loading URL in BrowserView: ${url}`);
     loadURLInBrowserView(url);
-  });
-
-  // Load URL (new handler for URL bar)
-  ipcMain.handle('load-url', async (event, url: string) => {
-    console.log(`[IPC] Loading URL: ${url}`);
-    if (browserView) {
-      browserView.webContents.loadURL(url);
-    } else {
-      createBrowserView(url);
-    }
   });
 
   // Navigation methods
@@ -515,9 +507,13 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-current-url', async () => {
+    console.log(`[IPC] Getting current URL`);
     if (browserView) {
-      return browserView.webContents.getURL();
+      const url = browserView.webContents.getURL();
+      console.log(`[IPC] Current URL from BrowserView: ${url}`);
+      return url;
     }
+    console.log(`[IPC] Current URL from fallback: ${currentURL}`);
     return currentURL;
   });
 
@@ -525,12 +521,20 @@ function setupIpcHandlers() {
     console.log(`[IPC] Updating layout`);
     updateBrowserViewBounds();
   });
+
+  // Test handler to verify IPC setup
+  ipcMain.handle('test-ipc', async () => {
+    console.log(`[IPC] Test handler called successfully`);
+    return 'IPC handlers are working';
+  });
 }
 
 // App event handlers
 app.whenReady().then(() => {
+  console.log('[DEBUG] App is ready, initializing...');
   initialize();
   createWindow();
+  console.log('[DEBUG] Window created, IPC handlers should be set up');
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
