@@ -30,7 +30,7 @@
       "id": "navigate_to_google",
       "domain": "browser",
       "type": "action",
-      "subtype": "goto_url",
+      "subtype": "goto",
       "properties": {
         "timeout": 30000,
         "wait_for_load": true

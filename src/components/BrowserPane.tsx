@@ -58,8 +58,11 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     }
 
     return () => {
-      // Cleanup event listeners if needed
+      // Cleanup event listeners
       console.log('[DEBUG] Cleaning up event listeners');
+      if (window.electronAPI?.removeBrowserViewNavigatedListener) {
+        window.electronAPI.removeBrowserViewNavigatedListener();
+      }
     };
   }, []); // Keep empty dependency array
 

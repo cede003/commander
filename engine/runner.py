@@ -1,41 +1,51 @@
 """
-Workflow Runner - Interprets and executes node JSON using browser components
+Scalable Workflow Runner - Uses registry for dynamic function dispatch
 """
 
 import asyncio
 import json
 import sys
+import os
 from typing import Dict, Any, List, Optional
-from browser.session import BrowserSession
-from browser.observations import BrowserObservations
-from browser.events import BrowserEvents
+
+# Add the current directory to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from browser.session import BrowserSession
+    from registry.function_registry import registry, execute_node
+    from utils.template_engine import TemplateEngine
+except ImportError:
+    # Fallback for when run as standalone script
+    try:
+        from .browser.session import BrowserSession
+        from .registry.function_registry import registry, execute_node
+        from .utils.template_engine import TemplateEngine
+    except ImportError:
+        # Final fallback - add parent directory to path
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+        from engine.browser.session import BrowserSession
+        from engine.registry.function_registry import registry, execute_node
+        from engine.utils.template_engine import TemplateEngine
 
 
-class WorkflowRunner:
-    """Interprets and executes workflow nodes using browser components"""
+class ScalableWorkflowRunner:
+    """Scalable workflow runner using registry for dynamic function dispatch"""
     
     def __init__(self):
         self.session: Optional[BrowserSession] = None
-        self.actions: Optional[object] = None
-        self.observations: Optional[BrowserObservations] = None
-        self.events: Optional[BrowserEvents] = None
     
     async def initialize(self):
-        """Initialize browser session and components"""
-        print("🚀 Initializing workflow runner...")
+        """Initialize browser session"""
+        print("🚀 Initializing scalable workflow runner...")
         
         # Initialize browser session
         self.session = BrowserSession()
         await self.session.init()
         
-        # Initialize browser components
-        page = self.session.get_page()
-        if page:
-            self.observations = BrowserObservations(page)
-            self.events = BrowserEvents(page)
-            print("✅ Browser components initialized")
-        else:
-            raise Exception("Failed to get browser page")
+        print("✅ Browser session initialized")
     
     async def close(self):
         """Close the browser session"""
@@ -69,8 +79,10 @@ class WorkflowRunner:
                 'results': {},
                 'session': self.session,
                 'nodes': nodes,
-                'edges': edges
+                'edges': edges,
+                'properties': {}
             }
+            
             for node_id in starting_nodes:
                 await self._execute_node(node_id, nodes[node_id], context)
                 await self._execute_successors(node_id, nodes, edges, context)
@@ -96,112 +108,60 @@ class WorkflowRunner:
         return starting_nodes
     
     async def _execute_node(self, node_id: str, node_data: Dict, context: Dict) -> Dict[str, Any]:
-        """Execute a single node based on its type and subtype"""
-        node_id = node_data.get('id', node_id)
-        node_domain = node_data.get('domain', 'browser')
-        node_type = node_data.get('type')
-        node_subtype = node_data.get('subtype')
+        """Execute a single node using the registry"""
+        print(f"🎯 Executing node: {node_id}")
+        
+        # Get node properties
+        domain = node_data.get('domain', 'browser')
+        type_name = node_data.get('type', 'action')
+        subtype = node_data.get('subtype')
         inputs = node_data.get('inputs', {})
-        outputs = node_data.get('outputs', {})
+        properties = node_data.get('properties', {})
         error_handling = node_data.get('error_handling', {})
         
-        print(f"🔧 Executing node '{node_id}' (domain: {node_domain}, type: {node_type}, subtype: {node_subtype})")
+        # Update context with node properties
+        context['properties'] = properties
         
         # Process template variables in inputs
-        processed_inputs = self._process_template_variables(inputs, context)
+        if TemplateEngine.has_template_variables(inputs):
+            print(f"🔧 Processing template variables in node {node_id}")
+            inputs = TemplateEngine.process_template_variables(inputs, context)
         
-        # Add node properties to context for function access
-        context['properties'] = node_data.get('properties', {})
+        # Validate template variables
+        missing_vars = TemplateEngine.validate_template_variables(inputs, context)
+        if missing_vars:
+            print(f"⚠️  Missing template variables in node {node_id}: {missing_vars}")
         
-        # Execute with error handling
-        max_attempts = error_handling.get('max_attempts', 1)
-        retry = error_handling.get('retry', False)
-        fallback_node = error_handling.get('fallback_node')
-        
-        for attempt in range(max_attempts):
-            try:
-                # Dynamically load and execute the function
-                result = await self._execute_dynamic_function(node_domain, node_type, node_subtype, processed_inputs, context)
-                
-                # Store result in context
-                context['results'][node_id] = result
-                
-                print(f"✅ Node '{node_id}' completed successfully")
-                return result
-                
-            except Exception as e:
-                print(f"❌ Error in node '{node_id}' (attempt {attempt + 1}/{max_attempts}): {e}")
-                
-                if attempt + 1 >= max_attempts:
-                    if fallback_node:
-                        print(f"🔄 Falling back to node: {fallback_node}")
-                        return await self._execute_node(fallback_node, context['nodes'][fallback_node], context)
-                    else:
-                        raise e
-                elif retry:
-                    print(f"🔄 Retrying node '{node_id}'...")
-                    await asyncio.sleep(1)  # Brief delay before retry
-                else:
-                    raise e
-    
-    async def _execute_dynamic_function(self, domain: str, type_name: str, subtype: str, inputs: Dict, context: Dict) -> Dict[str, Any]:
-        """Dynamically load and execute a function based on domain/type/subtype"""
+        # Execute the node using registry
         try:
-            # Import the module
-            module_path = f"{domain}.{type_name}"
-            module = __import__(module_path, fromlist=[subtype])
+            result = await execute_node(domain, type_name, subtype, inputs, context)
             
-            # Get the function directly
-            function = getattr(module, subtype)
+            # Store result in context
+            context['results'][node_id] = result
             
-            # Call the async function
-            if asyncio.iscoroutinefunction(function):
-                result = await function(inputs, context)
-            else:
-                result = function(inputs, context)
-            
+            print(f"✅ Node {node_id} completed successfully")
             return result
             
-        except ImportError as e:
-            raise Exception(f"Could not import {domain}.{type_name}.{subtype}: {e}")
-        except AttributeError as e:
-            raise Exception(f"Function {subtype} not found in {domain}.{type_name}: {e}")
         except Exception as e:
-            raise Exception(f"Error executing {domain}.{type_name}.{subtype}: {e}")
-    
-    def _process_template_variables(self, inputs: Dict, context: Dict) -> Dict:
-        """Process template variables like {{inputs.customer_name}}"""
-        processed = {}
-        
-        for key, value in inputs.items():
-            if isinstance(value, str):
-                # Replace template variables
-                processed_value = value
-                if '{{inputs.' in value:
-                    for input_key, input_value in context.get('inputs', {}).items():
-                        placeholder = f"{{{{inputs.{input_key}}}}}"
-                        processed_value = processed_value.replace(placeholder, str(input_value))
-                processed[key] = processed_value
-            elif isinstance(value, dict):
-                # Recursively process nested dictionaries
-                processed[key] = self._process_template_variables(value, context)
-            else:
-                processed[key] = value
-        
-        return processed
-    
-    async def _execute_notification(self, inputs: Dict, context: Dict) -> Dict[str, Any]:
-        """Execute notification operation"""
-        message = inputs.get('message', '')
-        title = inputs.get('title', 'Notification')
-        
-        print(f"📢 {title}: {message}")
-        
-        return {
-            'message': message,
-            'title': title,
-            'success': True
-        }
+            print(f"❌ Error executing node {node_id}: {e}")
+            
+            # Handle error based on error_handling configuration
+            fallback_node = error_handling.get('fallback_node')
+            if fallback_node and fallback_node in context['nodes']:
+                print(f"🔄 Executing fallback node: {fallback_node}")
+                return await self._execute_node(fallback_node, context['nodes'][fallback_node], context)
+            
+            # Check for retry configuration
+            max_retries = error_handling.get('max_retries', 0)
+            retry_count = context.get('retry_count', {}).get(node_id, 0)
+            
+            if retry_count < max_retries:
+                print(f"🔄 Retrying node {node_id} ({retry_count + 1}/{max_retries})")
+                context.setdefault('retry_count', {})[node_id] = retry_count + 1
+                await asyncio.sleep(error_handling.get('retry_delay', 1))
+                return await self._execute_node(node_id, node_data, context)
+            
+            raise e
     
     async def _execute_successors(self, node_id: str, nodes: Dict, edges: List[Dict], context: Dict):
         """Execute all successor nodes"""
@@ -216,6 +176,10 @@ class WorkflowRunner:
             if successor_id in nodes:
                 await self._execute_node(successor_id, nodes[successor_id], context)
                 await self._execute_successors(successor_id, nodes, edges, context)
+    
+    def list_available_functions(self) -> Dict[str, Dict[str, list]]:
+        """List all available functions in the registry"""
+        return registry.list_functions()
 
 
 async def main():
@@ -229,7 +193,7 @@ async def main():
             return 1
         
         # Create runner
-        runner = WorkflowRunner()
+        runner = ScalableWorkflowRunner()
         
         try:
             # Run the workflow
@@ -238,14 +202,28 @@ async def main():
             return 0
             
         finally:
-            # Always close the browser session
+            # Clean up
             await runner.close()
             
     except Exception as e:
-        print(f"❌ Error in main: {e}")
+        print(f"❌ Workflow execution failed: {e}")
         return 1
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code) 
+    import sys
+    import asyncio
+
+    if len(sys.argv) < 2:
+        print("Usage: python runner.py '<workflow_json>'")
+        sys.exit(1)
+
+    workflow_json = sys.argv[1]
+    runner = ScalableWorkflowRunner()
+    async def run():
+        await runner.initialize()
+        try:
+            await runner.run_workflow(workflow_json)
+        finally:
+            await runner.close()
+    asyncio.run(run()) 

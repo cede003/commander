@@ -1,6 +1,11 @@
 {
   "workflows": [
     {
+      "filename": "minimal_workflow.json",
+      "name": "Minimal Workflow Test",
+      "description": "Test workflow using minimal boilerplate functions"
+    },
+    {
       "filename": "new_action_workflow.json",
       "name": "New Action Workflow",
       "description": "Demonstrates navigation and clicking with the current schema"

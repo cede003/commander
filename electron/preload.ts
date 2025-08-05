@@ -19,6 +19,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onBrowserViewNavigated: (callback: (data: { url: string }) => void) => {
     ipcRenderer.on('browser-view-navigated', (event, data) => callback(data));
   },
+  removeBrowserViewNavigatedListener: () => {
+    ipcRenderer.removeAllListeners('browser-view-navigated');
+  },
   onBrowserViewTitleChanged: (callback: (data: { title: string }) => void) => {
     ipcRenderer.on('browser-view-title-changed', (event, data) => callback(data));
   },
@@ -76,6 +79,7 @@ declare global {
       getBrowserViewCanGoForward: () => Promise<any>;
       updateBrowserViewBounds: () => Promise<any>;
       onBrowserViewNavigated: (callback: (data: { url: string }) => void) => void;
+      removeBrowserViewNavigatedListener: () => void;
       onBrowserViewTitleChanged: (callback: (data: { title: string }) => void) => void;
       onBrowserViewLoaded: (callback: (data: {}) => void) => void;
       onBrowserViewLoadFailed: (callback: (data: { error: any }) => void) => void;

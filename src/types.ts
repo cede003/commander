@@ -47,6 +47,7 @@ export interface URLBarProps {
   onGoBack: () => void;
   onGoForward: () => void;
   onReload: () => void;
+  onGoHome: () => void;
   onToggleSidebar: () => void;
   isSidebarVisible: boolean;
   isDarkMode?: boolean;

@@ -57,7 +57,11 @@ function App() {
   }, []);
 
   // Load workflows from files on component mount
+  const workflowsLoadedRef = useRef(false);
+  
   useEffect(() => {
+    if (workflowsLoadedRef.current) return;
+    
     const loadWorkflows = async () => {
       try {
         // Try to load workflow list from index file first
@@ -77,6 +81,7 @@ function App() {
         // Fallback to hardcoded list if index file not found
         if (workflowFiles.length === 0) {
           workflowFiles = [
+            'minimal_workflow.json',
             'new_action_workflow.json',
             'action_workflow.json', 
             'example_workflow.json'
@@ -126,9 +131,11 @@ function App() {
         }
 
         setCurrentWorkflows(loadedWorkflows);
+        workflowsLoadedRef.current = true;
       } catch (error) {
         console.error('❌ Failed to load workflows from files:', error);
         setCurrentWorkflows([]);
+        workflowsLoadedRef.current = true;
       } finally {
         setIsLoading(false);
       }
@@ -168,8 +175,14 @@ function App() {
     }
   };
 
+  const handleGoHome = () => {
+    setCurrentURL('https://www.google.com');
+    if (window.electronAPI?.loadURLInBrowserView) {
+      window.electronAPI.loadURLInBrowserView('https://www.google.com');
+    }
+  };
+
   const handleURLChange = (url: string) => {
-    console.log('[DEBUG] Browser navigated to:', url);
     setCurrentURL(url);
   };
 
@@ -199,7 +212,11 @@ function App() {
         
         // Execute the Python workflow
         if (window.electronAPI?.executeWorkflow) {
-          await window.electronAPI.executeWorkflow(workflow.workflowData);
+          console.log('🚀 Executing workflow:', workflow.name);
+          const result = await window.electronAPI.executeWorkflow(workflow.workflowData);
+          console.log('✅ Workflow execution result:', result);
+        } else {
+          throw new Error('executeWorkflow API not available');
         }
         
         // Set the workflow as no longer running
@@ -207,11 +224,21 @@ function App() {
           w.id === workflowId ? { ...w, isRunning: false } : w
         ));
       } catch (error) {
-        console.error('Failed to execute workflow:', error);
+        console.error('❌ Failed to execute workflow:', error);
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          workflow: workflow.name
+        });
+        
         // Set the workflow as no longer running on error
         setCurrentWorkflows(prev => prev.map(w => 
           w.id === workflowId ? { ...w, isRunning: false } : w
         ));
+        
+        // Show error to user (you could add a toast notification here)
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        alert(`Failed to execute workflow: ${errorMessage}`);
       }
     }
   };
@@ -315,6 +342,7 @@ function App() {
         onGoBack={handleGoBack}
         onGoForward={handleGoForward}
         onReload={handleReload}
+        onGoHome={handleGoHome}
         onToggleSidebar={toggleSidebar}
         isSidebarVisible={isSidebarVisible}
         isDarkMode={isDarkMode}

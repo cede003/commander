@@ -47,17 +47,7 @@
           },
           "subtype": {
             "type": "string",
-            "description": "Subtype/specific operation of the node",
-            "oneOf": [
-              {
-                "enum": ["goto_url", "click"],
-                "description": "Browser action subtypes"
-              },
-              {
-                "enum": ["console_log", "alert", "notification"],
-                "description": "Notification subtypes"
-              }
-            ]
+            "description": "Subtype/specific operation of the node"
           },
           "properties": {
             "type": "object",

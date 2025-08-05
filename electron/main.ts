@@ -722,17 +722,15 @@ function setupIpcHandlers() {
       const { spawn } = require('child_process');
       const path = require('path');
       
-      // Path to the Python workflow executor
-      const pythonScript = path.join(__dirname, '../engine/runner.py');
-      
-      // Spawn the Python process
-      const pythonProcess = spawn('python', [pythonScript], {
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-      
-      // Send the workflow data to stdin
-      pythonProcess.stdin.write(workflowData);
-      pythonProcess.stdin.end();
+      // Spawn the Python process with the new dynamic function calling method
+      const pythonProcess = spawn(
+        'python',
+        ['runner.py', workflowData],
+        {
+          cwd: path.join(__dirname, '../engine'),
+          stdio: ['pipe', 'pipe', 'pipe']
+        }
+      );
       
       // Collect output
       let output = '';
@@ -750,9 +748,15 @@ function setupIpcHandlers() {
       
       // Wait for completion
       return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          pythonProcess.kill();
+          reject(new Error('Workflow execution timed out after 60 seconds'));
+        }, 60000); // 60 second timeout
+        
         pythonProcess.on('close', (code: number) => {
+          clearTimeout(timeout);
           if (code === 0) {
-            console.log(`[IPC] Workflow executed successfully`);
+            console.log(`[IPC] Workflow executed successfully using new dynamic method`);
             resolve({ success: true, output });
           } else {
             console.error(`[IPC] Workflow execution failed with code ${code}`);
@@ -761,6 +765,7 @@ function setupIpcHandlers() {
         });
         
         pythonProcess.on('error', (error: Error) => {
+          clearTimeout(timeout);
           console.error(`[IPC] Failed to start Python process:`, error);
           reject(error);
         });

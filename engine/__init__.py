@@ -1,15 +1,25 @@
 """
-Commander Engine - Browser automation workflow engine
+Engine Package - Main workflow execution engine
 """
 
-from .runner import WorkflowRunner
-from .browser import BrowserSession, BrowserActions, BrowserObservations, BrowserEvents
+from .runner import ScalableWorkflowRunner
+from .registry.function_registry import registry, execute_node, register
+from .browser.helpers import auto_action, auto_observation, auto_event, auto_notification
+from .utils.playwright_helpers import PlaywrightHelpers
+from .utils.template_engine import TemplateEngine
 
-__version__ = "1.0.0"
 __all__ = [
-    'WorkflowRunner',
-    'BrowserSession', 
-    'BrowserActions', 
-    'BrowserObservations', 
-    'BrowserEvents'
-] 
+    'ScalableWorkflowRunner',
+    'registry',
+    'execute_node', 
+    'register',
+    'auto_action',
+    'auto_observation',
+    'auto_event',
+    'auto_notification',
+    'PlaywrightHelpers',
+    'TemplateEngine',
+]
+
+# Enable auto-dispatch by default
+registry.enable_auto_dispatch(True) 

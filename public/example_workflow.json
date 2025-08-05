@@ -27,25 +27,13 @@
         "timestamp": "string"
       }
     },
-    "navigate_to_form": {
-      "id": "navigate_to_form",
+    "navigate": {
+      "id": "navigate",
       "domain": "browser",
       "type": "action",
-      "subtype": "goto_url",
-      "properties": {
-        "timeout": 30000,
-        "wait_for_load": true
-      },
+      "subtype": "goto",
       "inputs": {
-        "url": "https://httpbin.org/forms/post"
-      },
-      "outputs": {
-        "url": "string",
-        "success": "boolean"
-      },
-      "error_handling": {
-        "retry": true,
-        "max_attempts": 3
+        "url": "{{inputs.target_url}}"
       }
     },
     "click_submit": {
