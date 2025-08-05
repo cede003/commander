@@ -11,7 +11,7 @@ export interface Workflow {
   description: string;
   url: string;
   workflowData: string;
-  isActive: boolean;
+  isRunning: boolean;
   createdAt: Date;
   lastAccessed: Date;
 }
@@ -98,6 +98,7 @@ declare global {
       onWorkflowCreated?: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => void;
       removeWorkflowCreatedListener?: () => void;
       onDevToolsToggle?: (callback: () => void) => void;
+      executeWorkflow?: (workflowData: string) => Promise<void>;
     };
     browserViewTracker?: Map<string, any>;
   }

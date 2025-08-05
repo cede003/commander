@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "name": "Simplified Action Workflow",
+    "author": "Commander",
+    "version": "1.0.0",
+    "description": "Example workflow using only goto_url and click actions"
+  },
+  "inputs": {
+    "target_url": "https://httpbin.org/forms/post"
+  },
+  "nodes": {
+    "start_notification": {
+      "id": "start_notification",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "properties": {
+        "log_level": "info"
+      },
+      "inputs": {
+        "title": "Workflow Started",
+        "message": "Starting simplified browser automation workflow"
+      },
+      "outputs": {
+        "timestamp": "string"
+      }
+    },
+    "navigate_to_page": {
+      "id": "navigate_to_page",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto_url",
+      "properties": {
+        "timeout": 30000,
+        "wait_for_load": true
+      },
+      "inputs": {
+        "url": "{{inputs.target_url}}"
+      },
+      "outputs": {
+        "url": "string",
+        "success": "boolean"
+      },
+      "error_handling": {
+        "retry": true,
+        "max_attempts": 3
+      }
+    },
+    "click_form_link": {
+      "id": "click_form_link",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "click",
+      "properties": {
+        "method": "by_selector",
+        "wait_for_element": true,
+        "timeout": 5000
+      },
+      "inputs": {
+        "selector": "a[href='/forms/post']",
+        "wait_for": true
+      },
+      "outputs": {
+        "selector": "string",
+        "success": "boolean"
+      },
+      "error_handling": {
+        "retry": true,
+        "max_attempts": 2
+      }
+    },
+    "success_notification": {
+      "id": "success_notification",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "properties": {
+        "log_level": "success"
+      },
+      "inputs": {
+        "title": "Workflow Complete",
+        "message": "Successfully navigated and clicked elements"
+      },
+      "outputs": {
+        "timestamp": "string"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_notification",
+      "to": "navigate_to_page"
+    },
+    {
+      "from": "navigate_to_page",
+      "to": "click_form_link"
+    },
+    {
+      "from": "click_form_link",
+      "to": "success_notification"
+    }
+  ]
+} 

@@ -1,0 +1,19 @@
+{
+  "workflows": [
+    {
+      "filename": "new_action_workflow.json",
+      "name": "New Action Workflow",
+      "description": "Demonstrates navigation and clicking with the current schema"
+    },
+    {
+      "filename": "action_workflow.json", 
+      "name": "Action Workflow",
+      "description": "Example workflow with form filling and submission"
+    },
+    {
+      "filename": "example_workflow.json",
+      "name": "Example Workflow", 
+      "description": "Basic example workflow for testing"
+    }
+  ]
+} 

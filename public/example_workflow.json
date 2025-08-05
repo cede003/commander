@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "name": "Contact Form Automation",
+    "author": "Workflow Builder",
+    "description": "Automates filling out a contact form with notification",
+    "version": "1.0.0"
+  },
+  "inputs": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "message": "Hello, this is a test message!"
+  },
+  "nodes": {
+    "start_notification": {
+      "id": "start_notification",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "properties": {
+        "log_level": "info"
+      },
+      "inputs": {
+        "title": "Workflow Started",
+        "message": "Starting contact form automation..."
+      },
+      "outputs": {
+        "timestamp": "string"
+      }
+    },
+    "navigate_to_form": {
+      "id": "navigate_to_form",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto_url",
+      "properties": {
+        "timeout": 30000,
+        "wait_for_load": true
+      },
+      "inputs": {
+        "url": "https://httpbin.org/forms/post"
+      },
+      "outputs": {
+        "url": "string",
+        "success": "boolean"
+      },
+      "error_handling": {
+        "retry": true,
+        "max_attempts": 3
+      }
+    },
+    "click_submit": {
+      "id": "click_submit",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "click",
+      "properties": {
+        "method": "by_selector",
+        "wait_for_element": true,
+        "timeout": 10000
+      },
+      "inputs": {
+        "selector": "button:has-text('Submit order')",
+        "wait_for": true
+      },
+      "outputs": {
+        "selector": "string",
+        "success": "boolean"
+      },
+      "error_handling": {
+        "retry": true,
+        "max_attempts": 2
+      }
+    },
+    "success_notification": {
+      "id": "success_notification",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "properties": {
+        "log_level": "success"
+      },
+      "inputs": {
+        "title": "Workflow Complete",
+        "message": "Contact form automation completed successfully!"
+      },
+      "outputs": {
+        "timestamp": "string"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_notification",
+      "to": "navigate_to_form"
+    },
+    {
+      "from": "navigate_to_form",
+      "to": "click_submit"
+    },
+    {
+      "from": "click_submit",
+      "to": "success_notification"
+    }
+  ]
+} 

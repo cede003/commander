@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import URLBar from './URLBar';
+import React, { useState, useEffect } from 'react';
 
 interface BrowserPaneProps {
   className?: string;
@@ -270,6 +269,7 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
             {/* WebContentsView is managed by the main process */}
             {/* This div serves as a placeholder/background */}
             <div 
+              id="root"
               className="w-full h-full bg-white"
               onMouseDown={handleMouseDown}
             >

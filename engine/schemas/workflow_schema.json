@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Workflow Schema",
+  "type": "object",
+  "required": ["metadata", "nodes", "edges"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Workflow metadata",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Name of the workflow" },
+        "author": { "type": "string", "description": "Author of the workflow" },
+        "description": { "type": "string", "description": "Description of the workflow" },
+        "version": { "type": "string", "description": "Version of the workflow" }
+      },
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Global inputs for the workflow",
+      "additionalProperties": true
+    },
+    "nodes": {
+      "type": "object",
+      "description": "Nodes of the workflow, keyed by node id",
+      "propertyNames": {
+        "pattern": "^[a-zA-Z0-9_-]+$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "domain", "type", "subtype"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the node"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Domain/environment of the node",
+            "enum": ["browser", "spreadsheet", "email", "file", "llm", "api"]
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of node",
+            "enum": ["action", "observation", "event", "notification", "wait_for_input"]
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Subtype/specific operation of the node",
+            "oneOf": [
+              {
+                "enum": ["goto_url", "click"],
+                "description": "Browser action subtypes"
+              },
+              {
+                "enum": ["console_log", "alert", "notification"],
+                "description": "Notification subtypes"
+              }
+            ]
+          },
+          "properties": {
+            "type": "object",
+            "description": "Static configuration properties for the node",
+            "additionalProperties": true,
+            "default": {}
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Dynamic input data for this node",
+            "additionalProperties": true,
+            "default": {}
+          },
+          "outputs": {
+            "type": "object",
+            "description": "Outputs exposed by the node",
+            "additionalProperties": true,
+            "default": {}
+          },
+          "conditions": {
+            "type": "string",
+            "description": "Optional boolean expression to conditionally run this node"
+          },
+          "error_handling": {
+            "type": "object",
+            "description": "Node-specific error handling configuration",
+            "properties": {
+              "retry": { "type": "boolean" },
+              "max_attempts": { "type": "integer", "minimum": 1 },
+              "fallback_node": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "async": {
+            "type": "boolean",
+            "description": "If true, node runs asynchronously"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Directed edges between nodes",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "ID of the source node"
+          },
+          "to": {
+            "type": "string",
+            "description": "ID of the target node"
+          },
+          "condition": {
+            "type": "string",
+            "description": "Optional condition expression to follow this edge"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

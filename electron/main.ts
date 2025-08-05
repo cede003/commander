@@ -1,6 +1,7 @@
 import { app, BrowserWindow, BrowserView, ipcMain, session, Menu } from 'electron';
 import * as path from 'path';
 import { initialize, enable } from '@electron/remote/main';
+import * as fs from 'fs';
 
 // Set consistent userData path for development
 if (!app.isPackaged) {
@@ -8,6 +9,10 @@ if (!app.isPackaged) {
   app.setPath('userData', userDataPath);
   console.log('User data path set to:', userDataPath);
 }
+
+// Enable remote debugging for workflow executor
+app.commandLine.appendSwitch('remote-debugging-port', '9222');
+app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
 
 let mainWindow: BrowserWindow | null = null;
 let browserView: BrowserView | null = null;
@@ -171,6 +176,17 @@ function createBrowserView(url: string) {
 
   browserView.webContents.on('did-finish-load', () => {
     console.log(`[DEBUG] BrowserView finished loading: ${url}`);
+    
+    // Inject JavaScript to set window.name for identification
+    if (browserView) {
+      browserView.webContents.executeJavaScript(`
+        window.name = "main-browser";
+        console.log("🔧 Set window.name = 'main-browser' in BrowserView");
+      `).catch(error => {
+        console.error("Failed to set window.name in BrowserView:", error);
+      });
+    }
+    
     mainWindow?.webContents.send('browser-view-loading-state-changed', { isLoading: false });
     mainWindow?.webContents.send('browser-view-loaded', {});
   });
@@ -278,6 +294,18 @@ function loadURLInBrowserView(url: string) {
 
   console.log(`[DEBUG] Loading URL in BrowserView: ${url}`);
   browserView.webContents.loadURL(url);
+  
+  // Inject JavaScript to set window.name after navigation
+  browserView.webContents.once('did-finish-load', () => {
+    if (browserView) {
+      browserView.webContents.executeJavaScript(`
+        window.name = "main-browser";
+        console.log("🔧 Set window.name = 'main-browser' in BrowserView after navigation");
+      `).catch(error => {
+        console.error("Failed to set window.name in BrowserView after navigation:", error);
+      });
+    }
+  });
 }
 
 function updateBrowserViewBounds() {
@@ -600,6 +628,127 @@ function setupIpcHandlers() {
   ipcMain.handle('test-ipc', async () => {
     console.log(`[IPC] Test handler called successfully`);
     return 'IPC handlers are working';
+  });
+
+  // Execute workflow with Python
+  ipcMain.handle('execute-workflow', async (event, workflowData: string) => {
+    console.log(`[IPC] Executing workflow with data:`, workflowData.substring(0, 100) + '...');
+    
+    try {
+      const { spawn } = require('child_process');
+      const path = require('path');
+      
+      // Path to the Python workflow executor
+      const pythonScript = path.join(__dirname, '../engine/runner.py');
+      
+      // Spawn the Python process
+      const pythonProcess = spawn('python', [pythonScript], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      // Send the workflow data to stdin
+      pythonProcess.stdin.write(workflowData);
+      pythonProcess.stdin.end();
+      
+      // Collect output
+      let output = '';
+      let errorOutput = '';
+      
+      pythonProcess.stdout.on('data', (data: Buffer) => {
+        output += data.toString();
+        console.log(`[Python] ${data.toString()}`);
+      });
+      
+      pythonProcess.stderr.on('data', (data: Buffer) => {
+        errorOutput += data.toString();
+        console.error(`[Python Error] ${data.toString()}`);
+      });
+      
+      // Wait for completion
+      return new Promise((resolve, reject) => {
+        pythonProcess.on('close', (code: number) => {
+          if (code === 0) {
+            console.log(`[IPC] Workflow executed successfully`);
+            resolve({ success: true, output });
+          } else {
+            console.error(`[IPC] Workflow execution failed with code ${code}`);
+            reject(new Error(`Workflow execution failed: ${errorOutput}`));
+          }
+        });
+        
+        pythonProcess.on('error', (error: Error) => {
+          console.error(`[IPC] Failed to start Python process:`, error);
+          reject(error);
+        });
+      });
+    } catch (error) {
+      console.error(`[IPC] Error executing workflow:`, error);
+      throw error;
+    }
+  });
+
+  // Execute workflow command in BrowserView
+  ipcMain.handle('execute-workflow-command', async (event, command: string, data: any) => {
+    console.log(`[IPC] Executing workflow command: ${command}`);
+    
+    if (!browserView) {
+      throw new Error('BrowserView not available');
+    }
+    
+    try {
+      switch (command) {
+        case 'navigate':
+          await browserView.webContents.loadURL(data.url);
+          return { success: true };
+          
+        case 'fill-form':
+          // Execute JavaScript to fill form fields
+          const script = `
+            (async () => {
+              const fields = ${JSON.stringify(data.fields)};
+              const results = {};
+              
+              for (const [selector, value] of Object.entries(fields)) {
+                try {
+                  const element = document.querySelector(selector);
+                  if (element) {
+                    element.value = value;
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    results[selector] = { success: true, value };
+                  } else {
+                    results[selector] = { success: false, error: 'Element not found' };
+                  }
+                } catch (error) {
+                  results[selector] = { success: false, error: error.message };
+                }
+              }
+              
+              return results;
+            })();
+          `;
+          
+          const result = await browserView.webContents.executeJavaScript(script);
+          return { success: true, results: result };
+          
+        default:
+          throw new Error(`Unknown command: ${command}`);
+      }
+    } catch (error) {
+      console.error(`[IPC] Error executing workflow command:`, error);
+      throw error;
+    }
+  });
+
+  // Handle workflow file loading
+  ipcMain.handle('load-workflow-file', async (event, filePath: string) => {
+    try {
+      const fullPath = path.join(__dirname, '..', filePath);
+      const workflowData = fs.readFileSync(fullPath, 'utf8');
+      return { success: true, data: workflowData };
+    } catch (error) {
+      console.error('Error loading workflow file:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
   });
 }
 

@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onDevToolsToggle: (callback: () => void) => {
     ipcRenderer.on('dev-tools-toggle', callback);
   },
+  executeWorkflow: (workflowData: string) => ipcRenderer.invoke('execute-workflow', workflowData),
+  executeWorkflowCommand: (command: string, data: any) => ipcRenderer.invoke('execute-workflow-command', command, data),
 });
 
 // Type definitions for the exposed API
@@ -89,6 +91,8 @@ declare global {
       openCreateWorkflowModal: () => Promise<void>;
       testIpc: () => Promise<string>;
       onDevToolsToggle: (callback: () => void) => void;
+      executeWorkflow: (workflowData: string) => Promise<void>;
+      executeWorkflowCommand: (command: string, data: any) => Promise<any>;
     };
   }
 } 

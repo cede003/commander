@@ -1,194 +1,267 @@
-# Commander - Electron Desktop Browser
+# Workflow Executor
 
-A modern Electron desktop application built with React, TypeScript, and Tailwind CSS. Features a Chromium webview browser interface with tab management and an AI chatbot.
+A Python CLI tool for executing browser automation workflows using Playwright. Designed to work with Electron apps and read workflow schemas from stdin.
 
-## Features
+## 🚀 Features
 
-### 🌐 Browser Interface
-- **Chromium Webview**: Full-featured browser with persistent cookies
-- **URL Bar**: Updates on navigation and accepts user input
-- **Navigation Controls**: Back/forward buttons that reflect browser history
-- **Context Menu**: Right-click support with macOS compatibility (Control + click)
-- **Persistent Sessions**: Cookies and sessions persist across app restarts
+- **JSON-based workflows** - Define workflows using simple JSON schemas
+- **Browser automation** - Fill forms, navigate pages using Playwright
+- **Variable interpolation** - Use `{{variable}}` syntax in inputs
+- **Conditional execution** - Add conditions to edges for branching logic
+- **Node-based architecture** - Extensible handler system for different node types
+- **Electron integration** - Connect to existing Chromium tabs
 
-### 📑 Tab Management
-- **Current Tabs**: Active/open tabs with live previews
-- **Closed Tabs**: Recently closed tabs that can be reopened
-- **Tab Switching**: Click to activate different tabs
-- **Tab Closing**: Close tabs with X button
-- **Tab Reopening**: Click closed tabs to reopen them
-- **Shared Sessions**: All tabs share cookies and login sessions
+## 📦 Installation
 
-### 🎛️ Sidebar
-- **Resizable**: Drag to resize the sidebar width
-- **Tab Preview**: See current URL and title for each tab
-- **Scrollable**: Handles overflow content gracefully
-- **AI Chatbot**: Fixed-height chatbot section (LangChain integration ready)
-
-### 🤖 AI Assistant
-- **Chat Interface**: Modern chat UI with message bubbles
-- **Loading States**: Visual feedback during AI processing
-- **LangChain Ready**: Placeholder for LangChain integration
-- **Persistent Chat**: Chat history maintained during session
-
-## Tech Stack
-
-- **Electron** - Desktop application framework
-- **React** - UI library with TypeScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **Vite** - Fast build tool and dev server
-- **LangChain** - AI/LLM integration (placeholder)
-
-## Project Structure
-
-```
-commander/
-├── electron/           # Electron main process
-│   ├── main.ts        # Main process entry point
-│   ├── preload.ts     # Preload script for IPC
-│   └── tsconfig.json  # TypeScript config for main
-├── src/               # React renderer process
-│   ├── components/    # React components
-│   │   ├── BrowserInterface.tsx
-│   │   ├── Sidebar.tsx
-│   │   ├── TabList.tsx
-│   │   ├── Webview.tsx
-│   │   └── Chatbot.tsx
-│   ├── types.ts       # TypeScript definitions
-│   ├── App.tsx        # Main app component
-│   ├── main.tsx       # React entry point
-│   └── index.css      # Global styles with Tailwind
-├── dist/              # Built files
-├── package.json       # Dependencies and scripts
-├── vite.config.ts     # Vite configuration
-├── tailwind.config.js # Tailwind configuration
-└── tsconfig.json      # TypeScript configuration
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-
-### Installation
-
-1. **Clone and install dependencies:**
-   ```bash
-   git clone <repository-url>
-   cd commander
-   npm install
-   ```
-
-2. **Development mode:**
-   ```bash
-   npm run dev
-   ```
-   This starts both the Vite dev server and Electron app concurrently.
-
-3. **Build for production:**
-   ```bash
-   npm run build
-   npm run dist
-   ```
-
-### Development Scripts
-
-- `npm run dev` - Start development mode (Vite + Electron)
-- `npm run dev:vite` - Start only Vite dev server
-- `npm run dev:electron` - Start only Electron (waits for Vite)
-- `npm run build` - Build for production
-- `npm run dist` - Create distributable packages
-
-## Key Features Implementation
-
-### Webview Configuration
-The webview uses Electron's `persist:` partition for persistent cookies:
-```typescript
-<webview
-  partition="persist:commander"
-  webpreferences="contextIsolation=yes, nodeIntegration=no"
-/>
-```
-
-### Tab Management
-Tabs are managed in two sections:
-- **Current**: Active tabs with full functionality
-- **Closed**: Recently closed tabs that can be reopened
-
-### Resizable Sidebar
-The sidebar can be resized by dragging the left edge:
-- Minimum width: 200px
-- Maximum width: 600px
-- Smooth resize with mouse events
-
-### Context Menu Support
-Right-click context menu is handled with proper event prevention:
-```typescript
-const handleContextMenu = (event: any) => {
-  event.preventDefault();
-  // Custom context menu implementation
-};
-```
-
-## Customization
-
-### Adding New Features
-1. **New Tab Actions**: Extend the `Tab` interface in `src/types.ts`
-2. **Custom Context Menus**: Implement in `BrowserInterface.tsx`
-3. **LangChain Integration**: Replace placeholder in `Chatbot.tsx`
-
-### Styling
-The app uses Tailwind CSS for styling. Custom styles can be added to:
-- `src/index.css` for global styles
-- Component-specific classes in each component
-
-### Electron Configuration
-Main process configuration is in `electron/main.ts`:
-- Window size and properties
-- IPC handlers
-- Session management
-
-## Building and Distribution
-
-### Development Build
 ```bash
-npm run build
+# Install dependencies
+pip install -r requirements.txt
+
+# Install Playwright browsers
+playwright install
 ```
 
-### Production Distribution
+## 🏗️ Architecture
+
+```
+workflow_executor.py          # Main entry point
+engine/                       # Core workflow engine
+├── __init__.py              # Engine package initialization
+├── workflow_runner.py        # Core execution engine
+├── handlers/                 # Node type implementations
+│   ├── __init__.py          # Handler registry
+│   ├── browser_autofill.py  # Form filling automation
+│   ├── notification.py      # Message printing
+│   └── llm_generate.py      # LLM integration (stub)
+├── schemas/                  # JSON schema validation
+│   └── workflow_schema.json # Workflow schema definition
+└── examples/                 # Example workflows
+    ├── example_workflow.json
+    └── example_conditional_workflow.json
+requirements.txt              # Dependencies
+test_engine.py               # Engine testing
+```
+
+## 📝 Usage
+
+### Basic Usage
+
 ```bash
-npm run dist
+# Execute a workflow from JSON file
+python workflow_executor.py < engine/examples/example_workflow.json
+
+# Execute from stdin
+echo '{"nodes": {...}}' | python workflow_executor.py
+
+# Test the engine
+python test_engine.py
 ```
 
-This creates platform-specific packages in the `release/` directory.
+### Workflow JSON Structure
 
-## Troubleshooting
+```json
+{
+  "metadata": {
+    "name": "Workflow Name",
+    "author": "Author Name"
+  },
+  "inputs": {
+    "variable_name": "value"
+  },
+  "nodes": {
+    "node_id": {
+      "type": "node_type",
+      "inputs": {
+        "param1": "value1",
+        "param2": "{{variable_name}}"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "node_id",
+      "to": "next_node_id",
+      "condition": "optional_condition"
+    }
+  ]
+}
+```
 
-### Common Issues
+## 🔧 Node Types
 
-1. **Webview not loading**: Ensure the webview partition is properly configured
-2. **IPC errors**: Check that preload script is correctly exposing APIs
-3. **Build errors**: Verify all TypeScript types are properly defined
+### notification
+Prints messages with different levels.
 
-### Development Tips
+**Inputs:**
+- `message` (string): The message to display
+- `level` (string): Message level (info, warning, error, success)
 
-- Use `console.log` in the main process for debugging
-- Check the Electron DevTools for renderer process debugging
-- Monitor the Vite dev server console for build issues
+**Example:**
+```json
+{
+  "type": "notification",
+  "inputs": {
+    "message": "Starting workflow...",
+    "level": "info"
+  }
+}
+```
 
-## License
+### browser_autofill
+Fills form fields in a web page.
+
+**Inputs:**
+- `url` (string): The URL to navigate to
+- `fields` (object): CSS selectors mapped to values
+
+**Example:**
+```json
+{
+  "type": "browser_autofill",
+  "inputs": {
+    "url": "https://example.com/form",
+    "fields": {
+      "#name": "John Doe",
+      "#email": "john@example.com"
+    }
+  }
+}
+```
+
+### llm_generate (Stub)
+Placeholder for LLM text generation.
+
+**Inputs:**
+- `prompt` (string): The prompt to send to the LLM
+- `model` (string): The model to use
+
+## 🔄 Variable Interpolation
+
+Use `{{variable_name}}` syntax to reference:
+- Global inputs
+- Outputs from previous nodes
+- Context variables
+
+**Example:**
+```json
+{
+  "inputs": {
+    "name": "John Doe"
+  },
+  "nodes": {
+    "fill_form": {
+      "type": "browser_autofill",
+      "inputs": {
+        "url": "https://example.com",
+        "fields": {
+          "#name": "{{name}}"
+        }
+      }
+    }
+  }
+}
+```
+
+## 🔀 Conditional Execution
+
+Add conditions to edges using Python expressions:
+
+```json
+{
+  "edges": [
+    {
+      "from": "node1",
+      "to": "node2",
+      "condition": "len(outputs['node1']['result']) > 0"
+    }
+  ]
+}
+```
+
+## 🔌 Electron Integration
+
+The browser autofill handler can connect to existing Chromium tabs:
+
+1. Launch Electron with remote debugging:
+   ```bash
+   electron --remote-debugging-port=9222
+   ```
+
+2. The workflow executor will automatically connect to the existing browser instance.
+
+### 🚀 Using with the Commander App
+
+The workflow executor is designed to work with the Commander Electron app:
+
+1. **Start the Commander app** (which now has remote debugging enabled)
+2. **Run workflows** that will execute in the existing browser window:
+
+```bash
+# Test browser connection
+python test_browser_connection.py
+
+# Execute workflow in existing browser
+python engine/workflow_executor.py < engine/examples/electron_workflow.json
+```
+
+### 🔧 Browser Integration Features
+
+- ✅ **Connects to existing browser** - No need to launch new browser instances
+- ✅ **Uses current page** - Works with the page already open in the app
+- ✅ **Form filling** - Automatically fills forms in the existing browser window
+- ✅ **Navigation** - Can navigate to new URLs within the app
+- ✅ **Graceful fallback** - Falls back to new browser if connection fails
+
+### 📋 Example Workflow for Electron
+
+The `engine/examples/electron_workflow.json` demonstrates:
+- Connecting to the existing browser window
+- Filling forms in the current page
+- Using variable interpolation
+- Providing user feedback through notifications
+
+## 🧪 Testing
+
+```bash
+# Test with example workflow
+python workflow_executor.py < engine/examples/example_workflow.json
+
+# Test the engine
+python test_engine.py
+
+# Expected output:
+# 🚀 Starting workflow: Contact Form Automation
+# 👤 Author: Workflow Builder
+# 📍 Starting with 1 node(s): start_notification
+# 🔧 Executing node 'start_notification' (type: notification)
+# ℹ️  Starting contact form automation...
+# ✅ Node 'start_notification' completed successfully
+# ➡️  Following edge to 'fill_contact_form'
+# ...
+```
+
+## 🔧 Development
+
+### Adding New Node Types
+
+1. Create a new handler in `engine/handlers/`:
+   ```python
+   class MyHandler:
+       async def execute(self, inputs, context):
+           # Your logic here
+           return output
+   ```
+
+2. Register it in `engine/handlers/__init__.py`:
+   ```python
+   from .my_handler import MyHandler
+   _HANDLERS['my_type'] = MyHandler
+   ```
+
+### Error Handling
+
+The executor provides detailed error messages and continues execution where possible. Failed nodes are logged but don't stop the entire workflow.
+
+## 📄 License
 
 MIT License - see LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
----
-
-Built with ❤️ using Electron, React, TypeScript, and Tailwind CSS. 

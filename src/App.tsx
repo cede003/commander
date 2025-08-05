@@ -5,18 +5,94 @@ import URLBar from './components/URLBar';
 import { Workflow } from './types';
 
 function App() {
-  const [currentWorkflows, setCurrentWorkflows] = useState<Workflow[]>([
-    {
-      id: '1',
-      name: 'Default Workflow',
-      description: 'Default workflow for testing',
-      url: 'https://www.google.com',
-      workflowData: '{"steps": []}',
-      isActive: false,
-      createdAt: new Date(),
-      lastAccessed: new Date()
-    }
-  ]);
+  const [currentWorkflows, setCurrentWorkflows] = useState<Workflow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Helper function to generate unique IDs
+  const generateUniqueId = (prefix: string = 'workflow') => {
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  // Load workflows from files on component mount
+  useEffect(() => {
+    const loadWorkflows = async () => {
+      try {
+        // Try to load workflow list from index file first
+        let workflowFiles: string[] = [];
+        
+        try {
+          const indexResponse = await fetch('/workflows.json');
+          if (indexResponse.ok) {
+            const indexData = await indexResponse.json();
+            workflowFiles = indexData.workflows.map((w: any) => w.filename);
+            console.log('📋 Loaded workflow list from index file');
+          }
+        } catch (error) {
+          console.warn('⚠️  Could not load workflows index, using fallback list');
+        }
+
+        // Fallback to hardcoded list if index file not found
+        if (workflowFiles.length === 0) {
+          workflowFiles = [
+            'new_action_workflow.json',
+            'action_workflow.json', 
+            'example_workflow.json'
+          ];
+        }
+
+        const loadedWorkflows: Workflow[] = [];
+        let loadedCount = 0;
+
+        // Load each workflow file
+        for (const filename of workflowFiles) {
+          try {
+            const response = await fetch(`/${filename}`);
+            if (response.ok) {
+              const workflowJson = await response.text();
+              const workflowData = JSON.parse(workflowJson);
+              
+              // Generate unique ID based on filename and timestamp
+              const uniqueId = generateUniqueId(filename.replace('.json', ''));
+              
+              loadedWorkflows.push({
+                id: uniqueId,
+                name: workflowData.metadata.name,
+                description: workflowData.metadata.description,
+                url: workflowData.inputs?.search_url || 'https://www.google.com',
+                workflowData: workflowJson,
+                isRunning: false,
+                createdAt: new Date(),
+                lastAccessed: new Date()
+              });
+              
+              loadedCount++;
+              console.log(`✅ Loaded workflow: ${workflowData.metadata.name}`);
+            } else {
+              console.warn(`⚠️  Workflow file not found: ${filename}`);
+            }
+          } catch (error) {
+            console.warn(`⚠️  Failed to load workflow file: ${filename}`, error);
+            // Continue loading other files even if one fails
+          }
+        }
+
+        if (loadedCount === 0) {
+          console.warn('⚠️  No workflow files were loaded successfully');
+        } else {
+          console.log(`✅ Successfully loaded ${loadedCount} workflow(s)`);
+        }
+
+        setCurrentWorkflows(loadedWorkflows);
+      } catch (error) {
+        console.error('❌ Failed to load workflows from files:', error);
+        setCurrentWorkflows([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadWorkflows();
+  }, []);
 
   const [currentURL, setCurrentURL] = useState<string>('');
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
@@ -59,23 +135,42 @@ function App() {
     setCanGoForward(canGoForward);
   };
 
-  const handleWorkflowActivate = (workflowId: string) => {
-    setCurrentWorkflows(prev => prev.map(workflow => {
-      if (workflow.id === workflowId) {
-        // Toggle the active state for the clicked workflow
-        return {
-          ...workflow,
-          isActive: !workflow.isActive,
-          lastAccessed: new Date()
-        };
-      } else {
-        // Deactivate all other workflows
-        return {
-          ...workflow,
-          isActive: false
-        };
+  const handleWorkflowActivate = async (workflowId: string) => {
+    const workflow = currentWorkflows.find(w => w.id === workflowId);
+    
+    if (workflow) {
+      // If the workflow is currently running, stop it
+      if (workflow.isRunning) {
+        setCurrentWorkflows(prev => prev.map(w => 
+          w.id === workflowId ? { ...w, isRunning: false } : w
+        ));
+        return;
       }
-    }));
+      
+      // If the workflow is being activated (not deactivated)
+      try {
+        // Set the workflow as running
+        setCurrentWorkflows(prev => prev.map(w => 
+          w.id === workflowId ? { ...w, isRunning: true } : w
+        ));
+        
+        // Execute the Python workflow
+        if (window.electronAPI?.executeWorkflow) {
+          await window.electronAPI.executeWorkflow(workflow.workflowData);
+        }
+        
+        // Set the workflow as no longer running
+        setCurrentWorkflows(prev => prev.map(w => 
+          w.id === workflowId ? { ...w, isRunning: false } : w
+        ));
+      } catch (error) {
+        console.error('Failed to execute workflow:', error);
+        // Set the workflow as no longer running on error
+        setCurrentWorkflows(prev => prev.map(w => 
+          w.id === workflowId ? { ...w, isRunning: false } : w
+        ));
+      }
+    }
   };
 
   const handleWorkflowCreate = () => {
@@ -112,16 +207,16 @@ function App() {
           } : w
         ));
       } else {
-        // Create new workflow
-        const workflowId = Date.now().toString();
+        // Create new workflow with unique ID
+        const uniqueId = generateUniqueId('manual');
         
         const newWorkflow: Workflow = {
-          id: workflowId,
+          id: uniqueId,
           name: workflow.name,
           description: workflow.description,
           url: 'https://www.google.com',
           workflowData: workflow.workflowData,
-          isActive: false,
+          isRunning: false,
           createdAt: new Date(),
           lastAccessed: new Date()
         };
@@ -189,14 +284,20 @@ function App() {
         }`}>
           {isSidebarVisible && (
             <div className="relative h-full">
-              <Sidebar
-                currentWorkflows={currentWorkflows}
-                onWorkflowActivate={handleWorkflowActivate}
-                onWorkflowCreate={handleWorkflowCreate}
-                onWorkflowDelete={handleWorkflowDelete}
-                onWorkflowRename={handleWorkflowRename}
-                onWorkflowEdit={handleWorkflowEdit}
-              />
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-gray-500">Loading workflows...</div>
+                </div>
+              ) : (
+                <Sidebar
+                  currentWorkflows={currentWorkflows}
+                  onWorkflowActivate={handleWorkflowActivate}
+                  onWorkflowCreate={handleWorkflowCreate}
+                  onWorkflowDelete={handleWorkflowDelete}
+                  onWorkflowRename={handleWorkflowRename}
+                  onWorkflowEdit={handleWorkflowEdit}
+                />
+              )}
             </div>
           )}
         </div>

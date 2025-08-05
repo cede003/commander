@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "name": "Electron Browser Automation",
+    "author": "Workflow Builder",
+    "description": "Test workflow that runs in the existing Electron browser window",
+    "version": "1.0.0"
+  },
+  "inputs": {
+    "name": "Electron Test User",
+    "email": "electron@test.com",
+    "message": "This is a test from the workflow executor!"
+  },
+  "nodes": {
+    "start_notification": {
+      "type": "notification",
+      "inputs": {
+        "message": "Starting Electron browser automation...",
+        "level": "info"
+      }
+    },
+    "fill_test_form": {
+      "type": "browser_autofill",
+      "inputs": {
+        "url": "https://httpbin.org/forms/post",
+        "fields": {
+          "input[name='custname']": "{{name}}",
+          "input[name='custtel']": "555-1234",
+          "input[name='custemail']": "{{email}}",
+          "textarea[name='comments']": "{{message}}"
+        }
+      }
+    },
+    "success_notification": {
+      "type": "notification",
+      "inputs": {
+        "message": "Electron browser automation completed successfully!",
+        "level": "success"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_notification",
+      "to": "fill_test_form"
+    },
+    {
+      "from": "fill_test_form",
+      "to": "success_notification"
+    }
+  ]
+} 
