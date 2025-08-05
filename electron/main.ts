@@ -19,6 +19,7 @@ let browserView: BrowserView | null = null;
 let modalWindow: BrowserWindow | undefined = undefined;
 let currentURL: string = 'https://www.google.com';
 let isSidebarVisible: boolean = true;
+let dynamicBounds: { x: number; y: number; width: number; height: number } | null = null;
 
 function createWindow() {
   // Create the browser window
@@ -104,6 +105,16 @@ function createWindow() {
       updateBrowserViewBounds();
       mainWindow?.webContents.send('dev-tools-toggle');
     }, 100);
+  });
+
+  // Handle window focus to refresh BrowserView
+  mainWindow.on('focus', () => {
+    if (browserView) {
+      console.log('[DEBUG] Window focused, refreshing BrowserView bounds');
+      setTimeout(() => {
+        updateBrowserViewBounds();
+      }, 100);
+    }
   });
 
   // Configure session for BrowserView
@@ -221,6 +232,11 @@ function createBrowserView(url: string) {
   // Set initial bounds
   updateBrowserViewBounds();
 
+  // Force refresh the BrowserView to ensure proper rendering
+  setTimeout(() => {
+    updateBrowserViewBounds();
+  }, 200);
+
   // Set up context menu for the BrowserView
   setupBrowserViewContextMenu();
 
@@ -304,6 +320,16 @@ function loadURLInBrowserView(url: string) {
       `).catch(error => {
         console.error("Failed to set window.name in BrowserView after navigation:", error);
       });
+      
+      // Force refresh the BrowserView bounds to ensure proper rendering
+      setTimeout(() => {
+        updateBrowserViewBounds();
+        // Focus the BrowserView to ensure it's active and visible
+        if (browserView && mainWindow) {
+          browserView.webContents.focus();
+          mainWindow.focus();
+        }
+      }, 100);
     }
   });
 }
@@ -313,35 +339,59 @@ function updateBrowserViewBounds() {
     return;
   }
 
-  const [width, height] = mainWindow.getSize();
-  
-  // Check if DevTools is open
-  const isDevToolsOpen = mainWindow.webContents.isDevToolsOpened();
-  
-  // Calculate sidebar width based on visibility
-  const sidebarWidth = isSidebarVisible ? 320 : 0;
-  
-  // BrowserView takes up the right side of the window
-  // Sidebar is 320px when visible, 0px when hidden
-  // URL bar is 80px, so BrowserView starts at y=80
-  let bounds = {
-    x: sidebarWidth,
-    y: 80,
-    width: width - sidebarWidth,
-    height: height - 80
-  };
+  try {
+    // If we have dynamic bounds from React, use those
+    if (dynamicBounds) {
+      console.log(`[DEBUG] Using dynamic bounds from React:`, dynamicBounds);
+      browserView.setBounds(dynamicBounds);
+      browserView.setAutoResize({ width: true, height: true });
+      return;
+    }
 
-  // If DevTools is open, adjust bounds to account for DevTools panel
-  if (isDevToolsOpen) {
-    // DevTools typically takes up about 1/3 of the window width
-    // Adjust the BrowserView width accordingly
-    const devToolsWidth = Math.min(400, width * 0.4); // Cap at 400px or 40% of window
-    bounds.width = width - sidebarWidth - devToolsWidth;
+    // Fallback to hardcoded bounds
+    const [width, height] = mainWindow.getSize();
+    
+    // Check if DevTools is open
+    const isDevToolsOpen = mainWindow.webContents.isDevToolsOpened();
+    
+    // Calculate sidebar width based on visibility
+    const sidebarWidth = isSidebarVisible ? 320 : 0;
+    
+    // BrowserView takes up the right side of the window
+    // Sidebar is 320px when visible, 0px when hidden
+    // URL bar is h-20 (80px) + py-3 (24px) = 104px total
+    let bounds = {
+      x: sidebarWidth,
+      y: 104,
+      width: width - sidebarWidth,
+      height: height - 104
+    };
+
+    // If DevTools is open, adjust bounds to account for DevTools panel
+    if (isDevToolsOpen) {
+      // DevTools typically takes up about 1/3 of the window width
+      // Adjust the BrowserView width accordingly
+      const devToolsWidth = Math.min(400, width * 0.4); // Cap at 400px or 40% of window
+      bounds.width = width - sidebarWidth - devToolsWidth;
+    }
+
+    // Ensure bounds are valid
+    if (bounds.width <= 0 || bounds.height <= 0) {
+      console.warn('[DEBUG] Invalid bounds calculated, using fallback:', bounds);
+      bounds = { x: 0, y: 104, width: 800, height: 600 };
+    }
+
+    console.log(`[DEBUG] Setting BrowserView bounds (fallback):`, bounds, `DevTools open: ${isDevToolsOpen}, Sidebar visible: ${isSidebarVisible}`);
+    browserView.setBounds(bounds);
+    browserView.setAutoResize({ width: true, height: true });
+  } catch (error) {
+    console.error('[DEBUG] Error in updateBrowserViewBounds:', error);
+    // Set safe fallback bounds
+    if (browserView) {
+      browserView.setBounds({ x: 0, y: 104, width: 800, height: 600 });
+      browserView.setAutoResize({ width: true, height: true });
+    }
   }
-
-  console.log(`[DEBUG] Setting BrowserView bounds:`, bounds, `DevTools open: ${isDevToolsOpen}, Sidebar visible: ${isSidebarVisible}`);
-  browserView.setBounds(bounds);
-  browserView.setAutoResize({ width: true, height: true });
 }
 
 function setupBrowserViewContextMenu() {
@@ -445,6 +495,17 @@ function setupIpcHandlers() {
     loadURLInBrowserView(url);
   });
 
+  // Force focus BrowserView
+  ipcMain.handle('focus-browser-view', async () => {
+    if (browserView && mainWindow) {
+      console.log('[IPC] Forcing focus on BrowserView');
+      browserView.webContents.focus();
+      mainWindow.focus();
+      // Force refresh bounds
+      updateBrowserViewBounds();
+    }
+  });
+
   // Navigation methods
   ipcMain.handle('go-back-in-browser-view', async () => {
     if (!browserView) return false;
@@ -485,6 +546,29 @@ function setupIpcHandlers() {
   // Update bounds
   ipcMain.handle('update-browser-view-bounds', async () => {
     updateBrowserViewBounds();
+  });
+
+  // Update bounds from client (React component)
+  ipcMain.handle('update-browser-view-bounds-from-client', async (event, bounds) => {
+    try {
+      if (browserView && bounds) {
+        // Validate bounds - ensure all values are numbers and positive
+        const { x, y, width, height } = bounds;
+        if (typeof x !== 'number' || typeof y !== 'number' || 
+            typeof width !== 'number' || typeof height !== 'number' ||
+            width <= 0 || height <= 0) {
+          console.warn('[IPC] Invalid bounds received from client:', bounds);
+          return;
+        }
+        
+        console.log('[IPC] Updating BrowserView bounds from client:', bounds);
+        dynamicBounds = bounds; // Store the dynamic bounds
+        browserView.setBounds(bounds);
+        browserView.setAutoResize({ width: true, height: true });
+      }
+    } catch (error) {
+      console.error('[IPC] Error updating bounds from client:', error);
+    }
   });
 
   // Update sidebar visibility

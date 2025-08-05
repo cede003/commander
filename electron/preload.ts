@@ -6,12 +6,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // BrowserView management APIs
   createBrowserView: (url: string) => ipcRenderer.invoke('create-browser-view', url),
   loadURLInBrowserView: (url: string) => ipcRenderer.invoke('load-url-in-browser-view', url),
+  focusBrowserView: () => ipcRenderer.invoke('focus-browser-view'),
   goBackInBrowserView: () => ipcRenderer.invoke('go-back-in-browser-view'),
   goForwardInBrowserView: () => ipcRenderer.invoke('go-forward-in-browser-view'),
   reloadBrowserView: () => ipcRenderer.invoke('reload-browser-view'),
   getBrowserViewCanGoBack: () => ipcRenderer.invoke('get-browser-view-can-go-back'),
   getBrowserViewCanGoForward: () => ipcRenderer.invoke('get-browser-view-can-go-forward'),
   updateBrowserViewBounds: () => ipcRenderer.invoke('update-browser-view-bounds'),
+  updateBrowserViewBoundsFromClient: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke('update-browser-view-bounds-from-client', bounds),
   
   // BrowserView event listeners
   onBrowserViewNavigated: (callback: (data: { url: string }) => void) => {

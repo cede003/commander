@@ -7,11 +7,54 @@ import { Workflow } from './types';
 function App() {
   const [currentWorkflows, setCurrentWorkflows] = useState<Workflow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Helper function to generate unique IDs
   const generateUniqueId = (prefix: string = 'workflow') => {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
+
+  // Auto-detect dark mode based on system preferences and time
+  useEffect(() => {
+    const detectDarkMode = () => {
+      // Check system preference
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // Check time-based preference (dark mode from 6 PM to 6 AM)
+      const now = new Date();
+      const hour = now.getHours();
+      const isNightTime = hour >= 18 || hour < 6;
+      
+      // Use system preference as primary, time as secondary
+      const shouldBeDark = systemPrefersDark || isNightTime;
+      
+      console.log(`🌙 Dark mode detection:`, {
+        systemPrefersDark,
+        isNightTime,
+        currentHour: hour,
+        shouldBeDark
+      });
+      
+      setIsDarkMode(shouldBeDark);
+    };
+
+    // Initial detection
+    detectDarkMode();
+
+    // Listen for system preference changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => detectDarkMode();
+    
+    mediaQuery.addEventListener('change', handleChange);
+
+    // Check every minute for time-based changes
+    const interval = setInterval(detectDarkMode, 60000);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Load workflows from files on component mount
   useEffect(() => {
@@ -263,7 +306,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100'}`}>
       {/* URL Bar - Top level component */}
       <URLBar
         currentURL={currentURL}
@@ -274,19 +317,20 @@ function App() {
         onReload={handleReload}
         onToggleSidebar={toggleSidebar}
         isSidebarVisible={isSidebarVisible}
+        isDarkMode={isDarkMode}
       />
 
       {/* Main Content Area */}
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          isSidebarVisible ? 'w-80 border-r border-gray-200' : 'w-0'
-        }`}>
+        <div className={`shadow-lg transition-all duration-300 ease-in-out ${
+          isSidebarVisible ? 'w-80 border-r' : 'w-0'
+        } ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           {isSidebarVisible && (
             <div className="relative h-full">
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-gray-500">Loading workflows...</div>
+                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading workflows...</div>
                 </div>
               ) : (
                 <Sidebar
@@ -296,6 +340,7 @@ function App() {
                   onWorkflowDelete={handleWorkflowDelete}
                   onWorkflowRename={handleWorkflowRename}
                   onWorkflowEdit={handleWorkflowEdit}
+                  isDarkMode={isDarkMode}
                 />
               )}
             </div>
@@ -309,11 +354,10 @@ function App() {
             isSidebarVisible={isSidebarVisible}
             onURLChange={handleURLChange}
             onNavigationStateChange={handleNavigationStateChange}
+            isDarkMode={isDarkMode}
           />
         </div>
       </div>
-
-
     </div>
   );
 }

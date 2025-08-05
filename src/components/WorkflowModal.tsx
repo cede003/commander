@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const ModalApp: React.FC = () => {
+const WorkflowModal: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [workflowData, setWorkflowData] = useState('{\n  "steps": []\n}');
@@ -181,4 +181,4 @@ const ModalApp: React.FC = () => {
   );
 };
 
-export default ModalApp; 
+export default WorkflowModal; 

@@ -40,6 +40,18 @@ export interface BrowserInterfaceProps {
   onReload: () => void;
 }
 
+export interface URLBarProps {
+  currentURL: string;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  onGoBack: () => void;
+  onGoForward: () => void;
+  onReload: () => void;
+  onToggleSidebar: () => void;
+  isSidebarVisible: boolean;
+  isDarkMode?: boolean;
+}
+
 export interface SidebarProps {
   currentWorkflows: Workflow[];
   onWorkflowActivate: (workflowId: string) => void;
@@ -47,6 +59,15 @@ export interface SidebarProps {
   onWorkflowDelete: (workflowId: string) => void;
   onWorkflowRename: (workflowId: string, newName: string) => void;
   onWorkflowEdit: (workflow: Workflow) => void;
+  isDarkMode?: boolean;
+}
+
+export interface BrowserPaneProps {
+  className?: string;
+  isSidebarVisible?: boolean;
+  onURLChange?: (url: string) => void;
+  onNavigationStateChange?: (canGoBack: boolean, canGoForward: boolean) => void;
+  isDarkMode?: boolean;
 }
 
 export interface BrowserViewProps {
@@ -65,12 +86,14 @@ declare global {
       // BrowserView management APIs
       createBrowserView?: (url: string) => Promise<any>;
       loadURLInBrowserView?: (url: string) => Promise<any>;
+      focusBrowserView?: () => Promise<any>;
       goBackInBrowserView?: () => Promise<boolean>;
       goForwardInBrowserView?: () => Promise<boolean>;
       reloadBrowserView?: () => Promise<any>;
       getBrowserViewCanGoBack?: () => Promise<boolean>;
       getBrowserViewCanGoForward?: () => Promise<boolean>;
       updateBrowserViewBounds?: () => Promise<any>;
+      updateBrowserViewBoundsFromClient?: (bounds: { x: number; y: number; width: number; height: number }) => Promise<any>;
       
       // BrowserView event listeners
       onBrowserViewNavigated?: (callback: (data: { url: string }) => void) => void;
