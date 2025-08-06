@@ -2,6 +2,7 @@ import { BrowserView, BrowserWindow, ipcMain } from 'electron';
 import { CONFIG } from '../constants/config';
 import { calculateBrowserViewBounds, updateBrowserViewBounds, getBoundsFromClient, Bounds } from '../utils/bounds';
 import { setupBrowserViewContextMenu } from '../utils/contextMenu';
+import path from 'path';
 
 let browserView: BrowserView | undefined;
 let sidebarVisible = true;
@@ -10,7 +11,7 @@ let devToolsOpen = false;
 export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView {
   console.log(`[DEBUG] Creating new BrowserView with URL: ${url}`);
   
-  // Create new BrowserView
+  // Create new BrowserView with preload script
   browserView = new BrowserView({
     webPreferences: {
       nodeIntegration: false,
@@ -19,6 +20,7 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
       allowRunningInsecureContent: true,
       sandbox: false,
       experimentalFeatures: true,
+      preload: path.join(__dirname, '../../browserViewPreload.js') // Fixed path to dist root
     }
   });
 
@@ -32,12 +34,17 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
   setupBrowserViewContextMenu(browserView);
   
   console.log(`[DEBUG] BrowserView created and added to main window`);
+  console.log(`[DEBUG] BrowserView webContents.id: ${browserView.webContents.id}`);
   
   return browserView;
 }
 
 export function getBrowserView(): BrowserView | undefined {
   return browserView;
+}
+
+export function getBrowserViewId(): number | undefined {
+  return browserView?.webContents.id;
 }
 
 export function updateBrowserViewBoundsFromClient(bounds: Bounds): void {

@@ -122,7 +122,8 @@ declare global {
       onWorkflowCreated?: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => void;
       removeWorkflowCreatedListener?: () => void;
       onDevToolsToggle?: (callback: () => void) => void;
-      executeWorkflow?: (workflowData: string) => Promise<void>;
+      executeWorkflow: (workflowData: string) => Promise<any>;
+      testIpc?: () => Promise<string>;
     };
     browserViewTracker?: Map<string, any>;
   }

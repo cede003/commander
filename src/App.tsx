@@ -210,7 +210,30 @@ function App() {
           w.id === workflowId ? { ...w, isRunning: true } : w
         ));
         
-        // Execute the Python workflow
+        // Test IPC bridge first
+        console.log('🔍 Testing IPC bridge...');
+        console.log('🔍 Checking if executeWorkflow is available:', !!window.electronAPI?.executeWorkflow);
+        console.log('🔍 Available electronAPI methods:', Object.keys(window.electronAPI || {}));
+        
+        // Test a simple IPC call first
+        if (window.electronAPI?.testIpc) {
+          try {
+            const testResult = await window.electronAPI.testIpc();
+            console.log('✅ Test IPC call successful:', testResult);
+          } catch (error) {
+            console.error('❌ Test IPC call failed:', error);
+          }
+        }
+        
+        // Debug: Check what's available
+        console.log('🔍 Debugging electronAPI availability:', {
+          hasElectronAPI: !!window.electronAPI,
+          electronAPIType: typeof window.electronAPI,
+          availableKeys: window.electronAPI ? Object.keys(window.electronAPI) : [],
+          hasExecuteWorkflow: !!(window.electronAPI?.executeWorkflow),
+          executeWorkflowType: typeof window.electronAPI?.executeWorkflow
+        });
+        
         if (window.electronAPI?.executeWorkflow) {
           console.log('🚀 Executing workflow:', workflow.name);
           const result = await window.electronAPI.executeWorkflow(workflow.workflowData);
@@ -248,6 +271,29 @@ function App() {
       window.electronAPI.openCreateWorkflowModal();
     }
   };
+
+  const testElectronAPI = async () => {
+    console.log('🧪 Testing Electron API availability...');
+    console.log('window.electronAPI:', window.electronAPI);
+    console.log('Available methods:', window.electronAPI ? Object.keys(window.electronAPI) : 'No electronAPI');
+    
+    if (window.electronAPI?.testIpc) {
+      try {
+        const result = await window.electronAPI.testIpc();
+        console.log('✅ Test IPC result:', result);
+        alert('Electron API is working!');
+      } catch (error) {
+        console.error('❌ Test IPC failed:', error);
+        alert('Electron API test failed: ' + error);
+      }
+    } else {
+      console.error('❌ testIpc not available');
+      alert('testIpc not available');
+    }
+  };
+
+  // Expose test function globally for debugging
+  (window as any).testElectronAPI = testElectronAPI;
 
   const handleWorkflowEdit = (workflow: Workflow) => {
     if (window.electronAPI?.openCreateWorkflowModal) {
@@ -349,7 +395,7 @@ function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <div className={`shadow-lg transition-all duration-300 ease-in-out ${
           isSidebarVisible ? 'w-80 border-r' : 'w-0'
@@ -376,7 +422,7 @@ function App() {
         </div>
 
         {/* Browser Pane */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           <BrowserPane
             className="h-full"
             isSidebarVisible={isSidebarVisible}

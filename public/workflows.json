@@ -16,9 +16,29 @@
       "description": "Example workflow with form filling and submission"
     },
     {
-      "filename": "example_workflow.json",
-      "name": "Example Workflow", 
-      "description": "Basic example workflow for testing"
+      "filename": "weather_workflow.json",
+      "name": "Weather Check Workflow",
+      "description": "Navigate to weather.com and get current weather information"
+    },
+    {
+      "filename": "news_headlines_workflow.json",
+      "name": "News Headlines Workflow",
+      "description": "Navigate to BBC News and extract the latest headlines"
+    },
+    {
+      "filename": "calculator_workflow.json",
+      "name": "Calculator Workflow",
+      "description": "Use an online calculator to perform mathematical calculations"
+    },
+    {
+      "filename": "simple_test_workflow.json",
+      "name": "Simple Test Workflow",
+      "description": "Simple test workflow that just navigates and gets basic page info"
+    },
+    {
+      "filename": "calculator_test_workflow.json",
+      "name": "Calculator Test Workflow",
+      "description": "Test calculator workflow with unique logging to verify caching is resolved"
     }
   ]
 } 

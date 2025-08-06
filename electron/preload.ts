@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+console.log('🔧 Preload script loaded successfully');
+console.log('🔧 __dirname:', __dirname);
+console.log('🔧 process.type:', process.type);
+console.log('🔧 contextBridge available:', typeof contextBridge !== 'undefined');
+
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {

@@ -5,13 +5,11 @@ import path from 'path';
 let mainWindowInstance: BrowserWindow | undefined;
 
 export function createMainWindow(): BrowserWindow {
-  const mainWindow = new BrowserWindow({
-    ...CONFIG.mainWindow,
-    width: CONFIG.mainWindow.width,
-    height: CONFIG.mainWindow.height,
-    minWidth: CONFIG.mainWindow.minWidth,
-    minHeight: CONFIG.mainWindow.minHeight,
-  });
+  console.log('🔧 Creating main window with preload path:', CONFIG.preloadPath);
+  console.log('🔧 __dirname:', __dirname);
+  console.log('🔧 File exists:', require('fs').existsSync(CONFIG.preloadPath));
+  
+  const mainWindow = new BrowserWindow(CONFIG.mainWindow);
 
   // Store the instance
   mainWindowInstance = mainWindow;

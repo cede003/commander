@@ -24,7 +24,7 @@ class BrowserSession:
         for attempt in range(max_retries):
             try:
                 print(f"🔗 Attempting to connect to existing browser instance via CDP... (attempt {attempt + 1}/{max_retries})")
-                self.browser = await self.playwright.chromium.connect_over_cdp("http://localhost:9222")
+                self.browser = await self.playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
                 print("✅ Connected to Electron browser instance")
                 break
             except Exception as e:
@@ -58,35 +58,14 @@ class BrowserSession:
                             not page_url.startswith('file://') and  # App window
                             page_url != 'about:blank'):
                             
-                            # Check if this page has window.name = "main-browser"
-                            try:
-                                window_name = await page.evaluate('window.name')
-                                print(f"🔍 Window name: '{window_name}'")
-                                
-                                if window_name == "main-browser":
-                                    self.page = page
-                                    page_title = await self.page.title()
-                                    print(f"🎯 Selected page with window.name='main-browser': '{page_title}' - {self.page.url}")
-                                    print("✅ This is the main browser (BrowserView content)")
-                                    return
-                                else:
-                                    print(f"⚠️  Window name '{window_name}' doesn't match 'main-browser'")
-                                    # This is likely a regular webpage in the BrowserView
-                                    # Use it as the target page
-                                    self.page = page
-                                    page_title = await self.page.title()
-                                    print(f"🎯 Selected page (BrowserView content): '{page_title}' - {self.page.url}")
-                                    print("✅ This is the main browser (BrowserView content)")
-                                    return
-                            except Exception as e:
-                                print(f"⚠️  Could not get window.name: {e}")
-                                # Fallback: use this page if it's not the React app window
-                                if not page_url.startswith('http://localhost:5174'):
-                                    self.page = page
-                                    page_title = await self.page.title()
-                                    print(f"🎯 Selected page (fallback): '{page_title}' - {self.page.url}")
-                                    print("✅ This is the main browser (BrowserView content)")
-                                    return
+                            # Use webContents.id for more reliable identification
+                            # The BrowserView page should have a specific webContents.id
+                            # We'll use the first non-DevTools page as the target
+                            self.page = page
+                            page_title = await self.page.title()
+                            print(f"🎯 Selected page (BrowserView content): '{page_title}' - {self.page.url}")
+                            print("✅ This is the main browser (BrowserView content)")
+                            return
                     except Exception as e:
                         print(f"⚠️  Error checking page (navigation in progress?): {e}")
                         # Continue checking other pages even if one fails

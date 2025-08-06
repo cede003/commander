@@ -1,0 +1,91 @@
+{
+  "metadata": {
+    "name": "Simple Test Workflow",
+    "description": "Simple test workflow that just navigates and gets basic page info",
+    "author": "Commander",
+    "version": "1.0.0"
+  },
+  "inputs": {
+    "test_url": "https://www.google.com"
+  },
+  "nodes": {
+    "start_notification": {
+      "id": "start_notification",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": {
+        "message": "Starting simple test workflow",
+        "level": "info"
+      }
+    },
+    "navigate_to_page": {
+      "id": "navigate_to_page",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": {
+        "url": "{{inputs.test_url}}"
+      },
+      "error_handling": {
+        "retry": true,
+        "max_attempts": 3
+      }
+    },
+    "wait_briefly": {
+      "id": "wait_briefly",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_timeout",
+      "inputs": {
+        "timeout": 2000
+      }
+    },
+    "get_page_title": {
+      "id": "get_page_title",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "get_title",
+      "inputs": {}
+    },
+    "get_page_url": {
+      "id": "get_page_url",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "url",
+      "inputs": {}
+    },
+    "log_success": {
+      "id": "log_success",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": {
+        "message": "Simple test workflow completed successfully",
+        "level": "success"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_notification",
+      "to": "navigate_to_page"
+    },
+    {
+      "from": "navigate_to_page",
+      "to": "wait_briefly"
+    },
+    {
+      "from": "wait_briefly",
+      "to": "get_page_title"
+    },
+    {
+      "from": "get_page_title",
+      "to": "get_page_url"
+    },
+    {
+      "from": "get_page_url",
+      "to": "log_success"
+    }
+  ]
+} 

@@ -7,6 +7,8 @@ import { getMainWindow } from '../../windows/mainWindow';
 export function registerWorkflowCommands(): void {
   // Execute workflow with Python
   ipcMain.handle('execute-workflow', async (event, workflowData: string) => {
+    console.log(`[IPC] execute-workflow handler called`);
+    console.log(`[IPC] Workflow data length:`, workflowData.length);
     console.log(`[IPC] Executing workflow with data:`, workflowData.substring(0, 100) + '...');
     
     try {

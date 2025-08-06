@@ -22,7 +22,7 @@ export function calculateBrowserViewBounds(
   const availableWidth = width - sidebarWidth;
   
   // Calculate y offset (account for title bar and any other UI elements)
-  const yOffset = 80; // Adjust based on your UI layout
+  const yOffset = 80;
   
   return {
     x: x + sidebarWidth,
@@ -38,7 +38,8 @@ export function updateBrowserViewBounds(
 ): void {
   if (browserView) {
     browserView.setBounds(bounds);
-    browserView.setAutoResize({ width: true, height: true });
+    // Remove auto-resize to prevent conflicts with manual bounds setting
+    // browserView.setAutoResize({ width: true, height: true });
   }
 }
 

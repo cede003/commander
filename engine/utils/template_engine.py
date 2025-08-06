@@ -62,14 +62,22 @@ class TemplateEngine:
                     return f"{{{{{expr}}}}}"
             
             elif expr.startswith('results.'):
-                # {{results.field_name}}
-                field_name = expr[8:]  # Remove 'results.'
+                # {{results.node_id.field_name}}
+                field_path = expr[8:]  # Remove 'results.'
                 results = context.get('results', {})
-                if field_name in results:
-                    return str(results[field_name])
-                else:
-                    print(f"⚠️  Template variable not found: {expr}")
-                    return f"{{{{{expr}}}}}"
+                
+                # Handle nested property access
+                parts = field_path.split('.')
+                current = results
+                
+                for part in parts:
+                    if isinstance(current, dict) and part in current:
+                        current = current[part]
+                    else:
+                        print(f"⚠️  Template variable not found: {expr}")
+                        return f"{{{{{expr}}}}}"
+                
+                return str(current)
             
             elif expr.startswith('properties.'):
                 # {{properties.field_name}}
@@ -157,8 +165,20 @@ class TemplateEngine:
                 field_name = expr[7:]
                 return field_name in context.get('inputs', {})
             elif expr.startswith('results.'):
-                field_name = expr[8:]
-                return field_name in context.get('results', {})
+                field_path = expr[8:]
+                results = context.get('results', {})
+                
+                # Handle nested property access
+                parts = field_path.split('.')
+                current = results
+                
+                for part in parts:
+                    if isinstance(current, dict) and part in current:
+                        current = current[part]
+                    else:
+                        return False
+                
+                return True
             elif expr.startswith('properties.'):
                 field_name = expr[11:]
                 return field_name in context.get('properties', {})

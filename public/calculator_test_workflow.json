@@ -1,0 +1,179 @@
+{
+    "metadata": {
+      "name": "Calculator Workflow 2",
+      "description": "Use an online calculator to perform mathematical calculations",
+      "author": "Commander",
+      "version": "1.0.0"
+    },
+    "inputs": {
+      "calculator_url": "https://www.calculator.net",
+      "first_number": "5",
+      "second_number": "7",
+      "operation": "multiply"
+    },
+    "nodes": {
+      "start_notification": {
+        "id": "start_notification",
+        "domain": "browser",
+        "type": "notification",
+        "subtype": "console_log",
+        "inputs": {
+          "message": "Starting calculator workflow",
+          "level": "info"
+        }
+      },
+      "navigate_to_calculator": {
+        "id": "navigate_to_calculator",
+        "domain": "browser",
+        "type": "action",
+        "subtype": "goto",
+        "inputs": {
+          "url": "{{inputs.calculator_url}}"
+        },
+        "error_handling": {
+          "retry": true,
+          "max_attempts": 3
+        }
+      },
+      "wait_for_page_load": {
+        "id": "wait_for_page_load",
+        "domain": "browser",
+        "type": "event",
+        "subtype": "wait_for_timeout",
+        "inputs": {
+          "timeout": 1000
+        }
+      },
+      "click_first_number": {
+        "id": "click_first_number",
+        "domain": "browser",
+        "type": "action",
+        "subtype": "click",
+        "inputs": {
+          "selector": "span[onclick*='{{inputs.first_number}}'], span.scinm:has-text('{{inputs.first_number}}')"
+        }
+      },
+      "click_operation": {
+        "id": "click_operation",
+        "domain": "browser",
+        "type": "action",
+        "subtype": "click",
+        "inputs": {
+          "selector": "span[onclick*='*'], span.scinm:has-text('*'), span[onclick*='multiply']"
+        }
+      },
+      "click_second_number": {
+        "id": "click_second_number",
+        "domain": "browser",
+        "type": "action",
+        "subtype": "click",
+        "inputs": {
+          "selector": "span[onclick*='{{inputs.second_number}}'], span.scinm:has-text('{{inputs.second_number}}')"
+        }
+      },
+      "click_equals": {
+        "id": "click_equals",
+        "domain": "browser",
+        "type": "action",
+        "subtype": "click",
+        "inputs": {
+          "selector": "span[onclick*='='], span.scinm:has-text('='), span[onclick*='equals']"
+        }
+      },
+      "wait_for_result": {
+        "id": "wait_for_result",
+        "domain": "browser",
+        "type": "event",
+        "subtype": "wait_for_timeout",
+        "inputs": {
+          "timeout": 1000
+        }
+      },
+          "get_calculation_result": {
+      "id": "get_calculation_result",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "text_content",
+      "inputs": {
+        "selector": "#sciOutPut"
+      },
+      "outputs": {
+        "result": "string"
+      }
+    },
+  
+      "show_result": {
+        "id": "show_result",
+        "domain": "browser",
+        "type": "notification",
+        "subtype": "print_result",
+        "inputs": {
+          "result_key": "get_calculation_result",
+          "message": "Calculation result"
+        }
+      },
+      "get_page_title": {
+        "id": "get_page_title",
+        "domain": "browser",
+        "type": "observation",
+        "subtype": "get_title",
+        "inputs": {}
+      },
+      "log_calculation": {
+        "id": "log_calculation",
+        "domain": "browser",
+        "type": "notification",
+        "subtype": "console_log",
+        "inputs": {
+          "message": "{{results.get_calculation_result.result}}",
+          "level": "success"
+        }
+      }
+    },
+    "edges": [
+      {
+        "from": "start_notification",
+        "to": "navigate_to_calculator"
+      },
+      {
+        "from": "navigate_to_calculator",
+        "to": "wait_for_page_load"
+      },
+      {
+        "from": "wait_for_page_load",
+        "to": "click_first_number"
+      },
+      {
+        "from": "click_first_number",
+        "to": "click_operation"
+      },
+      {
+        "from": "click_operation",
+        "to": "click_second_number"
+      },
+      {
+        "from": "click_second_number",
+        "to": "click_equals"
+      },
+      {
+        "from": "click_equals",
+        "to": "wait_for_result"
+      },
+      {
+        "from": "wait_for_result",
+        "to": "get_calculation_result"
+      },
+      {
+        "from": "get_calculation_result",
+        "to": "show_result"
+      },
+      {
+        "from": "show_result",
+        "to": "get_page_title"
+      },
+      {
+        "from": "get_page_title",
+        "to": "log_calculation"
+      }
+    ]
+  } 

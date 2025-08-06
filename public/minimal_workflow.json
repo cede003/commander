@@ -47,6 +47,15 @@
         "selector": "input[name='btnK'], button[name='btnK']"
       }
     },
+    "wait_for_search_results": {
+      "id": "wait_for_search_results",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_load_state",
+      "inputs": {
+        "state": "networkidle"
+      }
+    },
     "get_title": {
       "id": "get_title",
       "domain": "browser",
@@ -80,6 +89,10 @@
     },
     {
       "from": "click_search",
+      "to": "wait_for_search_results"
+    },
+    {
+      "from": "wait_for_search_results",
       "to": "get_title"
     },
     {

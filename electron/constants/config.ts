@@ -5,6 +5,9 @@ export const CONFIG = {
   // Development flags
   isDev: process.env.NODE_ENV === 'development' || !app.isPackaged,
   
+  // Debug preload path
+  preloadPath: path.join(__dirname, '..', 'preload.js'),
+  
   // Paths
   userDataPath: path.join(__dirname, '../userData'),
   enginePath: path.join(__dirname, '../engine'),
@@ -29,7 +32,7 @@ export const CONFIG = {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '..', 'preload.js'),
       webSecurity: false,
       allowRunningInsecureContent: true,
       sandbox: false,
@@ -48,7 +51,7 @@ export const CONFIG = {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '..', 'preload.js'),
       webSecurity: false,
       allowRunningInsecureContent: true,
       sandbox: false,

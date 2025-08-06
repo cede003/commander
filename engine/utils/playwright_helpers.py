@@ -49,6 +49,21 @@ class PlaywrightHelpers:
         # Execute the method
         try:
             print(f"🎭 Executing Playwright method: {method_name}")
+            print(f"🎭 Method args: {args}")
+            print(f"🎭 Method kwargs: {kwargs}")
+            
+            # Add extra debugging for title method
+            if method_name == 'title':
+                print(f"🎭 Page URL before title call: {page.url}")
+                print(f"🎭 Page is closed: {page.is_closed()}")
+                
+                # Try to get basic page info first
+                try:
+                    current_url = page.url
+                    print(f"🎭 Current URL: {current_url}")
+                except Exception as url_error:
+                    print(f"❌ Error getting URL: {url_error}")
+            
             result = await method(*args, **kwargs)
             print(f"✅ Successfully executed {method_name}")
             
@@ -61,6 +76,18 @@ class PlaywrightHelpers:
             
         except Exception as e:
             print(f"❌ Error executing {method_name}: {e}")
+            print(f"❌ Error type: {type(e).__name__}")
+            print(f"❌ Error args: {e.args}")
+            
+            # Add extra debugging for title method errors
+            if method_name == 'title':
+                print(f"❌ Page state during title error:")
+                try:
+                    print(f"❌ Page URL: {page.url}")
+                    print(f"❌ Page is closed: {page.is_closed()}")
+                except Exception as debug_error:
+                    print(f"❌ Error getting page debug info: {debug_error}")
+            
             raise
     
     @staticmethod

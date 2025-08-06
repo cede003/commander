@@ -143,6 +143,8 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
 
   // Send browser view bounds to Electron
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout | null = null;
+    
     const sendBounds = () => {
       const rect = browserViewRef.current?.getBoundingClientRect();
       if (rect) {
@@ -155,6 +157,13 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
       }
     };
 
+    const debouncedSendBounds = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(sendBounds, 100); // Debounce resize events
+    };
+
     // Initial send
     sendBounds();
 
@@ -162,7 +171,7 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     let resizeObserver: ResizeObserver | null = null;
     if (browserViewRef.current) {
       resizeObserver = new ResizeObserver(() => {
-        sendBounds();
+        debouncedSendBounds(); // Use debounced version
       });
       resizeObserver.observe(browserViewRef.current);
     }
@@ -182,16 +191,19 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     }
 
     // Also listen for window resize as fallback
-    window.addEventListener('resize', sendBounds);
+    window.addEventListener('resize', debouncedSendBounds); // Use debounced version
     
     return () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
       if (mutationObserver) {
         mutationObserver.disconnect();
       }
-      window.removeEventListener('resize', sendBounds);
+      window.removeEventListener('resize', debouncedSendBounds);
     };
   }, []);
 

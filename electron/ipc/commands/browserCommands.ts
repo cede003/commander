@@ -7,8 +7,16 @@ import {
   setSidebarVisible
 } from '../../views/browserViewManager';
 import { Bounds } from '../../utils/bounds';
+import { getMainWindow } from '../../windows/mainWindow';
 
 export function registerBrowserCommands(): void {
+  // Initialize BrowserView
+  ipcMain.handle('initialize-browser-view', async (event) => {
+    console.log(`[IPC] Initializing BrowserView`);
+    // The BrowserView is already created in main.ts, so we just need to return success
+    return { success: true };
+  });
+
   // Load URL in BrowserView
   ipcMain.handle('load-url', async (event, url: string) => {
     console.log(`[IPC] Loading URL: ${url}`);
@@ -30,9 +38,9 @@ export function registerBrowserCommands(): void {
     if (browserView) {
       const url = browserView.webContents.getURL();
       console.log(`[IPC] Current URL from BrowserView: ${url}`);
-      return { url };
+      return url; // Return just the URL string, not an object
     }
-    return { url: '' };
+    return ''; // Return empty string if no BrowserView
   });
 
   // Navigate BrowserView
@@ -59,7 +67,24 @@ export function registerBrowserCommands(): void {
   // Update BrowserView bounds from client
   ipcMain.handle('update-browser-view-bounds-from-client', async (event, bounds: Bounds) => {
     console.log(`[IPC] Updating BrowserView bounds from client:`, bounds);
+    
+    // Check if we're currently resizing
+    const mainWindow = getMainWindow();
+    if (mainWindow && (mainWindow as any).isResizing && typeof (mainWindow as any).isResizing === 'function') {
+      const isResizing = (mainWindow as any).isResizing();
+      if (isResizing) {
+        console.log(`[IPC] Skipping bounds update during resize`);
+        return { success: true, skipped: true };
+      }
+    }
+    
     updateBrowserViewBoundsFromClient(bounds);
+    
+    // Store the last client bounds for window resize/move events
+    if (mainWindow && (mainWindow as any).updateLastClientBounds) {
+      (mainWindow as any).updateLastClientBounds(bounds);
+    }
+    
     return { success: true };
   });
 
@@ -68,5 +93,11 @@ export function registerBrowserCommands(): void {
     console.log(`[IPC] Updating sidebar visibility: ${visible}`);
     setSidebarVisible(visible);
     return { success: true };
+  });
+
+  // Test IPC bridge
+  ipcMain.handle('test-ipc', async (event) => {
+    console.log(`[IPC] Test IPC call received`);
+    return 'IPC bridge is working!';
   });
 } 
