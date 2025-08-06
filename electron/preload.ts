@@ -1,9 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import logger from './utils/logger';
 
-console.log('🔧 Preload script loaded successfully');
-console.log('🔧 __dirname:', __dirname);
-console.log('🔧 process.type:', process.type);
-console.log('🔧 contextBridge available:', typeof contextBridge !== 'undefined');
+logger.debug('🔧 Preload script loaded successfully');
+logger.debug('🔧 __dirname:', __dirname);
+logger.debug('🔧 process.type:', process.type);
+logger.debug('🔧 contextBridge available:', typeof contextBridge !== 'undefined');
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -67,6 +68,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   executeWorkflow: (workflowData: string) => ipcRenderer.invoke('execute-workflow', workflowData),
   executeWorkflowCommand: (command: string, data: any) => ipcRenderer.invoke('execute-workflow-command', command, data),
+  logEntry: (logEntry: any) => ipcRenderer.invoke('logEntry', logEntry),
 });
 
 // Type definitions for the exposed API
@@ -104,6 +106,7 @@ declare global {
       onDevToolsToggle: (callback: () => void) => void;
       executeWorkflow: (workflowData: string) => Promise<void>;
       executeWorkflowCommand: (command: string, data: any) => Promise<any>;
+      logEntry: (logEntry: any) => Promise<void>;
     };
   }
 } 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserPaneProps } from '../types';
+import logger from '../utils/logger';
 
 const BrowserPane: React.FC<BrowserPaneProps> = ({ 
   className = '', 
@@ -47,19 +48,19 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
   // Listen for browser navigation events
   useEffect(() => {
     const handleBrowserViewNavigated = async (data: { url: string }) => {
-      console.log('[DEBUG] BrowserView navigated:', data.url);
+      logger.debug('BrowserView navigated:', { url: data.url });
       setCurrentURL(data.url);
     };
 
     // Set up event listeners
     if (window.electronAPI?.onBrowserViewNavigated) {
-      console.log('[DEBUG] Setting up browser view navigated listener');
+      logger.debug('Setting up browser view navigated listener');
       window.electronAPI.onBrowserViewNavigated(handleBrowserViewNavigated);
     }
 
     return () => {
       // Cleanup event listeners
-      console.log('[DEBUG] Cleaning up event listeners');
+      logger.debug('Cleaning up event listeners');
       if (window.electronAPI?.removeBrowserViewNavigatedListener) {
         window.electronAPI.removeBrowserViewNavigatedListener();
       }

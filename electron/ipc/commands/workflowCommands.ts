@@ -3,27 +3,30 @@ import { runPythonWorkflow } from '../../utils/pythonRunner';
 import { createModalWindow } from '../../windows/modalWindow';
 import { getBrowserView } from '../../views/browserViewManager';
 import { getMainWindow } from '../../windows/mainWindow';
+import logger from '../../utils/logger';
 
 export function registerWorkflowCommands(): void {
   // Execute workflow with Python
   ipcMain.handle('execute-workflow', async (event, workflowData: string) => {
-    console.log(`[IPC] execute-workflow handler called`);
-    console.log(`[IPC] Workflow data length:`, workflowData.length);
-    console.log(`[IPC] Executing workflow with data:`, workflowData.substring(0, 100) + '...');
+    logger.info('execute-workflow handler called');
+    logger.debug('Workflow data length:', { length: workflowData.length });
+    logger.debug('Executing workflow with data:', { 
+      preview: workflowData.substring(0, 100) + '...' 
+    });
     
     try {
       const result = await runPythonWorkflow({ workflowData });
-      console.log(`[IPC] Workflow executed successfully using new dynamic method`);
+      logger.info('Workflow executed successfully using new dynamic method');
       return result;
     } catch (error) {
-      console.error(`[IPC] Error executing workflow:`, error);
+      logger.error('Error executing workflow:', { error: String(error) });
       throw error;
     }
   });
 
   // Execute workflow command in BrowserView
   ipcMain.handle('execute-workflow-command', async (event, command: string, data: any) => {
-    console.log(`[IPC] Executing workflow command: ${command}`);
+    logger.info('Executing workflow command:', { command });
     
     const browserView = getBrowserView();
     if (!browserView) {
@@ -78,15 +81,15 @@ export function registerWorkflowCommands(): void {
         default:
           throw new Error(`Unknown workflow command: ${command}`);
       }
-    } catch (error) {
-      console.error(`[IPC] Error executing workflow command:`, error);
-      throw error;
-    }
+          } catch (error) {
+        logger.error('Error executing workflow command:', { error: String(error) });
+        throw error;
+      }
   });
 
   // Open create workflow modal
   ipcMain.handle('open-create-workflow-modal', async (event) => {
-    console.log(`[IPC] Opening create workflow modal`);
+    logger.info('Opening create workflow modal');
     const mainWindow = getMainWindow();
     if (mainWindow) {
       createModalWindow(mainWindow);

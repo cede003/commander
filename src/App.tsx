@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import BrowserPane from './components/BrowserPane';
 import URLBar from './components/URLBar';
 import { Workflow } from './types';
+import logger, { createWorkflowLogger, createRunLogger } from './utils/logger';
 
 function App() {
   const [currentWorkflows, setCurrentWorkflows] = useState<Workflow[]>([]);
@@ -28,7 +29,7 @@ function App() {
       // Use system preference as primary, time as secondary
       const shouldBeDark = systemPrefersDark || isNightTime;
       
-      console.log(`🌙 Dark mode detection:`, {
+      logger.debug('Dark mode detection', {
         systemPrefersDark,
         isNightTime,
         currentHour: hour,
@@ -72,10 +73,10 @@ function App() {
           if (indexResponse.ok) {
             const indexData = await indexResponse.json();
             workflowFiles = indexData.workflows.map((w: any) => w.filename);
-            console.log('📋 Loaded workflow list from index file');
+            logger.info('Loaded workflow list from index file');
           }
         } catch (error) {
-          console.warn('⚠️  Could not load workflows index, using fallback list');
+          logger.warn('Could not load workflows index, using fallback list');
         }
 
         // Fallback to hardcoded list if index file not found
@@ -114,7 +115,7 @@ function App() {
               });
               
               loadedCount++;
-              console.log(`✅ Loaded workflow: ${workflowData.metadata.name}`);
+              logger.info('Loaded workflow:', { name: workflowData.metadata.name });
             } else {
               console.warn(`⚠️  Workflow file not found: ${filename}`);
             }
@@ -127,7 +128,7 @@ function App() {
         if (loadedCount === 0) {
           console.warn('⚠️  No workflow files were loaded successfully');
         } else {
-          console.log(`✅ Successfully loaded ${loadedCount} workflow(s)`);
+          logger.info('Successfully loaded workflows:', { count: loadedCount });
         }
 
         setCurrentWorkflows(loadedWorkflows);
@@ -211,22 +212,22 @@ function App() {
         ));
         
         // Test IPC bridge first
-        console.log('🔍 Testing IPC bridge...');
-        console.log('🔍 Checking if executeWorkflow is available:', !!window.electronAPI?.executeWorkflow);
-        console.log('🔍 Available electronAPI methods:', Object.keys(window.electronAPI || {}));
+        logger.debug('Testing IPC bridge...');
+        logger.debug('Checking if executeWorkflow is available', { available: !!window.electronAPI?.executeWorkflow });
+        logger.debug('Available electronAPI methods', { methods: Object.keys(window.electronAPI || {}) });
         
         // Test a simple IPC call first
         if (window.electronAPI?.testIpc) {
           try {
             const testResult = await window.electronAPI.testIpc();
-            console.log('✅ Test IPC call successful:', testResult);
+            logger.info('Test IPC call successful', { result: testResult });
           } catch (error) {
             console.error('❌ Test IPC call failed:', error);
           }
         }
         
         // Debug: Check what's available
-        console.log('🔍 Debugging electronAPI availability:', {
+        logger.debug('Debugging electronAPI availability', {
           hasElectronAPI: !!window.electronAPI,
           electronAPIType: typeof window.electronAPI,
           availableKeys: window.electronAPI ? Object.keys(window.electronAPI) : [],
@@ -235,9 +236,9 @@ function App() {
         });
         
         if (window.electronAPI?.executeWorkflow) {
-          console.log('🚀 Executing workflow:', workflow.name);
+          logger.info('Executing workflow', { workflowName: workflow.name });
           const result = await window.electronAPI.executeWorkflow(workflow.workflowData);
-          console.log('✅ Workflow execution result:', result);
+          logger.info('Workflow execution result', { result });
         } else {
           throw new Error('executeWorkflow API not available');
         }
@@ -247,9 +248,8 @@ function App() {
           w.id === workflowId ? { ...w, isRunning: false } : w
         ));
       } catch (error) {
-        console.error('❌ Failed to execute workflow:', error);
-        console.error('Error details:', {
-          message: error instanceof Error ? error.message : String(error),
+        logger.error('Failed to execute workflow', { 
+          error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           workflow: workflow.name
         });
@@ -273,14 +273,14 @@ function App() {
   };
 
   const testElectronAPI = async () => {
-    console.log('🧪 Testing Electron API availability...');
-    console.log('window.electronAPI:', window.electronAPI);
-    console.log('Available methods:', window.electronAPI ? Object.keys(window.electronAPI) : 'No electronAPI');
+    logger.debug('Testing Electron API availability...');
+    logger.debug('window.electronAPI', { electronAPI: window.electronAPI });
+    logger.debug('Available methods', { methods: window.electronAPI ? Object.keys(window.electronAPI) : 'No electronAPI' });
     
     if (window.electronAPI?.testIpc) {
       try {
         const result = await window.electronAPI.testIpc();
-        console.log('✅ Test IPC result:', result);
+        logger.info('Test IPC result', { result });
         alert('Electron API is working!');
       } catch (error) {
         console.error('❌ Test IPC failed:', error);

@@ -1,6 +1,12 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { CONFIG } from '../constants/config';
+import logger from './logger';
+
+// Function to strip ANSI color codes
+function stripAnsiColors(text: string): string {
+  return text.replace(/\u001b\[[0-9;]*m/g, '');
+}
 
 export interface PythonRunnerOptions {
   workflowData: string;
@@ -16,10 +22,12 @@ export interface PythonRunnerResult {
 export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<PythonRunnerResult> {
   const { workflowData, timeout = CONFIG.workflowTimeout } = options;
   
-  console.log(`[PythonRunner] Starting workflow execution`);
-  console.log(`[PythonRunner] Engine path:`, CONFIG.enginePath);
-  console.log(`[PythonRunner] Workflow data length:`, workflowData.length);
-  console.log(`[PythonRunner] Executing workflow with data:`, workflowData.substring(0, 100) + '...');
+  logger.info('Starting workflow execution');
+  logger.debug('Engine path:', { path: CONFIG.enginePath });
+  logger.debug('Workflow data length:', { length: workflowData.length });
+  logger.debug('Executing workflow with data:', { 
+    preview: workflowData.substring(0, 100) + '...' 
+  });
   
   return new Promise((resolve, reject) => {
     // Try different Python commands in order of preference
@@ -38,7 +46,7 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
     // Try each Python command until one works
     for (const pythonCmd of pythonCommands) {
       try {
-        console.log(`[PythonRunner] Trying Python command: ${pythonCmd}`);
+        logger.debug('Trying Python command:', { command: pythonCmd });
         
         // Enhanced environment with proper PATH
         const env = {
@@ -51,10 +59,11 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
             '/opt/homebrew/bin',
             process.env.PATH
           ].filter(Boolean).join(':'),
-          PYTHONPATH: CONFIG.enginePath
+          PYTHONPATH: CONFIG.enginePath,
+          LOG_NO_COLORS: '1'  // Disable colors in Python output
         };
         
-        console.log(`[PythonRunner] Using PATH: ${env.PATH}`);
+        logger.debug('Using PATH:', { path: env.PATH });
         
         pythonProcess = spawn(
           pythonCmd,
@@ -67,19 +76,19 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
         );
         
         // If we get here, the process started successfully
-        console.log(`[PythonRunner] Successfully started Python process with: ${pythonCmd}`);
-        console.log(`[PythonRunner] Process PID: ${pythonProcess.pid}`);
-        console.log(`[PythonRunner] Working directory: ${CONFIG.enginePath}`);
+        logger.info('Successfully started Python process:', { command: pythonCmd });
+        logger.debug('Process PID:', { pid: pythonProcess.pid });
+        logger.debug('Working directory:', { cwd: CONFIG.enginePath });
         
         // Check if runner.py exists in the working directory
         const fs = require('fs');
         const runnerPath = path.join(CONFIG.enginePath, 'runner.py');
-        console.log(`[PythonRunner] Runner path: ${runnerPath}`);
-        console.log(`[PythonRunner] Runner exists: ${fs.existsSync(runnerPath)}`);
+        logger.debug('Runner path:', { path: runnerPath });
+        logger.debug('Runner exists:', { exists: fs.existsSync(runnerPath) });
         
         break;
       } catch (error) {
-        console.log(`[PythonRunner] Failed to start with ${pythonCmd}:`, error);
+        logger.warn('Failed to start with command:', { command: pythonCmd, error: String(error) });
         lastError = error;
         continue;
       }
@@ -87,7 +96,10 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
     
     if (!pythonProcess) {
       const error = new Error(`Failed to start Python process. Tried: ${pythonCommands.join(', ')}. Last error: ${lastError}`);
-      console.error(`[PythonRunner] ${error.message}`);
+      logger.error('Failed to start Python process:', { 
+        triedCommands: pythonCommands, 
+        lastError: String(lastError) 
+      });
       reject(error);
       return;
     }
@@ -99,13 +111,19 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
     let errorOutput = '';
     
     pythonProcess.stdout.on('data', (data: Buffer) => {
-      output += data.toString();
-      console.log(`[Python] ${data.toString()}`);
+      const outputData = data.toString();
+      output += outputData;
+      // Log Python output with proper formatting (strip color codes)
+      const cleanOutput = stripAnsiColors(outputData.trim());
+      logger.info('Python Output:', { output: cleanOutput });
     });
     
     pythonProcess.stderr.on('data', (data: Buffer) => {
-      errorOutput += data.toString();
-      console.error(`[Python Error] ${data.toString()}`);
+      const errorData = data.toString();
+      errorOutput += errorData;
+      // Log Python errors with proper formatting (strip color codes)
+      const cleanError = stripAnsiColors(errorData.trim());
+      logger.error('Python Error:', { error: cleanError });
     });
     
     // Set timeout
@@ -119,17 +137,20 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
       clearTimeout(timeoutId);
       
       if (code === 0) {
-        console.log(`[PythonRunner] Workflow executed successfully`);
-        resolve({ success: true, output });
+        logger.info('Workflow executed successfully');
+        resolve({
+          success: true,
+          output: stripAnsiColors(output.trim()),
+          errorOutput: stripAnsiColors(errorOutput.trim())
+        });
       } else {
-        console.error(`[PythonRunner] Workflow execution failed with code ${code}`);
-        reject(new Error(`Workflow execution failed: ${errorOutput}`));
+        logger.error('Workflow execution failed:', { exitCode: code });
+        reject(new Error(`Workflow execution failed with exit code ${code}. Error output: ${stripAnsiColors(errorOutput)}`));
       }
     });
     
-    pythonProcess.on('error', (error: Error) => {
-      clearTimeout(timeoutId);
-      console.error(`[PythonRunner] Failed to start Python process:`, error);
+    pythonProcess.on('error', (error: any) => {
+      logger.error('Failed to start Python process:', { error: String(error) });
       reject(error);
     });
   });

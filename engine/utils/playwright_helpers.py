@@ -6,6 +6,15 @@ import inspect
 from typing import Dict, Any, List
 from playwright.async_api import Page
 
+# Import logger
+try:
+    from utils.logger import setup_logger
+    logger = setup_logger('commander.playwright')
+except ImportError:
+    # Fallback if logger not available
+    import logging
+    logger = logging.getLogger('commander.playwright')
+
 
 class PlaywrightHelpers:
     """Essential helpers for Playwright method calls with standardized error handling"""
@@ -48,24 +57,24 @@ class PlaywrightHelpers:
         
         # Execute the method
         try:
-            print(f"🎭 Executing Playwright method: {method_name}")
-            print(f"🎭 Method args: {args}")
-            print(f"🎭 Method kwargs: {kwargs}")
+            logger.debug(f"Executing Playwright method: {method_name}")
+            logger.debug(f"Method args: {args}")
+            logger.debug(f"Method kwargs: {kwargs}")
             
             # Add extra debugging for title method
             if method_name == 'title':
-                print(f"🎭 Page URL before title call: {page.url}")
-                print(f"🎭 Page is closed: {page.is_closed()}")
+                logger.debug(f"Page URL before title call: {page.url}")
+                logger.debug(f"Page is closed: {page.is_closed()}")
                 
                 # Try to get basic page info first
                 try:
                     current_url = page.url
-                    print(f"🎭 Current URL: {current_url}")
+                    logger.debug(f"Current URL: {current_url}")
                 except Exception as url_error:
-                    print(f"❌ Error getting URL: {url_error}")
+                    logger.debug(f"Error getting URL: {url_error}")
             
             result = await method(*args, **kwargs)
-            print(f"✅ Successfully executed {method_name}")
+            logger.debug(f"Successfully executed {method_name}")
             
             return {
                 'method': method_name,
@@ -75,18 +84,18 @@ class PlaywrightHelpers:
             }
             
         except Exception as e:
-            print(f"❌ Error executing {method_name}: {e}")
-            print(f"❌ Error type: {type(e).__name__}")
-            print(f"❌ Error args: {e.args}")
+            logger.debug(f"Error executing {method_name}: {e}")
+            logger.debug(f"Error type: {type(e).__name__}")
+            logger.debug(f"Error args: {e.args}")
             
             # Add extra debugging for title method errors
             if method_name == 'title':
-                print(f"❌ Page state during title error:")
+                logger.debug(f"Page state during title error:")
                 try:
-                    print(f"❌ Page URL: {page.url}")
-                    print(f"❌ Page is closed: {page.is_closed()}")
+                    logger.debug(f"Page URL: {page.url}")
+                    logger.debug(f"Page is closed: {page.is_closed()}")
                 except Exception as debug_error:
-                    print(f"❌ Error getting page debug info: {debug_error}")
+                    logger.debug(f"Error getting page debug info: {debug_error}")
             
             raise
     

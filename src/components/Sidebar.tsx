@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SidebarProps, Workflow } from '../types';
 import Chatbot from './Chatbot';
+import logger from '../utils/logger';
 
 const Sidebar: React.FC<SidebarProps> = ({
   currentWorkflows,
@@ -13,21 +14,23 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'workflows' | 'chatbot'>('workflows');
   const testElectronAPI = async () => {
-    console.log('🧪 Testing Electron API availability...');
-    console.log('window.electronAPI:', window.electronAPI);
-    console.log('Available methods:', window.electronAPI ? Object.keys(window.electronAPI) : 'No electronAPI');
+    logger.debug('Testing Electron API availability');
+    logger.debug('window.electronAPI:', { electronAPI: window.electronAPI });
+    logger.debug('Available methods:', { 
+      methods: window.electronAPI ? Object.keys(window.electronAPI) : 'No electronAPI' 
+    });
     
     if (window.electronAPI?.testIpc) {
       try {
         const result = await window.electronAPI.testIpc();
-        console.log('✅ Test IPC result:', result);
+        logger.info('Test IPC result:', { result });
         alert('Electron API is working!');
       } catch (error) {
-        console.error('❌ Test IPC failed:', error);
+        logger.error('Test IPC failed:', { error: String(error) });
         alert('Electron API test failed: ' + error);
       }
     } else {
-      console.error('❌ testIpc not available');
+      logger.error('testIpc not available');
       alert('testIpc not available');
     }
   };

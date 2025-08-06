@@ -1,13 +1,14 @@
 import { BrowserWindow, app } from 'electron';
 import { CONFIG } from '../constants/config';
+import logger from '../utils/logger';
 import path from 'path';
 
 let mainWindowInstance: BrowserWindow | undefined;
 
 export function createMainWindow(): BrowserWindow {
-  console.log('🔧 Creating main window with preload path:', CONFIG.preloadPath);
-  console.log('🔧 __dirname:', __dirname);
-  console.log('🔧 File exists:', require('fs').existsSync(CONFIG.preloadPath));
+  logger.debug('🔧 Creating main window with preload path:', CONFIG.preloadPath);
+  logger.debug('🔧 __dirname:', __dirname);
+  logger.debug('🔧 File exists:', require('fs').existsSync(CONFIG.preloadPath));
   
   const mainWindow = new BrowserWindow(CONFIG.mainWindow);
 
@@ -16,13 +17,13 @@ export function createMainWindow(): BrowserWindow {
 
   // Load the app
   if (CONFIG.isDev) {
-    console.log('Loading app in development mode:', CONFIG.isDev);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('app.isPackaged:', app.isPackaged);
-    console.log('Loading URL:', CONFIG.devServerUrl);
+    logger.debug('Loading app in development mode:', CONFIG.isDev);
+    logger.debug('NODE_ENV:', process.env.NODE_ENV);
+    logger.debug('app.isPackaged:', app.isPackaged);
+    logger.debug('Loading URL:', CONFIG.devServerUrl);
     mainWindow.loadURL(CONFIG.devServerUrl);
   } else {
-    console.log('Loading app in production mode');
+    logger.debug('Loading app in production mode');
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
@@ -38,7 +39,7 @@ export function createMainWindow(): BrowserWindow {
 
   // Handle window focus
   mainWindow.on('focus', () => {
-    console.log('[DEBUG] Window focused, refreshing BrowserView bounds');
+    logger.debug('Window focused, refreshing BrowserView bounds');
     // This will be handled by the browser view manager
   });
 

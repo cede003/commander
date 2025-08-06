@@ -7,12 +7,19 @@
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
     "dev:electron": "wait-on tcp:5174 && electron . --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1",
+    "dev:verbose": "LOG_LEVEL=debug concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:debug": "LOG_LEVEL=debug concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:info": "LOG_LEVEL=info concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "build": "npm run build:vite && npm run build:electron && npm run copy:engine",
     "build:vite": "vite build",
     "build:electron": "tsc -p electron/tsconfig.json",
     "copy:engine": "cp -r engine dist/",
     "dist": "npm run build && electron-builder",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "logs:clear": "rm -rf logs/*",
+    "logs:view": "tail -f logs/combined.log",
+    "test:logging": "node test-logging.js",
+    "test:python-logging": "python test-python-logging.py"
   },
   "keywords": [
     "electron",
@@ -42,7 +49,8 @@
     "electron-context-menu": "^4.1.0",
     "langchain": "^0.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "winston": "^3.17.0"
   },
   "build": {
     "appId": "com.commander.app",

@@ -15,6 +15,15 @@ from registry import register
 from registry.central_spec import FUNCTION_SPECS, get_required_inputs
 from .helpers import auto_action
 
+# Import logger
+try:
+    from utils.logger import setup_logger
+    logger = setup_logger('commander.browser.actions')
+except ImportError:
+    # Fallback if logger not available
+    import logging
+    logger = logging.getLogger('commander.browser.actions')
+
 
 def register_playwright_actions():
     """Dynamically register all Playwright actions from central spec"""
@@ -33,7 +42,7 @@ def register_playwright_actions():
         # Register the action
         register("browser", "action", method)(create_action(playwright_method))
         
-        print(f"🎭 Registered Playwright action: {method} -> {playwright_method}")
+        logger.debug(f"Registered Playwright action: {method} -> {playwright_method}")
 
 
 # Register all Playwright actions on module import

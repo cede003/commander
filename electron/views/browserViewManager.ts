@@ -2,6 +2,7 @@ import { BrowserView, BrowserWindow, ipcMain } from 'electron';
 import { CONFIG } from '../constants/config';
 import { calculateBrowserViewBounds, updateBrowserViewBounds, getBoundsFromClient, Bounds } from '../utils/bounds';
 import { setupBrowserViewContextMenu } from '../utils/contextMenu';
+import logger from '../utils/logger';
 import path from 'path';
 
 let browserView: BrowserView | undefined;
@@ -9,7 +10,7 @@ let sidebarVisible = true;
 let devToolsOpen = false;
 
 export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView {
-  console.log(`[DEBUG] Creating new BrowserView with URL: ${url}`);
+  logger.debug('Creating new BrowserView with URL:', { url });
   
   // Create new BrowserView with preload script
   browserView = new BrowserView({
@@ -33,8 +34,8 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
   // Set up context menu
   setupBrowserViewContextMenu(browserView);
   
-  console.log(`[DEBUG] BrowserView created and added to main window`);
-  console.log(`[DEBUG] BrowserView webContents.id: ${browserView.webContents.id}`);
+  logger.debug('BrowserView created and added to main window');
+  logger.debug('BrowserView webContents.id:', { id: browserView.webContents.id });
   
   return browserView;
 }
@@ -51,7 +52,7 @@ export function updateBrowserViewBoundsFromClient(bounds: Bounds): void {
   if (!browserView) return;
   
   const adjustedBounds = getBoundsFromClient(bounds);
-  console.log(`[DEBUG] Using dynamic bounds from React:`, adjustedBounds);
+  logger.debug('Using dynamic bounds from React:', adjustedBounds);
   updateBrowserViewBounds(browserView, adjustedBounds);
 }
 
@@ -59,7 +60,11 @@ export function updateBrowserViewBoundsFromWindow(mainWindow: BrowserWindow): vo
   if (!browserView) return;
   
   const bounds = calculateBrowserViewBounds(mainWindow, sidebarVisible, devToolsOpen);
-  console.log(`[DEBUG] Setting BrowserView bounds (fallback):`, bounds, `DevTools open: ${devToolsOpen}, Sidebar visible: ${sidebarVisible}`);
+  logger.debug('Setting BrowserView bounds (fallback):', { 
+    bounds, 
+    devToolsOpen, 
+    sidebarVisible 
+  });
   updateBrowserViewBounds(browserView, bounds);
 }
 
@@ -73,12 +78,12 @@ export function setDevToolsOpen(open: boolean): void {
 
 export function loadURLInBrowserView(url: string): void {
   if (!browserView) {
-    console.log(`[IPC] Initializing BrowserView with default URL`);
+    logger.info('Initializing BrowserView with default URL');
     createBrowserView(url);
     return;
   }
 
-  console.log(`[IPC] Loading URL in BrowserView: ${url}`);
+  logger.info('Loading URL in BrowserView:', { url });
   browserView.webContents.loadURL(url);
 }
 
@@ -91,28 +96,32 @@ export function focusBrowserView(): void {
 function setupBrowserViewEvents(browserView: BrowserView): void {
   // BrowserView loading events
   browserView.webContents.on('did-start-loading', () => {
-    console.log(`[DEBUG] BrowserView started loading: ${browserView.webContents.getURL()}`);
+    logger.debug('BrowserView started loading:', { url: browserView.webContents.getURL() });
     mainWindow?.webContents.send('browser-view-loading-state-changed', { isLoading: true });
   });
 
   browserView.webContents.on('did-stop-loading', () => {
-    console.log(`[DEBUG] BrowserView finished loading: ${browserView.webContents.getURL()}`);
+    logger.debug('BrowserView finished loading:', { url: browserView.webContents.getURL() });
     mainWindow?.webContents.send('browser-view-loading-state-changed', { isLoading: false });
     mainWindow?.webContents.send('browser-view-loaded', {});
   });
 
   browserView.webContents.on('did-navigate', (event, navigationUrl) => {
-    console.log(`[DEBUG] BrowserView navigated to: ${navigationUrl}`);
+    logger.debug('BrowserView navigated to:', { url: navigationUrl });
     mainWindow?.webContents.send('browser-view-navigated', { url: navigationUrl });
   });
 
   browserView.webContents.on('page-title-updated', (event, title) => {
-    console.log(`[DEBUG] BrowserView title changed: ${title}`);
+    logger.debug('BrowserView title changed:', { title });
     mainWindow?.webContents.send('browser-view-title-changed', { title });
   });
 
   browserView.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    console.error(`[DEBUG] BrowserView failed to load: ${validatedURL}, Error: ${errorDescription} (${errorCode})`);
+    logger.error('BrowserView failed to load:', { 
+      url: validatedURL, 
+      errorCode, 
+      errorDescription 
+    });
     mainWindow?.webContents.send('browser-view-load-failed', { 
       error: { 
         errorCode, 

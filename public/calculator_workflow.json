@@ -101,17 +101,6 @@
         "result": "string"
       }
     },
-
-    "show_result": {
-      "id": "show_result",
-      "domain": "browser",
-      "type": "notification",
-      "subtype": "print_result",
-      "inputs": {
-        "result_key": "get_calculation_result",
-        "message": "Calculation result"
-      }
-    },
     "get_page_title": {
       "id": "get_page_title",
       "domain": "browser",
@@ -165,10 +154,6 @@
     },
     {
       "from": "get_calculation_result",
-      "to": "show_result"
-    },
-    {
-      "from": "show_result",
       "to": "get_page_title"
     },
     {

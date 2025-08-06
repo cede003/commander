@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { CONFIG } from '../constants/config';
+import logger from '../utils/logger';
 import path from 'path';
 
 let modalWindow: BrowserWindow | undefined;
@@ -19,10 +20,10 @@ export function createModalWindow(parentWindow: BrowserWindow): BrowserWindow {
 
   // Load the modal content
   if (CONFIG.isDev) {
-    console.log('Loading modal URL:', CONFIG.modalUrl);
+    logger.debug('Loading modal URL:', CONFIG.modalUrl);
     modalWindow.loadURL(CONFIG.modalUrl);
   } else {
-    console.log('Loading modal file with hash');
+    logger.debug('Loading modal file with hash');
     modalWindow.loadFile(path.join(__dirname, '../renderer/index.html'), {
       hash: '/modal'
     });

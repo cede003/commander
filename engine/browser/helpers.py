@@ -14,10 +14,14 @@ if engine_path not in sys.path:
 try:
     from utils.playwright_helpers import PlaywrightHelpers
     from registry.central_spec import get_required_inputs
+    from utils.logger import setup_logger
+    logger = setup_logger('commander.browser')
 except ImportError:
     # Fallback for when run from engine directory
     from ..utils.playwright_helpers import PlaywrightHelpers
     from ..registry.central_spec import get_required_inputs
+    from ..utils.logger import setup_logger
+    logger = setup_logger('commander.browser')
 
 
 async def auto_action(inputs: Dict, context: Dict, method: str) -> Dict[str, Any]:
@@ -67,13 +71,13 @@ async def auto_notification(inputs: Dict, context: Dict, method: str) -> Dict[st
         
         # Log with appropriate level
         if level == 'error':
-            print(f"❌ {message}")
+            logger.error(message)
         elif level == 'warning':
-            print(f"⚠️  {message}")
+            logger.warning(message)
         elif level == 'success':
-            print(f"✅ {message}")
+            logger.info(message)  # Use info for success messages
         else:
-            print(f"ℹ️  {message}")
+            logger.info(message)
         
         return {
             'message': message,
@@ -82,7 +86,7 @@ async def auto_notification(inputs: Dict, context: Dict, method: str) -> Dict[st
             'method_type': 'console'
         }
     
-    elif method == "print_result":
+    elif method == "console_result":
         result_key = inputs.get('result_key', '')
         message = inputs.get('message', 'Result')
         
@@ -91,9 +95,9 @@ async def auto_notification(inputs: Dict, context: Dict, method: str) -> Dict[st
         
         if result_key and result_key in results:
             value = results[result_key]
-            print(f"📊 {message}: {value}")
+            logger.info(f"{message}: {value}")
         else:
-            print(f"📊 {message}: {results}")
+            logger.info(f"{message}: {results}")
         
         return {
             'message': message,

@@ -8,36 +8,37 @@ import {
 } from '../../views/browserViewManager';
 import { Bounds } from '../../utils/bounds';
 import { getMainWindow } from '../../windows/mainWindow';
+import logger from '../../utils/logger';
 
 export function registerBrowserCommands(): void {
   // Initialize BrowserView
   ipcMain.handle('initialize-browser-view', async (event) => {
-    console.log(`[IPC] Initializing BrowserView`);
+    logger.info('Initializing BrowserView');
     // The BrowserView is already created in main.ts, so we just need to return success
     return { success: true };
   });
 
   // Load URL in BrowserView
   ipcMain.handle('load-url', async (event, url: string) => {
-    console.log(`[IPC] Loading URL: ${url}`);
+    logger.info('Loading URL:', { url });
     loadURLInBrowserView(url);
     return { success: true };
   });
 
   // Load URL in BrowserView (alternative method)
   ipcMain.handle('load-url-in-browser-view', async (event, url: string) => {
-    console.log(`[IPC] Loading URL in BrowserView: ${url}`);
+    logger.info('Loading URL in BrowserView:', { url });
     loadURLInBrowserView(url);
     return { success: true };
   });
 
   // Get current URL from BrowserView
   ipcMain.handle('get-current-url', async (event) => {
-    console.log(`[IPC] Getting current URL`);
+    logger.info('Getting current URL');
     const browserView = getBrowserView();
     if (browserView) {
       const url = browserView.webContents.getURL();
-      console.log(`[IPC] Current URL from BrowserView: ${url}`);
+      logger.info('Current URL from BrowserView:', { url });
       return url; // Return just the URL string, not an object
     }
     return ''; // Return empty string if no BrowserView
@@ -45,7 +46,7 @@ export function registerBrowserCommands(): void {
 
   // Navigate BrowserView
   ipcMain.handle('navigate', async (event, direction: 'back' | 'forward') => {
-    console.log(`[IPC] Navigating ${direction}`);
+    logger.info('Navigating:', { direction });
     const browserView = getBrowserView();
     if (browserView) {
       if (direction === 'back' && browserView.webContents.canGoBack()) {
@@ -59,21 +60,21 @@ export function registerBrowserCommands(): void {
 
   // Focus BrowserView
   ipcMain.handle('focus-browser-view', async (event) => {
-    console.log(`[IPC] Focusing BrowserView`);
+    logger.info('Focusing BrowserView');
     focusBrowserView();
     return { success: true };
   });
 
   // Update BrowserView bounds from client
   ipcMain.handle('update-browser-view-bounds-from-client', async (event, bounds: Bounds) => {
-    console.log(`[IPC] Updating BrowserView bounds from client:`, bounds);
+    logger.info('Updating BrowserView bounds from client:', bounds);
     
     // Check if we're currently resizing
     const mainWindow = getMainWindow();
     if (mainWindow && (mainWindow as any).isResizing && typeof (mainWindow as any).isResizing === 'function') {
       const isResizing = (mainWindow as any).isResizing();
       if (isResizing) {
-        console.log(`[IPC] Skipping bounds update during resize`);
+        logger.info('Skipping bounds update during resize');
         return { success: true, skipped: true };
       }
     }
@@ -90,14 +91,14 @@ export function registerBrowserCommands(): void {
 
   // Update sidebar visibility
   ipcMain.handle('update-sidebar-visibility', async (event, visible: boolean) => {
-    console.log(`[IPC] Updating sidebar visibility: ${visible}`);
+    logger.info('Updating sidebar visibility:', { visible });
     setSidebarVisible(visible);
     return { success: true };
   });
 
   // Test IPC bridge
   ipcMain.handle('test-ipc', async (event) => {
-    console.log(`[IPC] Test IPC call received`);
-    return 'IPC bridge is working!';
+    logger.info('Test IPC call received');
+    return { success: true, message: 'IPC bridge is working!' };
   });
 } 

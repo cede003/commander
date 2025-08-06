@@ -1,8 +1,9 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { CONFIG } from './constants/config';
 import { createMainWindow } from './windows/mainWindow';
 import { createBrowserView, setMainWindow, updateBrowserViewBoundsFromWindow, updateBrowserViewBoundsFromClient } from './views/browserViewManager';
 import { setupIpcHandlers } from './ipc/handlers';
+import logger from './utils/logger';
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -10,23 +11,23 @@ let mainWindow: BrowserWindow | undefined;
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  console.log('🚀 Electron app is ready');
-  console.log('🔧 CONFIG:', CONFIG);
-  console.log('🔧 CONFIG.mainWindow:', CONFIG.mainWindow);
-  console.log('🔧 CONFIG.preloadPath:', CONFIG.preloadPath);
+  logger.info('🚀 Electron app is ready');
+  logger.debug('🔧 CONFIG:', CONFIG);
+  logger.debug('🔧 CONFIG.mainWindow:', CONFIG.mainWindow);
+  logger.debug('🔧 CONFIG.preloadPath:', CONFIG.preloadPath);
   
   // Enable remote debugging
   app.commandLine.appendSwitch('remote-debugging-port', CONFIG.remoteDebuggingPort.toString());
   app.commandLine.appendSwitch('remote-debugging-address', CONFIG.remoteDebuggingAddress);
+  
+  // Set up IPC handlers FIRST - before creating any windows
+  setupIpcHandlers();
   
   // Create the main window
   mainWindow = createMainWindow();
   
   // Set the main window reference for other modules
   setMainWindow(mainWindow);
-  
-  // Set up IPC handlers
-  setupIpcHandlers();
   
   // Create and add BrowserView to the main window
   const browserView = createBrowserView();
@@ -35,7 +36,7 @@ app.whenReady().then(() => {
   // Set up window event listeners
   setupWindowEventListeners(mainWindow);
   
-  console.log('✅ Main window and BrowserView created successfully');
+  logger.info('✅ Main window and BrowserView created successfully');
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -51,6 +52,9 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
+    // Set up IPC handlers first
+    setupIpcHandlers();
+    
     mainWindow = createMainWindow();
     setMainWindow(mainWindow);
     
@@ -69,7 +73,7 @@ function setupWindowEventListeners(window: BrowserWindow): void {
   
   // Handle window resize
   window.on('resize', () => {
-    console.log('[DEBUG] Window resized, updating BrowserView bounds');
+    logger.debug('Window resized, updating BrowserView bounds');
     
     // Set resizing flag to prevent client bounds updates
     isResizing = true;
@@ -78,31 +82,31 @@ function setupWindowEventListeners(window: BrowserWindow): void {
     }
     resizeTimeout = setTimeout(() => {
       isResizing = false;
-      console.log('[DEBUG] Resize complete, allowing client bounds updates');
+      logger.debug('Resize complete, allowing client bounds updates');
     }, 100); // Wait 100ms after resize stops
     
     // Only update bounds if not triggered by focus
     if (!isFocusTriggeredResize) {
       // If we have client bounds, use them instead of fallback
       if (lastClientBounds) {
-        console.log('[DEBUG] Using last known client bounds for resize');
+        logger.debug('Using last known client bounds for resize');
         updateBrowserViewBoundsFromClient(lastClientBounds);
       } else {
-        console.log('[DEBUG] No client bounds available, using fallback');
+        logger.debug('No client bounds available, using fallback');
         updateBrowserViewBoundsFromWindow(window);
       }
     } else {
-      console.log('[DEBUG] Skipping bounds update for focus-triggered resize');
+      logger.debug('Skipping bounds update for focus-triggered resize');
       isFocusTriggeredResize = false;
     }
   });
   
   // Handle window move
   window.on('move', () => {
-    console.log('[DEBUG] Window moved, updating BrowserView bounds');
+    logger.debug('Window moved, updating BrowserView bounds');
     // Use client bounds if available, otherwise fallback
     if (lastClientBounds) {
-      console.log('[DEBUG] Using last known client bounds for move');
+      logger.debug('Using last known client bounds for move');
       updateBrowserViewBoundsFromClient(lastClientBounds);
     } else {
       updateBrowserViewBoundsFromWindow(window);
@@ -111,7 +115,7 @@ function setupWindowEventListeners(window: BrowserWindow): void {
   
   // Handle window focus - don't override client bounds
   window.on('focus', () => {
-    console.log('[DEBUG] Window focused');
+    logger.debug('Window focused');
     // Mark that the next resize might be focus-triggered
     isFocusTriggeredResize = true;
     // Removed the bounds update to preserve client-provided bounds
@@ -119,12 +123,12 @@ function setupWindowEventListeners(window: BrowserWindow): void {
   
   // Handle window blur
   window.on('blur', () => {
-    console.log('[DEBUG] Window blurred');
+    logger.debug('Window blurred');
   });
   
   // Handle window close
   window.on('closed', () => {
-    console.log('[DEBUG] Window closed');
+    logger.debug('Window closed');
     mainWindow = undefined;
   });
   
@@ -133,9 +137,9 @@ function setupWindowEventListeners(window: BrowserWindow): void {
     // Only update client bounds if not currently resizing
     if (!isResizing) {
       lastClientBounds = bounds;
-      console.log('[DEBUG] Updated last client bounds:', bounds);
+      logger.debug('Updated last client bounds:', bounds);
     } else {
-      console.log('[DEBUG] Skipping client bounds update during resize');
+      logger.debug('Skipping client bounds update during resize');
     }
   };
   
