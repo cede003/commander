@@ -76,10 +76,13 @@ class PlaywrightHelpers:
             result = await method(*args, **kwargs)
             logger.debug(f"Successfully executed {method_name}")
             
+            # Serialize result to ensure it's JSON-compatible
+            serialized_result = PlaywrightHelpers._serialize_result(result)
+            
             return {
                 'method': method_name,
                 'success': True,
-                'result': result,
+                'result': serialized_result,
                 'method_type': 'playwright'
             }
             
@@ -100,6 +103,85 @@ class PlaywrightHelpers:
             raise
     
     @staticmethod
+    def _serialize_result(result: Any) -> Any:
+        """Serialize result to ensure it's JSON-compatible"""
+        if result is None:
+            return None
+        
+        # Handle Playwright ElementHandle objects
+        if hasattr(result, 'bounding_box') and hasattr(result, 'inner_text'):
+            # This is likely an ElementHandle
+            try:
+                return {
+                    'type': 'element_handle',
+                    'tag_name': result.tag_name if hasattr(result, 'tag_name') else None,
+                    'inner_text': result.inner_text() if hasattr(result, 'inner_text') else None,
+                    'text_content': result.text_content() if hasattr(result, 'text_content') else None,
+                    'get_attribute': {attr: result.get_attribute(attr) for attr in ['id', 'class', 'name', 'type'] if result.get_attribute(attr)} if hasattr(result, 'get_attribute') else {},
+                    'bounding_box': result.bounding_box() if hasattr(result, 'bounding_box') else None
+                }
+            except Exception as e:
+                return {
+                    'type': 'element_handle',
+                    'error': f"Failed to serialize element: {str(e)}"
+                }
+        
+        # Handle Playwright Locator objects
+        if hasattr(result, 'count') and hasattr(result, 'first'):
+            try:
+                return {
+                    'type': 'locator',
+                    'count': result.count() if hasattr(result, 'count') else None,
+                    'description': str(result)
+                }
+            except Exception as e:
+                return {
+                    'type': 'locator',
+                    'error': f"Failed to serialize locator: {str(e)}"
+                }
+        
+        # Handle Response objects from Playwright
+        if hasattr(result, 'url') and hasattr(result, 'status'):
+            # This is likely a Response object
+            return {
+                'type': 'response',
+                'url': str(result.url) if hasattr(result, 'url') else None,
+                'status': result.status if hasattr(result, 'status') else None,
+                'status_text': result.status_text if hasattr(result, 'status_text') else None,
+                'headers': dict(result.headers) if hasattr(result, 'headers') else None
+            }
+        
+        # Handle Page objects
+        if hasattr(result, 'url') and hasattr(result, 'title'):
+            return {
+                'type': 'page',
+                'url': result.url if hasattr(result, 'url') else None,
+                'title': result.title() if hasattr(result, 'title') else None
+            }
+        
+        # Handle lists that might contain ElementHandles
+        if isinstance(result, list):
+            return [PlaywrightHelpers._serialize_result(item) for item in result]
+        
+        # Handle dictionaries that might contain ElementHandles
+        if isinstance(result, dict):
+            return {key: PlaywrightHelpers._serialize_result(value) for key, value in result.items()}
+        
+        # Handle other non-serializable objects
+        if hasattr(result, '__dict__'):
+            try:
+                return str(result)
+            except:
+                return f"<{type(result).__name__} object>"
+        
+        # Handle basic types
+        if isinstance(result, (str, int, float, bool)):
+            return result
+        
+        # Fallback to string representation
+        return str(result)
+    
+    @staticmethod
     def get_session_page(context: Dict) -> Page:
         """Get the page from session context with error handling"""
         session = context.get('session')
@@ -114,11 +196,30 @@ class PlaywrightHelpers:
     
     @staticmethod
     def validate_required_inputs(inputs: Dict, required_fields: List[str]) -> None:
-        """Validate that required input fields are present"""
+        """Validate that required input fields are present with helpful error messages"""
         missing_fields = []
         for field in required_fields:
             if field not in inputs or inputs[field] is None:
                 missing_fields.append(field)
         
         if missing_fields:
-            raise ValueError(f"Required fields missing: {', '.join(missing_fields)}") 
+            # Create a more helpful error message
+            if len(missing_fields) == 1:
+                field = missing_fields[0]
+                error_msg = f"Missing required parameter '{field}'"
+                
+                # Add helpful suggestions for common parameters
+                if field == 'key':
+                    error_msg += ". For press() action, specify a key like 'Enter', 'Tab', 'Escape', etc."
+                elif field == 'selector':
+                    error_msg += ". For browser actions, specify a CSS selector like '#button', '.class', etc."
+                elif field == 'url':
+                    error_msg += ". For navigation actions, specify a URL like 'https://example.com'"
+                elif field == 'text':
+                    error_msg += ". For text input actions, specify the text to type"
+                elif field == 'value':
+                    error_msg += ". For form actions, specify the value to set"
+            else:
+                error_msg = f"Missing required parameters: {', '.join(missing_fields)}"
+            
+            raise ValueError(error_msg) 

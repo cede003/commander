@@ -19,14 +19,30 @@ class BrowserSession:
         """Initialize the browser session"""
         self.playwright = await async_playwright().start()
         
-        # Try to connect to existing browser with retries
-        max_retries = 3
+        # Try to connect to existing browser with shorter timeouts and better error handling
+        max_retries = 2  # Reduced from 3 to 2 for faster fallback
         for attempt in range(max_retries):
             try:
                 print(f"🔗 Attempting to connect to existing browser instance via CDP... (attempt {attempt + 1}/{max_retries})")
-                self.browser = await self.playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
-                print("✅ Connected to Electron browser instance")
+                
+                # Use a shorter timeout for the connection attempt
+                self.browser = await asyncio.wait_for(
+                    self.playwright.chromium.connect_over_cdp("http://127.0.0.1:9222"),
+                    timeout=3.0  # Reduced from 5.0 to 3.0 seconds
+                )
+                print("Connected to Electron browser instance")
                 break
+            except asyncio.TimeoutError:
+                print(f"⚠️  Connection attempt {attempt + 1} timed out after 3 seconds")
+                if attempt + 1 >= max_retries:
+                    print("🆕 All connection attempts failed, launching new browser instance")
+                    self.browser = await self.playwright.chromium.launch(headless=False)
+                    self.page = await self.browser.new_page()
+                    print("📄 Created new page")
+                    return
+                else:
+                    print(f"Retrying in 0.5 seconds...")
+                    await asyncio.sleep(0.5)
             except Exception as e:
                 print(f"⚠️  Connection attempt {attempt + 1} failed: {e}")
                 if attempt + 1 >= max_retries:
@@ -36,15 +52,17 @@ class BrowserSession:
                     print("📄 Created new page")
                     return
                 else:
-                    print(f"🔄 Retrying in 2 seconds...")
-                    await asyncio.sleep(2)
+                    print(f"Retrying in 0.5 seconds...")
+                    await asyncio.sleep(0.5)
         
         try:
-            print("🔍 Searching for available pages...")
+            print("Searching for available pages...")
+            page_found = False
             for context in self.browser.contexts:
                 for page in context.pages:
                     try:
-                        page_title = await page.title()
+                        # Use a shorter timeout for page operations
+                        page_title = await asyncio.wait_for(page.title(), timeout=1.0)  # Reduced from 2.0 to 1.0
                         page_url = page.url
                         print(f"[CDP] Found page: '{page_title}' - {page_url}")
                         
@@ -62,26 +80,39 @@ class BrowserSession:
                             # The BrowserView page should have a specific webContents.id
                             # We'll use the first non-DevTools page as the target
                             self.page = page
-                            page_title = await self.page.title()
-                            print(f"🎯 Selected page (BrowserView content): '{page_title}' - {self.page.url}")
-                            print("✅ This is the main browser (BrowserView content)")
-                            return
+                            page_title = await asyncio.wait_for(self.page.title(), timeout=1.0)
+                            print(f"Selected page (BrowserView content): '{page_title}' - {self.page.url}")
+                            print("This is the main browser (BrowserView content)")
+                            page_found = True
+                            break
+                    except asyncio.TimeoutError:
+                        print(f"⚠️  Timeout checking page (navigation in progress?): {page.url}")
+                        # Continue checking other pages even if one fails
+                        continue
                     except Exception as e:
                         print(f"⚠️  Error checking page (navigation in progress?): {e}")
                         # Continue checking other pages even if one fails
                         continue
+                
+                if page_found:
+                    break
             
-            print("❌ No suitable page found in Electron browser.")
-            print("📋 Available pages:")
-            for context in self.browser.contexts:
-                for page in context.pages:
-                    try:
-                        page_title = await page.title()
-                        page_url = page.url
-                        print(f"  - '{page_title}' - {page_url}")
-                    except Exception as e:
-                        print(f"  - Error getting page info: {e}")
-            raise Exception("No suitable page found in Electron browser.")
+            if not page_found:
+                print("No suitable page found in Electron browser.")
+                print("📋 Available pages:")
+                for context in self.browser.contexts:
+                    for page in context.pages:
+                        try:
+                            page_title = await asyncio.wait_for(page.title(), timeout=1.0)
+                            page_url = page.url
+                            print(f"  - '{page_title}' - {page_url}")
+                        except Exception as e:
+                            print(f"  - Error getting page info: {e}")
+                
+                # If no suitable page found, create a new one
+                print("🆕 Creating new page in existing browser")
+                self.page = await self.browser.new_page()
+                print("📄 Created new page")
             
         except Exception as e:
             print(f"⚠️  Could not connect to existing browser: {e}")

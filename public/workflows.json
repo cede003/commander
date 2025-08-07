@@ -39,6 +39,26 @@
       "filename": "calculator_test_workflow.json",
       "name": "Calculator Test Workflow",
       "description": "Test calculator workflow with unique logging to verify caching is resolved"
+    },
+    {
+      "filename": "element_handle_demo_workflow.json",
+      "name": "ElementHandle Serialization Demo",
+      "description": "Demonstrates handling of ElementHandle serialization errors"
+    },
+    {
+      "filename": "error_handling_demo_workflow.json",
+      "name": "Error Handling Demo",
+      "description": "Demonstrates various error handling strategies"
+    },
+    {
+      "filename": "press_error_demo_workflow.json",
+      "name": "Press Error Demo",
+      "description": "Demonstrates handling of press() missing key parameter error"
+    },
+    {
+      "filename": "linkedIn_easy_apply_workflow.json",
+      "name": "LinkedIn Easy Apply Workflow",
+      "description": "Clicks Easy Apply and checks form field completeness"
     }
   ]
 } 

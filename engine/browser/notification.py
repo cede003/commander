@@ -21,6 +21,7 @@ def register_playwright_notifications():
     
     browser_notifications = FUNCTION_SPECS.get("browser", {}).get("notification", {})
     
+    registered_count = 0
     for method, spec in browser_notifications.items():
         # Create the notification function dynamically with proper closure
         def create_notification(method):
@@ -30,7 +31,17 @@ def register_playwright_notifications():
         
         register("browser", "notification", method)(create_notification(method))
         
-        print(f"🔔 Registered notification: {method}")
+        # Only log in debug mode
+        import logging
+        logger = logging.getLogger('commander.browser.notifications')
+        logger.debug(f"🔔 Registered notification: {method}")
+        registered_count += 1
+    
+    # Log summary at info level (only if we actually registered something)
+    import logging
+    logger = logging.getLogger('commander.browser.notifications')
+    if registered_count > 0:
+        logger.info(f"Registered {registered_count} notifications")
 
 
 # Register all notification functions

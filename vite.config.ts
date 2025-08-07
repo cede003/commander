@@ -5,6 +5,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  publicDir: 'public',
   build: {
     outDir: 'dist/renderer',
     emptyOutDir: true,

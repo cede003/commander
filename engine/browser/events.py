@@ -20,6 +20,7 @@ def register_playwright_events():
     """Dynamically register all Playwright events from central spec"""
     browser_events = FUNCTION_SPECS.get("browser", {}).get("event", {})
     
+    registered_count = 0
     for method, spec in browser_events.items():
         # Get Playwright method from spec
         playwright_method = spec.get("playwright_method", method)
@@ -33,7 +34,18 @@ def register_playwright_events():
         # Register the event
         register("browser", "event", method)(create_event(playwright_method))
         
-        print(f"⏳ Registered Playwright event: {method} -> {playwright_method}")
+        # Only log in debug mode
+        import logging
+        logger = logging.getLogger('commander.browser.events')
+        # Only log individual registrations in debug mode
+        logger.debug(f"Registered Playwright event: {method} -> {playwright_method}")
+        registered_count += 1
+    
+    # Log summary at info level (only if we actually registered something)
+    import logging
+    logger = logging.getLogger('commander.browser.events')
+    if registered_count > 0:
+        logger.info(f"Registered {registered_count} Playwright events")
 
 
 # Register all Playwright events on module import
@@ -53,9 +65,9 @@ async def wait_for_text(inputs: Dict, context: Dict) -> Dict[str, Any]:
         text = inputs['text']
         timeout = inputs.get('timeout', 30000)
         
-        print(f"⏳ Waiting for text: {text}")
+        print(f"Waiting for text: {text}")
         await page.wait_for_function(f'document.body.innerText.includes("{text}")', timeout=timeout)
-        print(f"✅ Text appeared: {text}")
+        print(f"Text appeared: {text}")
         
         return {
             'text': text,
@@ -65,7 +77,7 @@ async def wait_for_text(inputs: Dict, context: Dict) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        print(f"❌ Error waiting for text: {e}")
+        print(f"Error waiting for text: {e}")
         raise
 
 
@@ -80,9 +92,9 @@ async def wait_for_time(inputs: Dict, context: Dict) -> Dict[str, Any]:
         raise ValueError("Positive seconds value is required for wait_for_time node")
     
     try:
-        print(f"⏳ Waiting for {seconds} second(s)...")
+        print(f"Waiting for {seconds} second(s)...")
         await asyncio.sleep(seconds)
-        print(f"✅ Waited for {seconds} second(s)")
+        print(f"Waited for {seconds} second(s)")
         
         return {
             'seconds': seconds,
@@ -91,7 +103,7 @@ async def wait_for_time(inputs: Dict, context: Dict) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        print(f"❌ Error waiting for time: {e}")
+        print(f"Error waiting for time: {e}")
         raise
 
 
@@ -126,9 +138,9 @@ async def wait_for_network_idle(inputs: Dict, context: Dict) -> Dict[str, Any]:
     timeout = inputs.get('timeout', 30000)
     
     try:
-        print(f"⏳ Waiting for network to be idle...")
+        print(f"Waiting for network to be idle...")
         await page.wait_for_load_state("networkidle", timeout=timeout)
-        print(f"✅ Network is idle")
+        print(f"Network is idle")
         
         return {
             'timeout': timeout,
@@ -137,5 +149,5 @@ async def wait_for_network_idle(inputs: Dict, context: Dict) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        print(f"❌ Error waiting for network idle: {e}")
+        print(f"Error waiting for network idle: {e}")
         raise 

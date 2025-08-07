@@ -21,7 +21,7 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
       allowRunningInsecureContent: true,
       sandbox: false,
       experimentalFeatures: true,
-      preload: path.join(__dirname, '../../browserViewPreload.js') // Fixed path to dist root
+      preload: path.join(__dirname, '../../dist/browserViewPreload.js') // Fixed path to dist root
     }
   });
 
@@ -36,6 +36,7 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
   
   logger.debug('BrowserView created and added to main window');
   logger.debug('BrowserView webContents.id:', { id: browserView.webContents.id });
+  logger.debug('BrowserView bounds:', { bounds: browserView.getBounds() });
   
   return browserView;
 }

@@ -5,7 +5,20 @@ import { getBrowserView } from '../../views/browserViewManager';
 import { getMainWindow } from '../../windows/mainWindow';
 import logger from '../../utils/logger';
 
+// Global initialization guards
+declare global {
+  var __workflowCommandsRegistered: boolean;
+}
+
 export function registerWorkflowCommands(): void {
+  // Check if already registered
+  if (global.__workflowCommandsRegistered) {
+    logger.debug('Workflow commands already registered, skipping');
+    return;
+  }
+  
+  global.__workflowCommandsRegistered = true;
+  
   // Execute workflow with Python
   ipcMain.handle('execute-workflow', async (event, workflowData: string) => {
     logger.info('execute-workflow handler called');

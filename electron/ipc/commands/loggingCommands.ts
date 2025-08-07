@@ -1,7 +1,20 @@
 import { ipcMain } from 'electron';
 import logger from '../../utils/logger';
 
+// Global initialization guards
+declare global {
+  var __loggingCommandsRegistered: boolean;
+}
+
 export function registerLoggingCommands(): void {
+  // Check if already registered
+  if (global.__loggingCommandsRegistered) {
+    logger.debug('Logging commands already registered, skipping');
+    return;
+  }
+  
+  global.__loggingCommandsRegistered = true;
+  
   // Handle log entries from renderer process
   ipcMain.handle('logEntry', (event, logEntry) => {
     try {

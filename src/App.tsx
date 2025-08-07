@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import BrowserPane from './components/BrowserPane';
 import URLBar from './components/URLBar';
 import { Workflow } from './types';
-import logger, { createWorkflowLogger, createRunLogger } from './utils/logger';
+import logger from './utils/logger';
 
 function App() {
   const [currentWorkflows, setCurrentWorkflows] = useState<Workflow[]>([]);
@@ -145,6 +145,18 @@ function App() {
     loadWorkflows();
   }, []);
 
+  // Focus browser view when app loads
+  useEffect(() => {
+    if (window.electronAPI?.focusBrowserView) {
+      // Focus after a delay to ensure the browser view is ready
+      const timer = setTimeout(() => {
+        window.electronAPI!.focusBrowserView!();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   const [currentURL, setCurrentURL] = useState<string>('');
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
@@ -180,6 +192,12 @@ function App() {
     setCurrentURL('https://www.google.com');
     if (window.electronAPI?.loadURLInBrowserView) {
       window.electronAPI.loadURLInBrowserView('https://www.google.com');
+    }
+    // Focus the browser view after loading
+    if (window.electronAPI?.focusBrowserView) {
+      setTimeout(() => {
+        window.electronAPI!.focusBrowserView!();
+      }, 500);
     }
   };
 

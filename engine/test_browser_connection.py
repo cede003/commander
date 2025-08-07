@@ -25,29 +25,29 @@ async def test_browser_connection():
         if page:
             title = await page.title()
             url = page.url
-            print(f"✅ Connected to page: '{title}' - {url}")
+            print(f"Connected to page: '{title}' - {url}")
             
             # Test basic page interaction
             print("🧪 Testing page interaction...")
             await page.click('body')
-            print("✅ Successfully clicked body element")
+            print("Successfully clicked body element")
             
             # Test navigation
             print("🧪 Testing navigation...")
             await page.goto('https://www.example.com')
             title = await page.title()
             url = page.url
-            print(f"✅ Navigated to: '{title}' - {url}")
+            print(f"Navigated to: '{title}' - {url}")
             
             # Test clicking on the new page
             await page.click('body')
-            print("✅ Successfully clicked body element on new page")
+            print("Successfully clicked body element on new page")
             
         else:
-            print("❌ No page available")
+            print("No page available")
             
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
     finally:
         await session.close()
 

@@ -115,7 +115,7 @@ class TemplateEngine:
                 return str(current)
                 
         except Exception as e:
-            print(f"❌ Error evaluating template {expr}: {e}")
+            print(f"Error evaluating template {expr}: {e}")
             return f"{{{{{expr}}}}}"
     
     @staticmethod

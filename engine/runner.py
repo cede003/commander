@@ -12,27 +12,21 @@ from typing import Dict, Any, List, Optional
 # Add the current directory to Python path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Import modules with single fallback path to prevent duplicate imports
 try:
     from browser.session import BrowserSession
     from registry.function_registry import registry, execute_node
     from utils.template_engine import TemplateEngine
     from utils.logger import setup_logger, create_workflow_logger, create_run_logger, log
 except ImportError:
-    # Fallback for when run as standalone script
-    try:
-        from .browser.session import BrowserSession
-        from .registry.function_registry import registry, execute_node
-        from .utils.template_engine import TemplateEngine
-        from .utils.logger import setup_logger, create_workflow_logger, create_run_logger, log
-    except ImportError:
-        # Final fallback - add parent directory to path
-        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        if parent_dir not in sys.path:
-            sys.path.insert(0, parent_dir)
-        from engine.browser.session import BrowserSession
-        from engine.registry.function_registry import registry, execute_node
-        from engine.utils.template_engine import TemplateEngine
-        from engine.utils.logger import setup_logger, create_workflow_logger, create_run_logger, log
+    # Single fallback - add parent directory to path
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    from engine.browser.session import BrowserSession
+    from engine.registry.function_registry import registry, execute_node
+    from engine.utils.template_engine import TemplateEngine
+    from engine.utils.logger import setup_logger, create_workflow_logger, create_run_logger, log
 
 
 class ScalableWorkflowRunner:
@@ -98,7 +92,8 @@ class ScalableWorkflowRunner:
                 'workflow_id': workflow_id,
                 'run_id': run_id,
                 'workflow_logger': workflow_logger,
-                'run_logger': run_logger
+                'run_logger': run_logger,
+                'workflow_data': workflow_data  # Add workflow data for global error handling
             }
             
             for node_id in starting_nodes:
@@ -111,7 +106,15 @@ class ScalableWorkflowRunner:
             
             # Debug level: Show detailed results
             run_logger.debug("Workflow results", { "results": context.get('results', {}) })
-            return context
+            
+            # Return JSON-serializable result
+            return {
+                'success': True,
+                'results': context.get('results', {}),
+                'workflow_id': workflow_id,
+                'run_id': run_id,
+                'workflow_name': workflow_name
+            }
             
         except Exception as e:
             # Info level: Just show failure status
@@ -148,6 +151,9 @@ class ScalableWorkflowRunner:
         properties = node_data.get('properties', {})
         error_handling = node_data.get('error_handling', {})
         
+        # Get global error handling settings
+        global_error_handling = context.get('workflow_data', {}).get('global_error_handling', {})
+        
         # Update context with node properties
         context['properties'] = properties
         
@@ -177,35 +183,152 @@ class ScalableWorkflowRunner:
             return result
             
         except Exception as e:
-            # Info level: Just show failure status
-            workflow_logger.info(f"Node {node_id} failed")
+            # Get error type and message
+            error_type = type(e).__name__
+            error_message = str(e)
             
-            # Debug level: Show detailed error
-            run_logger.error(f"Node {node_id} failed", { 
-                "error": str(e), 
-                "node_id": node_id, 
-                "domain": domain, 
-                "type_name": type_name, 
-                "subtype": subtype 
-            })
+            # Create detailed error context
+            error_context = {
+                "node_id": node_id,
+                "domain": domain,
+                "type_name": type_name,
+                "subtype": subtype,
+                "error_type": error_type,
+                "error_message": error_message,
+                "inputs": inputs,
+                "properties": properties
+            }
             
-            # Handle error based on error_handling configuration
-            fallback_node = error_handling.get('fallback_node')
-            if fallback_node and fallback_node in context['nodes']:
-                workflow_logger.info(f"Executing fallback node: {fallback_node}")
-                return await self._execute_node(fallback_node, context['nodes'][fallback_node], context)
+            # Log error with appropriate level
+            log_level = error_handling.get('log_level', 'error')
+            custom_message = error_handling.get('error_message', f"Node {node_id} failed")
             
-            # Check for retry configuration
-            max_retries = error_handling.get('max_retries', 0)
-            retry_count = context.get('retry_count', {}).get(node_id, 0)
+            if log_level == 'debug':
+                workflow_logger.debug(f"{custom_message}: {error_message}", error_context)
+            elif log_level == 'info':
+                workflow_logger.info(f"{custom_message}: {error_message}")
+            elif log_level == 'warning':
+                workflow_logger.warning(f"{custom_message}: {error_message}")
+            else:  # error level
+                workflow_logger.error(f"{custom_message}: {error_message}")
             
-            if retry_count < max_retries:
-                workflow_logger.info(f"Retrying node {node_id} ({retry_count + 1}/{max_retries})")
-                context.setdefault('retry_count', {})[node_id] = retry_count + 1
-                await asyncio.sleep(error_handling.get('retry_delay', 1))
-                return await self._execute_node(node_id, node_data, context)
+            # Debug level: Show detailed error context
+            run_logger.error(f"Node {node_id} failed", error_context)
             
-            raise e
+            # Determine error handling strategy
+            strategy = error_handling.get('strategy', global_error_handling.get('default_strategy', 'continue'))
+            
+            # Check for deprecated 'retry' field
+            if error_handling.get('retry') and strategy == 'continue':
+                strategy = 'retry'
+            
+            # Check error type specific handling
+            continue_on_types = error_handling.get('continue_on_error_types', [])
+            exit_on_types = error_handling.get('exit_on_error_types', [])
+            
+            if error_type in continue_on_types:
+                strategy = 'continue'
+            elif error_type in exit_on_types:
+                strategy = 'exit'
+            
+            # Handle critical errors globally
+            critical_types = global_error_handling.get('critical_error_types', ['KeyboardInterrupt', 'SystemExit', 'MemoryError'])
+            if error_type in critical_types and global_error_handling.get('exit_on_critical_errors', True):
+                strategy = 'exit'
+            
+            # Execute strategy
+            if strategy == 'retry':
+                return await self._handle_retry_strategy(node_id, node_data, context, e, error_handling, global_error_handling)
+            elif strategy == 'fallback':
+                return await self._handle_fallback_strategy(node_id, node_data, context, e, error_handling)
+            elif strategy == 'pause':
+                return await self._handle_pause_strategy(node_id, node_data, context, e, error_handling, global_error_handling)
+            elif strategy == 'exit':
+                return await self._handle_exit_strategy(node_id, node_data, context, e, error_handling)
+            elif strategy == 'skip':
+                return await self._handle_skip_strategy(node_id, node_data, context, e, error_handling)
+            else:  # strategy == 'continue'
+                return await self._handle_continue_strategy(node_id, node_data, context, e, error_handling)
+    
+    async def _handle_retry_strategy(self, node_id: str, node_data: Dict, context: Dict, error: Exception, 
+                                   error_handling: Dict, global_error_handling: Dict) -> Dict[str, Any]:
+        """Handle retry strategy"""
+        workflow_logger = context.get('workflow_logger', self.logger)
+        
+        max_attempts = error_handling.get('max_attempts', global_error_handling.get('max_retries', 3))
+        retry_count = context.get('retry_count', {}).get(node_id, 0)
+        retry_delay = error_handling.get('retry_delay', global_error_handling.get('retry_delay', 1))
+        
+        if retry_count < max_attempts:
+            workflow_logger.info(f"Retrying node {node_id} ({retry_count + 1}/{max_attempts})")
+            context.setdefault('retry_count', {})[node_id] = retry_count + 1
+            await asyncio.sleep(retry_delay)
+            return await self._execute_node(node_id, node_data, context)
+        else:
+            workflow_logger.error(f"Node {node_id} failed after {max_attempts} attempts")
+            raise error
+    
+    async def _handle_fallback_strategy(self, node_id: str, node_data: Dict, context: Dict, error: Exception, 
+                                      error_handling: Dict) -> Dict[str, Any]:
+        """Handle fallback strategy"""
+        workflow_logger = context.get('workflow_logger', self.logger)
+        
+        fallback_node = error_handling.get('fallback_node')
+        if fallback_node and fallback_node in context['nodes']:
+            workflow_logger.info(f"Executing fallback node: {fallback_node}")
+            return await self._execute_node(fallback_node, context['nodes'][fallback_node], context)
+        else:
+            workflow_logger.error(f"No valid fallback node specified for {node_id}")
+            raise error
+    
+    async def _handle_pause_strategy(self, node_id: str, node_data: Dict, context: Dict, error: Exception, 
+                                   error_handling: Dict, global_error_handling: Dict) -> Dict[str, Any]:
+        """Handle pause strategy"""
+        workflow_logger = context.get('workflow_logger', self.logger)
+        
+        pause_duration = error_handling.get('pause_duration', global_error_handling.get('pause_duration', 5))
+        workflow_logger.info(f"Pausing execution for {pause_duration} seconds due to error in node {node_id}")
+        await asyncio.sleep(pause_duration)
+        
+        # After pause, continue with next node
+        return {
+            'node_id': node_id,
+            'status': 'paused_and_continued',
+            'error': str(error),
+            'pause_duration': pause_duration
+        }
+    
+    async def _handle_exit_strategy(self, node_id: str, node_data: Dict, context: Dict, error: Exception, 
+                                  error_handling: Dict) -> Dict[str, Any]:
+        """Handle exit strategy"""
+        workflow_logger = context.get('workflow_logger', self.logger)
+        
+        workflow_logger.error(f"Exiting workflow due to error in node {node_id}")
+        raise SystemExit(f"Workflow terminated due to error in node {node_id}: {error}")
+    
+    async def _handle_skip_strategy(self, node_id: str, node_data: Dict, context: Dict, error: Exception, 
+                                  error_handling: Dict) -> Dict[str, Any]:
+        """Handle skip strategy"""
+        workflow_logger = context.get('workflow_logger', self.logger)
+        
+        workflow_logger.info(f"Skipping node {node_id} due to error")
+        return {
+            'node_id': node_id,
+            'status': 'skipped',
+            'error': str(error)
+        }
+    
+    async def _handle_continue_strategy(self, node_id: str, node_data: Dict, context: Dict, error: Exception, 
+                                      error_handling: Dict) -> Dict[str, Any]:
+        """Handle continue strategy"""
+        workflow_logger = context.get('workflow_logger', self.logger)
+        
+        workflow_logger.info(f"Continuing execution after error in node {node_id}")
+        return {
+            'node_id': node_id,
+            'status': 'failed_but_continued',
+            'error': str(error)
+        }
     
     async def _execute_successors(self, node_id: str, nodes: Dict, edges: List[Dict], context: Dict):
         """Execute all successor nodes"""
@@ -229,46 +352,133 @@ class ScalableWorkflowRunner:
 async def main():
     """Main entry point for workflow execution"""
     try:
-        # Read workflow JSON from stdin
-        workflow_json = sys.stdin.read().strip()
-        
-        if not workflow_json:
-            log.error("No workflow JSON provided")
-            return 1
-        
-        # Create runner
-        runner = ScalableWorkflowRunner()
-        
-        try:
-            # Run the workflow
-            result = await runner.run_workflow(workflow_json)
-            log.info("Workflow execution completed successfully")
-            return 0
+        # Check if running in persistent mode
+        if '--persistent' in sys.argv:
+            await run_persistent_mode()
+        else:
+            # Read workflow JSON from stdin
+            workflow_json = sys.stdin.read().strip()
             
-        finally:
-            # Clean up
-            await runner.close()
+            if not workflow_json:
+                log.error("No workflow JSON provided")
+                return 1
             
+            # Create runner
+            runner = ScalableWorkflowRunner()
+            
+            try:
+                # Run the workflow
+                result = await runner.run_workflow(workflow_json)
+                log.info("Workflow execution completed successfully")
+                return 0
+                
+            finally:
+                # Clean up
+                await runner.close()
+                
     except Exception as e:
         log.info("Workflow execution failed")
         log.error(f"Workflow execution failed: {e}")
         return 1
 
 
+async def run_persistent_mode():
+    """Run in persistent mode, listening for workflow requests"""
+    log.info("Starting persistent workflow runner...")
+    
+    try:
+        runner = ScalableWorkflowRunner()
+        log.info("Created ScalableWorkflowRunner instance")
+        
+        await runner.initialize()
+        log.info("Runner initialization completed")
+        
+        log.info("Persistent runner ready")
+        print("READY", flush=True)  # Signal to Electron that we're ready
+        log.info("Sent READY signal to Electron")
+        
+    except Exception as e:
+        log.error(f"Failed to initialize persistent runner: {e}")
+        raise
+    
+    try:
+        # Listen for workflow requests from stdin
+        while True:
+            try:
+                # Read JSON request from stdin
+                request_line = input().strip()
+                if not request_line:
+                    continue
+                
+                request = json.loads(request_line)
+                request_id = request.get('id')
+                workflow_data = request.get('workflow')
+                
+                if not workflow_data:
+                    log.error("No workflow data in request")
+                    continue
+                
+                log.info(f"Processing workflow request {request_id}")
+                
+                try:
+                    # Run the workflow
+                    result = await runner.run_workflow(workflow_data)
+                    
+                    # Send success response
+                    response = {
+                        'id': request_id,
+                        'success': True,
+                        'result': result
+                    }
+                    print(json.dumps(response), flush=True)
+                    
+                except Exception as e:
+                    log.error(f"Workflow execution failed: {e}")
+                    
+                    # Handle JSON serialization errors specifically
+                    if "not JSON serializable" in str(e):
+                        log.error(f"JSON serialization error: {e}")
+                        # Try to create a serializable error response
+                        error_info = {
+                            'error_type': type(e).__name__,
+                            'error_message': str(e),
+                            'suggestion': 'This may be due to Playwright objects that cannot be serialized. Check the workflow for actions that return complex objects.'
+                        }
+                        response = {
+                            'id': request_id,
+                            'success': False,
+                            'error': f"Serialization error: {str(e)}",
+                            'error_details': error_info
+                        }
+                    else:
+                        # Send regular error response
+                        response = {
+                            'id': request_id,
+                            'success': False,
+                            'error': str(e)
+                        }
+                    
+                    print(json.dumps(response), flush=True)
+                    
+            except EOFError:
+                log.info("Stdin closed, shutting down")
+                break
+            except KeyboardInterrupt:
+                log.info("Received interrupt, shutting down")
+                break
+            except Exception as e:
+                log.error(f"Error processing request: {e}")
+                continue
+                
+    finally:
+        await runner.close()
+        log.info("Persistent runner shutdown complete")
+
+
 if __name__ == "__main__":
     import sys
     import asyncio
-
-    if len(sys.argv) < 2:
-        log.error("Usage: python runner.py '<workflow_json>'")
-        sys.exit(1)
-
-    workflow_json = sys.argv[1]
-    runner = ScalableWorkflowRunner()
-    async def run():
-        await runner.initialize()
-        try:
-            await runner.run_workflow(workflow_json)
-        finally:
-            await runner.close()
-    asyncio.run(run()) 
+    
+    # Run the main function which handles both persistent and single-execution modes
+    exit_code = asyncio.run(main())
+    sys.exit(exit_code) 

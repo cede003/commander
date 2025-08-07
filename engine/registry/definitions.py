@@ -262,11 +262,6 @@ FUNCTION_SPECS = {
                 "description": "Logs a message to console",
                 "playwright_method": None
             },
-            "print_result": {
-                "required_inputs": ["message"],
-                "description": "Prints a result from previous node",
-                "playwright_method": None
-            }
         }
     }
 } 

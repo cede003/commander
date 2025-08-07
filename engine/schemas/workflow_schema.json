@@ -75,9 +75,58 @@
             "type": "object",
             "description": "Node-specific error handling configuration",
             "properties": {
-              "retry": { "type": "boolean" },
-              "max_attempts": { "type": "integer", "minimum": 1 },
-              "fallback_node": { "type": "string" }
+              "strategy": {
+                "type": "string",
+                "enum": ["retry", "fallback", "pause", "exit", "continue", "skip"],
+                "description": "How to handle errors: retry the node, use fallback node, pause execution, exit workflow, continue to next node, or skip this node",
+                "default": "continue"
+              },
+              "retry": { 
+                "type": "boolean",
+                "description": "Whether to retry on failure (deprecated, use strategy instead)"
+              },
+              "max_attempts": { 
+                "type": "integer", 
+                "minimum": 1,
+                "description": "Maximum number of retry attempts",
+                "default": 3
+              },
+              "retry_delay": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Delay in seconds between retry attempts",
+                "default": 1
+              },
+              "fallback_node": { 
+                "type": "string",
+                "description": "ID of fallback node to execute if this node fails"
+              },
+              "pause_duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Duration in seconds to pause execution when error occurs",
+                "default": 5
+              },
+              "error_message": {
+                "type": "string",
+                "description": "Custom error message to display when error occurs"
+              },
+              "log_level": {
+                "type": "string",
+                "enum": ["debug", "info", "warning", "error"],
+                "description": "Log level for error messages",
+                "default": "error"
+              },
+              "continue_on_error_types": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of error types to continue execution on (e.g., ['ValueError', 'TimeoutError'])"
+              },
+              "exit_on_error_types": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of error types to exit workflow on (e.g., ['KeyboardInterrupt', 'SystemExit'])"
+              }
             },
             "additionalProperties": false
           },
@@ -111,6 +160,47 @@
         },
         "additionalProperties": false
       }
+    },
+    "global_error_handling": {
+      "type": "object",
+      "description": "Global error handling configuration for the entire workflow",
+      "properties": {
+        "default_strategy": {
+          "type": "string",
+          "enum": ["retry", "fallback", "pause", "exit", "continue", "skip"],
+          "description": "Default error handling strategy for nodes without specific error_handling",
+          "default": "continue"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Default maximum retry attempts",
+          "default": 3
+        },
+        "pause_on_error": {
+          "type": "boolean",
+          "description": "Whether to pause execution on any error",
+          "default": false
+        },
+        "pause_duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Default pause duration in seconds",
+          "default": 5
+        },
+        "exit_on_critical_errors": {
+          "type": "boolean",
+          "description": "Whether to exit workflow on critical errors",
+          "default": true
+        },
+        "critical_error_types": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of error types considered critical",
+          "default": ["KeyboardInterrupt", "SystemExit", "MemoryError"]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

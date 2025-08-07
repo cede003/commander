@@ -3,6 +3,7 @@ import { CONFIG } from './constants/config';
 import { createMainWindow } from './windows/mainWindow';
 import { createBrowserView, setMainWindow, updateBrowserViewBoundsFromWindow, updateBrowserViewBoundsFromClient } from './views/browserViewManager';
 import { setupIpcHandlers } from './ipc/handlers';
+import { initializePythonProcess, cleanupPythonProcess } from './utils/pythonRunner';
 import logger from './utils/logger';
 
 let mainWindow: BrowserWindow | undefined;
@@ -33,8 +34,23 @@ app.whenReady().then(() => {
   const browserView = createBrowserView();
   mainWindow.setBrowserView(browserView);
   
+  // Set initial bounds for the browser view
+  updateBrowserViewBoundsFromWindow(mainWindow);
+  
+  // Debug: Log the initial bounds
+  logger.debug('Initial browser view bounds set');
+  
   // Set up window event listeners
   setupWindowEventListeners(mainWindow);
+  
+  // Initialize Python process after a short delay
+  setTimeout(() => {
+    initializePythonProcess().then(() => {
+      logger.info('Python process initialized successfully');
+    }).catch((error) => {
+      logger.error('Failed to initialize Python process:', error);
+    });
+  }, 2000); // Wait 2 seconds for app to be fully ready
   
   logger.info('✅ Main window and BrowserView created successfully');
 });
@@ -46,6 +62,12 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// Cleanup on app quit
+app.on('before-quit', () => {
+  logger.info('App quitting, cleaning up Python process');
+  cleanupPythonProcess();
 });
 
 app.on('activate', () => {
@@ -148,4 +170,4 @@ function setupWindowEventListeners(window: BrowserWindow): void {
 }
 
 // In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here. 
+// code. You can also put them in separate files and import them here.

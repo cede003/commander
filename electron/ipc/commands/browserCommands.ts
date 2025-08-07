@@ -10,7 +10,20 @@ import { Bounds } from '../../utils/bounds';
 import { getMainWindow } from '../../windows/mainWindow';
 import logger from '../../utils/logger';
 
+// Global initialization guards
+declare global {
+  var __browserCommandsRegistered: boolean;
+}
+
 export function registerBrowserCommands(): void {
+  // Check if already registered
+  if (global.__browserCommandsRegistered) {
+    logger.debug('Browser commands already registered, skipping');
+    return;
+  }
+  
+  global.__browserCommandsRegistered = true;
+  
   // Initialize BrowserView
   ipcMain.handle('initialize-browser-view', async (event) => {
     logger.info('Initializing BrowserView');

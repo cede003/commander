@@ -1,14 +1,15 @@
 import { BrowserWindow, app } from 'electron';
 import { CONFIG } from '../constants/config';
+import { focusBrowserView } from '../views/browserViewManager';
 import logger from '../utils/logger';
 import path from 'path';
 
 let mainWindowInstance: BrowserWindow | undefined;
 
 export function createMainWindow(): BrowserWindow {
-  logger.debug('🔧 Creating main window with preload path:', CONFIG.preloadPath);
-  logger.debug('🔧 __dirname:', __dirname);
-  logger.debug('🔧 File exists:', require('fs').existsSync(CONFIG.preloadPath));
+  logger.debug('Creating main window with preload path:', CONFIG.preloadPath);
+  logger.debug('__dirname:', __dirname);
+  logger.debug('File exists:', require('fs').existsSync(CONFIG.preloadPath));
   
   const mainWindow = new BrowserWindow(CONFIG.mainWindow);
 
@@ -30,6 +31,10 @@ export function createMainWindow(): BrowserWindow {
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    // Focus the browser view after a short delay to ensure it's ready
+    setTimeout(() => {
+      focusBrowserView();
+    }, 100);
   });
 
   // Handle window closed
@@ -40,6 +45,8 @@ export function createMainWindow(): BrowserWindow {
   // Handle window focus
   mainWindow.on('focus', () => {
     logger.debug('Window focused, refreshing BrowserView bounds');
+    // Focus the browser view when window gains focus
+    focusBrowserView();
     // This will be handled by the browser view manager
   });
 

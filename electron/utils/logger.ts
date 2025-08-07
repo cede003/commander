@@ -45,7 +45,6 @@ const getLogLevel = (): string => {
 const logger = winston.createLogger({
   level: getLogLevel(),
   format: fileFormat,
-  defaultMeta: { service: 'commander' },
   transports: [
     // Error log file
     new winston.transports.File({
@@ -62,12 +61,18 @@ const logger = winston.createLogger({
       maxFiles: 5,
     }),
   ],
+  // Add error handling to prevent crashes
+  exitOnError: false,
 });
 
 // Add console transport for development
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: consoleFormat,
+    handleExceptions: true,
+    handleRejections: true,
+    // Add error handling to prevent EPIPE errors
+    silent: false,
   }));
 }
 
@@ -82,7 +87,6 @@ export const createWorkflowLogger = (workflowId: string, workflowName?: string) 
     level: getLogLevel(),
     format: fileFormat,
     defaultMeta: { 
-      service: 'commander',
       workflowId,
       workflowName: workflowName || workflowId
     },
@@ -116,7 +120,6 @@ export const createRunLogger = (runId: string, workflowId?: string) => {
     level: getLogLevel(),
     format: fileFormat,
     defaultMeta: { 
-      service: 'commander',
       runId,
       workflowId: workflowId || 'unknown'
     },

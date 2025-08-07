@@ -67,9 +67,9 @@ async def test_logging():
     try:
         await runner.initialize()
         result = await runner.run_workflow(json.dumps(test_workflow))
-        print("✅ INFO level test completed")
+        print("INFO level test completed")
     except Exception as e:
-        print(f"❌ INFO level test failed: {e}")
+        print(f"INFO level test failed: {e}")
     finally:
         await runner.close()
     

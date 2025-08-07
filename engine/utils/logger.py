@@ -21,11 +21,14 @@ class WinstonFormatter(logging.Formatter):
             "timestamp": datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S'),
             "level": record.levelname.lower(),
             "message": record.getMessage(),
-            "service": "commander",
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno
         }
+        
+        # Only include service metadata in debug and error levels (not info)
+        if record.levelno == logging.DEBUG or record.levelno >= logging.ERROR:
+            log_entry["service"] = "commander"
         
         # Add extra fields if present
         if hasattr(record, 'workflow_id'):
@@ -62,7 +65,6 @@ class ConsoleFormatter(logging.Formatter):
         super().__init__()
         # Auto-detect if we should use colors
         if use_colors is None:
-            # Disable colors if not in interactive terminal or if LOG_NO_COLORS is set
             self.use_colors = (
                 sys.stdout.isatty() and 
                 os.getenv('LOG_NO_COLORS') is None and
@@ -108,10 +110,19 @@ def get_log_level() -> str:
     return 'debug' if os.getenv('NODE_ENV') == 'development' else 'info'
 
 
+# Global logger cache to prevent duplicate loggers
+_logger_cache = {}
+
+
 def setup_logger(name: str = 'commander', 
                 workflow_id: Optional[str] = None,
                 run_id: Optional[str] = None) -> logging.Logger:
     """Setup a logger with Winston-compatible configuration"""
+    
+    # Check if logger already exists in cache
+    cache_key = f"{name}_{workflow_id}_{run_id}"
+    if cache_key in _logger_cache:
+        return _logger_cache[cache_key]
     
     # Create logs directory
     logs_dir = Path.cwd() / 'logs'
@@ -121,6 +132,9 @@ def setup_logger(name: str = 'commander',
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, get_log_level().upper()))
     
+    # Disable propagation to prevent duplicate logs
+    logger.propagate = False
+    
     # Clear existing handlers
     logger.handlers.clear()
     
@@ -128,17 +142,18 @@ def setup_logger(name: str = 'commander',
     file_formatter = WinstonFormatter()
     console_formatter = ConsoleFormatter()
     
-    # File handler for all logs
-    combined_handler = logging.FileHandler(logs_dir / 'combined.log')
-    combined_handler.setLevel(logging.DEBUG)
-    combined_handler.setFormatter(file_formatter)
-    logger.addHandler(combined_handler)
-    
-    # File handler for errors only
-    error_handler = logging.FileHandler(logs_dir / 'error.log')
-    error_handler.setLevel(logging.ERROR)
-    error_handler.setFormatter(file_formatter)
-    logger.addHandler(error_handler)
+    # File handler for all logs (only in production)
+    if os.getenv('NODE_ENV') == 'production':
+        combined_handler = logging.FileHandler(logs_dir / 'combined.log')
+        combined_handler.setLevel(logging.DEBUG)
+        combined_handler.setFormatter(file_formatter)
+        logger.addHandler(combined_handler)
+        
+        # File handler for errors only
+        error_handler = logging.FileHandler(logs_dir / 'error.log')
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(file_formatter)
+        logger.addHandler(error_handler)
     
     # Workflow-specific log file
     if workflow_id:
@@ -160,18 +175,29 @@ def setup_logger(name: str = 'commander',
         run_handler.setFormatter(file_formatter)
         logger.addHandler(run_handler)
     
-    # Console handler for development
+    # Console handler for development (only add if no console handler exists)
     if os.getenv('NODE_ENV') != 'production':
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.DEBUG)
-        console_handler.setFormatter(console_formatter)
-        logger.addHandler(console_handler)
+        # Check if we already have a console handler
+        has_console_handler = any(
+            isinstance(handler, logging.StreamHandler) and 
+            handler.stream == sys.stdout 
+            for handler in logger.handlers
+        )
+        
+        if not has_console_handler:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setLevel(logging.DEBUG)
+            console_handler.setFormatter(console_formatter)
+            logger.addHandler(console_handler)
     
     # Add extra attributes for filtering
     if workflow_id:
         logger.workflow_id = workflow_id
     if run_id:
         logger.run_id = run_id
+    
+    # Cache the logger
+    _logger_cache[cache_key] = logger
     
     return logger
 
@@ -189,84 +215,44 @@ def create_run_logger(run_id: str, workflow_id: Optional[str] = None) -> logging
     return setup_logger(f'commander.run.{run_id}', workflow_id=workflow_id, run_id=run_id)
 
 
-# Create default logger
+def get_shared_logger(name: str = 'commander.browser') -> logging.Logger:
+    """Get a shared logger instance for browser modules"""
+    return setup_logger(name)
+
+
+# Create default logger and shared logger instances
 default_logger = setup_logger('commander')
-
-# Convenience functions that match Winston API
-def log_error(message: str, meta: Optional[Dict[str, Any]] = None):
-    """Log error message with optional metadata"""
-    if meta:
-        default_logger.error(f"{message} {json.dumps(meta)}")
-    else:
-        default_logger.error(message)
+shared_logger = get_shared_logger()
 
 
-def log_warn(message: str, meta: Optional[Dict[str, Any]] = None):
-    """Log warning message with optional metadata"""
-    if meta:
-        default_logger.warning(f"{message} {json.dumps(meta)}")
-    else:
-        default_logger.warning(message)
-
-
-def log_info(message: str, meta: Optional[Dict[str, Any]] = None):
-    """Log info message with optional metadata"""
-    if meta:
-        default_logger.info(f"{message} {json.dumps(meta)}")
-    else:
-        default_logger.info(message)
-
-
-def log_debug(message: str, meta: Optional[Dict[str, Any]] = None):
-    """Log debug message with optional metadata"""
-    if meta:
-        default_logger.debug(f"{message} {json.dumps(meta)}")
-    else:
-        default_logger.debug(message)
-
-
-def log_verbose(message: str, meta: Optional[Dict[str, Any]] = None):
-    """Log verbose message with optional metadata"""
-    if meta:
-        default_logger.debug(f"{message} {json.dumps(meta)}")
-    else:
-        default_logger.debug(message)
-
-
-# Create a convenience object that matches Winston's log object
 class LogWrapper:
+    """Convenience wrapper that matches Winston's log object"""
+    
     def __init__(self, logger):
         self.logger = logger
     
-    def error(self, message: str, meta: Optional[Dict[str, Any]] = None):
+    def _log_with_meta(self, level: str, message: str, meta: Optional[Dict[str, Any]] = None):
+        """Internal method to log with optional metadata"""
         if meta:
-            self.logger.error(f"{message} {json.dumps(meta)}")
+            getattr(self.logger, level)(f"{message} {json.dumps(meta)}")
         else:
-            self.logger.error(message)
+            getattr(self.logger, level)(message)
+    
+    def error(self, message: str, meta: Optional[Dict[str, Any]] = None):
+        self._log_with_meta('error', message, meta)
     
     def warn(self, message: str, meta: Optional[Dict[str, Any]] = None):
-        if meta:
-            self.logger.warning(f"{message} {json.dumps(meta)}")
-        else:
-            self.logger.warning(message)
+        self._log_with_meta('warning', message, meta)
     
     def info(self, message: str, meta: Optional[Dict[str, Any]] = None):
-        if meta:
-            self.logger.info(f"{message} {json.dumps(meta)}")
-        else:
-            self.logger.info(message)
+        self._log_with_meta('info', message, meta)
     
     def debug(self, message: str, meta: Optional[Dict[str, Any]] = None):
-        if meta:
-            self.logger.debug(f"{message} {json.dumps(meta)}")
-        else:
-            self.logger.debug(message)
+        self._log_with_meta('debug', message, meta)
     
     def verbose(self, message: str, meta: Optional[Dict[str, Any]] = None):
-        if meta:
-            self.logger.debug(f"{message} {json.dumps(meta)}")
-        else:
-            self.logger.debug(message)
+        self._log_with_meta('debug', message, meta)
 
-# Export convenience object that matches Winston's log object
+
+# Export convenience objects
 log = LogWrapper(default_logger) 

@@ -55,7 +55,7 @@ class FunctionRegistry:
             self._registry[domain][type_name] = {}
         
         self._registry[domain][type_name][subtype] = func
-        log.info(f"Registered: {domain}.{type_name}.{subtype}")
+        log.debug(f"Registered: {domain}.{type_name}.{subtype}")
     
     def get_function(self, domain: str, type_name: str, subtype: str) -> Optional[Callable]:
         """Get a function from the registry with auto-dispatch fallback"""
@@ -184,7 +184,7 @@ class FunctionRegistry:
     def enable_auto_dispatch(self, enabled: bool = True):
         """Enable or disable auto-dispatch"""
         self._auto_dispatch_enabled = enabled
-        print(f"🎭 Auto-dispatch {'enabled' if enabled else 'disabled'}")
+        print(f"Auto-dispatch {'enabled' if enabled else 'disabled'}")
 
 
 # Global registry instance

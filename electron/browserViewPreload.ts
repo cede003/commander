@@ -1,12 +1,12 @@
 import { contextBridge } from 'electron';
 import logger from './utils/logger';
 
-logger.debug('🔧 BrowserView preload script loaded');
+logger.debug('BrowserView preload script loaded');
 
 // Set up identification for the Python engine
 // @ts-ignore
 window.name = 'main-browser';
-logger.debug('🔧 Set window.name = "main-browser" for Python engine identification');
+  logger.debug('Set window.name = "main-browser" for Python engine identification');
 
 // Expose any necessary APIs to the page
 contextBridge.exposeInMainWorld('browserViewAPI', {
@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('browserViewAPI', {
 // @ts-ignore
 document.addEventListener('DOMContentLoaded', () => {
   // @ts-ignore
-  logger.debug('🔧 BrowserView page loaded, window.name:', window.name);
+      logger.debug('BrowserView page loaded, window.name:', window.name);
 });
 
 // Ensure window.name persists across navigations

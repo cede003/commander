@@ -1,10 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import logger from './utils/logger';
 
-logger.debug('🔧 Preload script loaded successfully');
-logger.debug('🔧 __dirname:', __dirname);
-logger.debug('🔧 process.type:', process.type);
-logger.debug('🔧 contextBridge available:', typeof contextBridge !== 'undefined');
+logger.debug('Preload script loaded successfully');
+logger.debug('__dirname:', __dirname);
+logger.debug('process.type:', process.type);
+logger.debug('contextBridge available:', typeof contextBridge !== 'undefined');
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
