@@ -1,64 +1,29 @@
 {
   "workflows": [
     {
-      "filename": "minimal_workflow.json",
-      "name": "Minimal Workflow Test",
-      "description": "Test workflow using minimal boilerplate functions"
-    },
-    {
-      "filename": "new_action_workflow.json",
-      "name": "New Action Workflow",
-      "description": "Demonstrates navigation and clicking with the current schema"
-    },
-    {
-      "filename": "action_workflow.json", 
-      "name": "Action Workflow",
-      "description": "Example workflow with form filling and submission"
-    },
-    {
-      "filename": "weather_workflow.json",
-      "name": "Weather Check Workflow",
-      "description": "Navigate to weather.com and get current weather information"
-    },
-    {
-      "filename": "news_headlines_workflow.json",
-      "name": "News Headlines Workflow",
-      "description": "Navigate to BBC News and extract the latest headlines"
-    },
-    {
       "filename": "calculator_workflow.json",
       "name": "Calculator Workflow",
       "description": "Use an online calculator to perform mathematical calculations"
     },
     {
-      "filename": "simple_test_workflow.json",
-      "name": "Simple Test Workflow",
-      "description": "Simple test workflow that just navigates and gets basic page info"
-    },
-    {
-      "filename": "calculator_test_workflow.json",
-      "name": "Calculator Test Workflow",
-      "description": "Test calculator workflow with unique logging to verify caching is resolved"
-    },
-    {
-      "filename": "element_handle_demo_workflow.json",
-      "name": "ElementHandle Serialization Demo",
-      "description": "Demonstrates handling of ElementHandle serialization errors"
-    },
-    {
-      "filename": "error_handling_demo_workflow.json",
-      "name": "Error Handling Demo",
-      "description": "Demonstrates various error handling strategies"
-    },
-    {
-      "filename": "press_error_demo_workflow.json",
-      "name": "Press Error Demo",
-      "description": "Demonstrates handling of press() missing key parameter error"
+      "filename": "custom_actions_demo.json",
+      "name": "Custom Actions Demo",
+      "description": "Demonstrates custom action functions and their usage"
     },
     {
       "filename": "linkedIn_easy_apply_workflow.json",
       "name": "LinkedIn Easy Apply Workflow",
       "description": "Clicks Easy Apply and checks form field completeness"
+    },
+    {
+      "filename": "linkedIn_easy_apply_2.json",
+      "name": "LinkedIn Easy Apply 2",
+      "description": "Clicks Next repeatedly until it no longer exists"
+    },
+    {
+      "filename": "status_demo_workflow.json",
+      "name": "Status Demo Workflow",
+      "description": "Demonstrates workflow status tracking and logging"
     }
   ]
 } 

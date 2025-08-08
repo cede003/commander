@@ -1,8 +1,8 @@
 """
-Function Definitions - Central specifications for all available functions
+Playwright Definitions - Auto-registered basic actions (direct Playwright methods)
 """
 
-FUNCTION_SPECS = {
+PLAYWRIGHT_SPECS = {
     "browser": {
         "action": {
             # Navigation
@@ -27,7 +27,7 @@ FUNCTION_SPECS = {
                 "playwright_method": "go_forward"
             },
             
-            # Interaction
+            # Basic Interaction
             "click": {
                 "required_inputs": ["selector"],
                 "description": "Clicks an element",
@@ -79,7 +79,7 @@ FUNCTION_SPECS = {
                 "playwright_method": "drag_and_drop"
             },
             
-            # Selection
+            # Basic Selection
             "select_option": {
                 "required_inputs": ["selector", "value"],
                 "description": "Selects an option from a dropdown",
@@ -94,6 +94,18 @@ FUNCTION_SPECS = {
                 "required_inputs": ["selector"],
                 "description": "Unchecks a checkbox",
                 "playwright_method": "uncheck"
+            },
+            
+            # Basic Utilities
+            "screenshot": {
+                "required_inputs": ["path"],
+                "description": "Takes a screenshot of the page",
+                "playwright_method": "screenshot"
+            },
+            "scroll_to": {
+                "required_inputs": ["selector"],
+                "description": "Scrolls to an element",
+                "playwright_method": "scroll_into_view_if_needed"
             }
         },
         
@@ -260,7 +272,8 @@ FUNCTION_SPECS = {
             "console_log": {
                 "required_inputs": ["message"],
                 "description": "Logs a message to console",
-                "playwright_method": None
+                "playwright_method": None,
+                "custom_implementation": True
             },
         }
     }

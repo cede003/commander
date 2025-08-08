@@ -49,6 +49,30 @@
             "type": "string",
             "description": "Subtype/specific operation of the node"
           },
+          "status": {
+            "type": "string",
+            "description": "Current execution status of the node",
+            "enum": ["queued", "running", "complete", "error", "skipped", "paused"],
+            "default": "queued"
+          },
+          "status_message": {
+            "type": "string",
+            "description": "Additional status information or error message"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when node execution started"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when node execution completed"
+          },
+          "execution_time": {
+            "type": "number",
+            "description": "Execution time in seconds"
+          },
           "properties": {
             "type": "object",
             "description": "Static configuration properties for the node",

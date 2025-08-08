@@ -16,6 +16,12 @@ body {
   overflow: hidden;
 }
 
+/* Ensure React UI elements appear above BrowserView */
+#root > * {
+  position: relative;
+  z-index: 10;
+}
+
 /* Custom scrollbar styles */
 .scrollbar-thin {
   scrollbar-width: thin;

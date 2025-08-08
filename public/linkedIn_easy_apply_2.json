@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "name": "LinkedIn Easy Apply 2",
+    "author": "cede",
+    "description": "Clicks Next repeatedly until it no longer exists",
+    "version": "1.0.0"
+  },
+  "inputs": {},
+  "nodes": {
+    "kickoff_click": {
+      "id": "kickoff_click",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "click",
+      "inputs": {
+        "selector": "#jobs-apply-button-id",
+        "timeout": 3000
+      },
+      "error_handling": {
+        "strategy": "skip",
+        "error_message": "Initial Next not found; skipping to loop"
+      }
+    },
+    "loop_click": {
+      "id": "loop_click",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "click",
+      "inputs": {
+        "selector": "button[data-easy-apply-next-button]",
+        "timeout": 1500
+      },
+      "error_handling": {
+        "strategy": "exit",
+        "error_message": "No more Next buttons; finishing workflow"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "kickoff_click",
+      "to": "loop_click"
+    },
+    {
+      "from": "loop_click",
+      "to": "loop_click"
+    }
+  ]
+}

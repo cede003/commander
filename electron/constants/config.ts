@@ -21,6 +21,11 @@ export const CONFIG = {
   remoteDebuggingPort: 9222,
   remoteDebuggingAddress: '127.0.0.1',
   
+  // UI settings
+  sidebar_default_state: true,
+  sidebar_width: 320,
+  url_bar_height: 80,
+  
   // Window settings
   mainWindow: {
     width: 1400,
@@ -28,7 +33,10 @@ export const CONFIG = {
     minWidth: 800,
     minHeight: 600,
     show: false,
+    frame: true, // Keep frame for main window
     titleBarStyle: 'default' as const,
+    transparent: false,
+    backgroundThrottling: false, // Prevent background throttling for smooth resizing
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -37,6 +45,8 @@ export const CONFIG = {
       allowRunningInsecureContent: true,
       sandbox: false,
       experimentalFeatures: true,
+      enableRemoteModule: false,
+      offscreen: false, // Ensure hardware acceleration
     },
   },
   
@@ -47,7 +57,10 @@ export const CONFIG = {
     minimizable: false,
     maximizable: false,
     show: false,
-    titleBarStyle: 'default' as const,
+    frame: false, // Frameless for reduced flicker/delay
+    titleBarStyle: 'customButtonsOnHover' as const,
+    transparent: true, // Enable transparency for better visual effects
+    backgroundThrottling: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -56,6 +69,8 @@ export const CONFIG = {
       allowRunningInsecureContent: true,
       sandbox: false,
       experimentalFeatures: true,
+      enableRemoteModule: false,
+      offscreen: false,
     },
   },
   

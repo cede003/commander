@@ -1,17 +1,57 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { CONFIG } from './constants/config';
 import { createMainWindow } from './windows/mainWindow';
-import { createBrowserView, setMainWindow, updateBrowserViewBoundsFromWindow, updateBrowserViewBoundsFromClient } from './views/browserViewManager';
+import { createBrowserView, setMainWindow, getSidebarVisible } from './views/browserViewManager';
 import { setupIpcHandlers } from './ipc/handlers';
 import { initializePythonProcess, cleanupPythonProcess } from './utils/pythonRunner';
+import { setupBrowserViewAutoResize, calculateBrowserViewBounds, updateBrowserViewBounds } from './utils/bounds';
 import logger from './utils/logger';
 
+// Layout constants
+const LAYOUT = {
+  SIDEBAR_WIDTH: 320,
+  URL_BAR_HEIGHT: 80
+} as const;
+
 let mainWindow: BrowserWindow | undefined;
+
+function createWindowWithBrowserView(): BrowserWindow {
+  // Create the main window
+  const window = createMainWindow();
+  
+  // Set the main window reference for other modules
+  setMainWindow(window);
+  
+  // Create and add BrowserView to the main window
+  const browserView = createBrowserView();
+  window.setBrowserView(browserView);
+  
+  // Set initial bounds using the consistent calculation function
+  const initialBounds = calculateBrowserViewBounds(window, CONFIG.sidebar_default_state);
+  browserView.setBounds(initialBounds);
+  
+  // Debug: Log the actual bounds that were set
+  logger.debug('BrowserView initial bounds set:', initialBounds);
+  
+  // Enable auto-resize for the browser view
+  setupBrowserViewAutoResize(browserView, window);
+  
+  // Keep BrowserView bounds in sync with window size and sidebar visibility
+  window.on('resize', () => {
+    if (browserView) {
+      updateBrowserViewBounds(browserView, window, getSidebarVisible());
+    }
+  });
+  
+  logger.debug('BrowserView created with initial bounds');
+  
+  return window;
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.on('ready', () => {
   logger.info('🚀 Electron app is ready');
   logger.debug('🔧 CONFIG:', CONFIG);
   logger.debug('🔧 CONFIG.mainWindow:', CONFIG.mainWindow);
@@ -24,24 +64,8 @@ app.whenReady().then(() => {
   // Set up IPC handlers FIRST - before creating any windows
   setupIpcHandlers();
   
-  // Create the main window
-  mainWindow = createMainWindow();
-  
-  // Set the main window reference for other modules
-  setMainWindow(mainWindow);
-  
-  // Create and add BrowserView to the main window
-  const browserView = createBrowserView();
-  mainWindow.setBrowserView(browserView);
-  
-  // Set initial bounds for the browser view
-  updateBrowserViewBoundsFromWindow(mainWindow);
-  
-  // Debug: Log the initial bounds
-  logger.debug('Initial browser view bounds set');
-  
-  // Set up window event listeners
-  setupWindowEventListeners(mainWindow);
+  // Create the main window with browser view
+  mainWindow = createWindowWithBrowserView();
   
   // Initialize Python process after a short delay
   setTimeout(() => {
@@ -74,100 +98,6 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    // Set up IPC handlers first
-    setupIpcHandlers();
-    
-    mainWindow = createMainWindow();
-    setMainWindow(mainWindow);
-    
-    const browserView = createBrowserView();
-    mainWindow.setBrowserView(browserView);
-    
-    setupWindowEventListeners(mainWindow);
+    mainWindow = createWindowWithBrowserView();
   }
 });
-
-function setupWindowEventListeners(window: BrowserWindow): void {
-  let isFocusTriggeredResize = false;
-  let lastClientBounds: any = null;
-  let isResizing = false;
-  let resizeTimeout: NodeJS.Timeout | null = null;
-  
-  // Handle window resize
-  window.on('resize', () => {
-    logger.debug('Window resized, updating BrowserView bounds');
-    
-    // Set resizing flag to prevent client bounds updates
-    isResizing = true;
-    if (resizeTimeout) {
-      clearTimeout(resizeTimeout);
-    }
-    resizeTimeout = setTimeout(() => {
-      isResizing = false;
-      logger.debug('Resize complete, allowing client bounds updates');
-    }, 100); // Wait 100ms after resize stops
-    
-    // Only update bounds if not triggered by focus
-    if (!isFocusTriggeredResize) {
-      // If we have client bounds, use them instead of fallback
-      if (lastClientBounds) {
-        logger.debug('Using last known client bounds for resize');
-        updateBrowserViewBoundsFromClient(lastClientBounds);
-      } else {
-        logger.debug('No client bounds available, using fallback');
-        updateBrowserViewBoundsFromWindow(window);
-      }
-    } else {
-      logger.debug('Skipping bounds update for focus-triggered resize');
-      isFocusTriggeredResize = false;
-    }
-  });
-  
-  // Handle window move
-  window.on('move', () => {
-    logger.debug('Window moved, updating BrowserView bounds');
-    // Use client bounds if available, otherwise fallback
-    if (lastClientBounds) {
-      logger.debug('Using last known client bounds for move');
-      updateBrowserViewBoundsFromClient(lastClientBounds);
-    } else {
-      updateBrowserViewBoundsFromWindow(window);
-    }
-  });
-  
-  // Handle window focus - don't override client bounds
-  window.on('focus', () => {
-    logger.debug('Window focused');
-    // Mark that the next resize might be focus-triggered
-    isFocusTriggeredResize = true;
-    // Removed the bounds update to preserve client-provided bounds
-  });
-  
-  // Handle window blur
-  window.on('blur', () => {
-    logger.debug('Window blurred');
-  });
-  
-  // Handle window close
-  window.on('closed', () => {
-    logger.debug('Window closed');
-    mainWindow = undefined;
-  });
-  
-  // Expose function to update last client bounds
-  (window as any).updateLastClientBounds = (bounds: any) => {
-    // Only update client bounds if not currently resizing
-    if (!isResizing) {
-      lastClientBounds = bounds;
-      logger.debug('Updated last client bounds:', bounds);
-    } else {
-      logger.debug('Skipping client bounds update during resize');
-    }
-  };
-  
-  // Expose resizing state for IPC handlers
-  (window as any).isResizing = () => isResizing;
-}
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.

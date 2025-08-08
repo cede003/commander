@@ -17,24 +17,38 @@
           "timeout": 5000
         },
         "outputs": {
-          "clicked": true
+          "clicked": "boolean"
         }
       },
-      "log_easy_apply_clicked": {
-        "id": "log_easy_apply_clicked",
+      "log_click_result": {
+        "id": "log_click_result",
         "domain": "browser",
         "type": "notification",
         "subtype": "console_log",
         "inputs": {
-            "message": "{{results.click_easy_apply.result}}",
+            "message": "Click successful: {{results.click_easy_apply.success}}",
             "level": "success"
+        }
+      },
+      "log_node_status": {
+        "id": "log_node_status",
+        "domain": "browser",
+        "type": "notification",
+        "subtype": "console_log",
+        "inputs": {
+            "message": "Node status will be available after execution",
+            "level": "info"
         }
       }
     },
     "edges": [
       {
         "from": "click_easy_apply",
-        "to": "log_easy_apply_clicked"
+        "to": "log_click_result"
+      },
+      {
+        "from": "log_click_result",
+        "to": "log_node_status"
       }
     ]   
 }

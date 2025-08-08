@@ -76,17 +76,7 @@ function App() {
             logger.info('Loaded workflow list from index file');
           }
         } catch (error) {
-          logger.warn('Could not load workflows index, using fallback list');
-        }
-
-        // Fallback to hardcoded list if index file not found
-        if (workflowFiles.length === 0) {
-          workflowFiles = [
-            'minimal_workflow.json',
-            'new_action_workflow.json',
-            'action_workflow.json', 
-            'example_workflow.json'
-          ];
+          logger.warn('Could not load workflows index');
         }
 
         const loadedWorkflows: Workflow[] = [];
@@ -160,6 +150,7 @@ function App() {
   const [currentURL, setCurrentURL] = useState<string>('');
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
+  // Use a renderer-safe default; main process handles actual BrowserView layout
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
   const workflowListenerRef = useRef<boolean>(false);
 

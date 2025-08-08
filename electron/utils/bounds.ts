@@ -1,4 +1,6 @@
 import { BrowserView, BrowserWindow } from 'electron';
+import logger from './logger';
+import { CONFIG } from '../constants/config';
 
 export interface Bounds {
   x: number;
@@ -12,42 +14,69 @@ export function calculateBrowserViewBounds(
   sidebarVisible: boolean = true,
   devToolsOpen: boolean = false
 ): Bounds {
-  const [width, height] = mainWindow.getSize();
-  const [x, y] = mainWindow.getPosition();
+  const { width, height } = mainWindow.getContentBounds();
   
   // Calculate sidebar width (320px when visible, 0 when hidden)
-  const sidebarWidth = sidebarVisible ? 320 : 0;
+  const sidebarWidth = sidebarVisible ? CONFIG.sidebar_width : 0;
   
   // Calculate available width for BrowserView
   const availableWidth = width - sidebarWidth;
   
   // Calculate y offset (account for title bar and any other UI elements)
-  const yOffset = 80;
+  const yOffset = CONFIG.url_bar_height;
   
+  
+  // Use relative coordinates (0,0) for BrowserView within the window
+  // BrowserView bounds are relative to the parent window, not screen coordinates
   return {
-    x: x + sidebarWidth,
-    y: y + yOffset,
-    width: availableWidth,
-    height: height - yOffset,
+    x: sidebarWidth,  // Remove absolute window position
+    y: yOffset,       // Remove absolute window position
+    width: Math.max(0, availableWidth),  // Ensure positive width
+    height: Math.max(0, height - yOffset ), // Account for DevTools space
   };
 }
 
+// Update BrowserView bounds when sidebar visibility changes
 export function updateBrowserViewBounds(
   browserView: BrowserView,
-  bounds: Bounds
+  mainWindow: BrowserWindow,
+  sidebarVisible: boolean
 ): void {
-  if (browserView) {
-    browserView.setBounds(bounds);
-    // Remove auto-resize to prevent conflicts with manual bounds setting
-    // browserView.setAutoResize({ width: true, height: true });
+  if (!browserView || !mainWindow) {
+    logger.error('BrowserView or MainWindow not available for bounds update');
+    return;
   }
+  
+  const newBounds = calculateBrowserViewBounds(mainWindow, sidebarVisible);
+  browserView.setBounds(newBounds);
+  
+  logger.info('BrowserView bounds updated for sidebar visibility change:', {
+    sidebarVisible,
+    newBounds
+  });
 }
 
-export function getBoundsFromClient(clientBounds: Bounds): Bounds {
-  return {
-    x: Math.floor(clientBounds.x),
-    y: Math.floor(clientBounds.y),
-    width: Math.floor(clientBounds.width),
-    height: Math.floor(clientBounds.height),
-  };
-} 
+// Set up auto-resize properly (call once during initialization)
+export function setupBrowserViewAutoResize(
+  browserView: BrowserView,
+  mainWindow: BrowserWindow,
+  sidebarVisible: boolean = true
+): void {
+  if (browserView) {
+    // Set initial bounds
+    const initialBounds = calculateBrowserViewBounds(mainWindow, sidebarVisible);
+    
+    // Disable auto-resize; we'll manage bounds manually to avoid overlaying the UI
+    browserView.setAutoResize({
+      width: false,
+      height: false,
+      horizontal: false,
+      vertical: false
+    });
+    
+    // Set bounds manually for full control
+    browserView.setBounds(initialBounds);
+    
+    console.log('Manual bounds control enabled for BrowserView with initial bounds:', initialBounds);
+  }
+}

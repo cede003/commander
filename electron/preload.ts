@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { CONFIG } from './constants/config';
 import logger from './utils/logger';
 
 logger.debug('Preload script loaded successfully');
@@ -11,7 +12,7 @@ logger.debug('contextBridge available:', typeof contextBridge !== 'undefined');
 contextBridge.exposeInMainWorld('electronAPI', {
   // BrowserView management APIs
   createBrowserView: (url: string) => ipcRenderer.invoke('create-browser-view', url),
-  loadURLInBrowserView: (url: string) => ipcRenderer.invoke('load-url-in-browser-view', url),
+  loadURLInBrowserView: (url: string) => ipcRenderer.invoke('load-url', url),
   focusBrowserView: () => ipcRenderer.invoke('focus-browser-view'),
   goBackInBrowserView: () => ipcRenderer.invoke('go-back-in-browser-view'),
   goForwardInBrowserView: () => ipcRenderer.invoke('go-forward-in-browser-view'),
@@ -19,7 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getBrowserViewCanGoBack: () => ipcRenderer.invoke('get-browser-view-can-go-back'),
   getBrowserViewCanGoForward: () => ipcRenderer.invoke('get-browser-view-can-go-forward'),
   updateBrowserViewBounds: () => ipcRenderer.invoke('update-browser-view-bounds'),
-  updateBrowserViewBoundsFromClient: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke('update-browser-view-bounds-from-client', bounds),
+
   
   // BrowserView event listeners
   onBrowserViewNavigated: (callback: (data: { url: string }) => void) => {
@@ -39,6 +40,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onBrowserViewLoadingStateChanged: (callback: (data: { isLoading: boolean }) => void) => {
     ipcRenderer.on('browser-view-loading-state-changed', (event, data) => callback(data));
+  },
+  onDevToolsToggle: (callback: (data: { open: boolean }) => void) => {
+    ipcRenderer.on('devtools-toggled', (event, data) => callback(data));
   },
   
   // Context menu and utility APIs
@@ -63,50 +67,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeWorkflowCreatedListener: () => {
     ipcRenderer.removeAllListeners('workflow-created');
   },
-  onDevToolsToggle: (callback: () => void) => {
-    ipcRenderer.on('dev-tools-toggle', callback);
-  },
+
   executeWorkflow: (workflowData: string) => ipcRenderer.invoke('execute-workflow', workflowData),
   executeWorkflowCommand: (command: string, data: any) => ipcRenderer.invoke('execute-workflow-command', command, data),
   logEntry: (logEntry: any) => ipcRenderer.invoke('logEntry', logEntry),
 });
 
-// Type definitions for the exposed API
-declare global {
-  interface Window {
-    electronAPI: {
-      getAppVersion: () => Promise<string>;
-      getPlatform: () => Promise<string>;
-      createBrowserView: (url: string) => Promise<any>;
-      loadURLInBrowserView: (url: string) => Promise<any>;
-      goBackInBrowserView: () => Promise<any>;
-      goForwardInBrowserView: () => Promise<any>;
-      reloadBrowserView: () => Promise<any>;
-      getBrowserViewCanGoBack: () => Promise<any>;
-      getBrowserViewCanGoForward: () => Promise<any>;
-      updateBrowserViewBounds: () => Promise<any>;
-      onBrowserViewNavigated: (callback: (data: { url: string }) => void) => void;
-      removeBrowserViewNavigatedListener: () => void;
-      onBrowserViewTitleChanged: (callback: (data: { title: string }) => void) => void;
-      onBrowserViewLoaded: (callback: (data: {}) => void) => void;
-      onBrowserViewLoadFailed: (callback: (data: { error: any }) => void) => void;
-      onBrowserViewLoadingStateChanged: (callback: (data: { isLoading: boolean }) => void) => void;
-      showContextMenu: (x: number, y: number, params: any) => Promise<void>;
-      showContextMenuAtPosition: (x: number, y: number) => Promise<void>;
-      
-      // BrowserPane API
-      loadURL: (url: string) => Promise<void>;
-      navigate: (direction: 'back' | 'forward') => Promise<void>;
-      getCurrentURL: () => Promise<string>;
-      updateLayout: () => Promise<void>;
-      updateSidebarVisibility: (visible: boolean) => Promise<void>;
-      initializeBrowserView: () => Promise<void>;
-      openCreateWorkflowModal: () => Promise<void>;
-      testIpc: () => Promise<string>;
-      onDevToolsToggle: (callback: () => void) => void;
-      executeWorkflow: (workflowData: string) => Promise<void>;
-      executeWorkflowCommand: (command: string, data: any) => Promise<any>;
-      logEntry: (logEntry: any) => Promise<void>;
-    };
-  }
-} 
+ 

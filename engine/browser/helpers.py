@@ -1,120 +1,128 @@
 """
-Browser Helpers - Auto-wrapper and utility functions
+Browser Helpers - Wrapper functions for registering all browser functions from FUNCTION_SPECS
 """
 
-from typing import Dict, Any, List
-import sys
-import os
-
-# Add engine directory to path for absolute imports
-engine_path = os.path.join(os.path.dirname(__file__), '..')
-if engine_path not in sys.path:
-    sys.path.insert(0, engine_path)
-
-try:
-    from utils.playwright_helpers import PlaywrightHelpers
-    from registry.central_spec import get_required_inputs
-    from utils.logger import setup_logger
-    logger = setup_logger('commander.browser')
-except ImportError:
-    # Fallback for when run from engine directory
-    from ..utils.playwright_helpers import PlaywrightHelpers
-    from ..registry.central_spec import get_required_inputs
-    from ..utils.logger import setup_logger
-    logger = setup_logger('commander.browser')
+from typing import Dict, Any, Callable
+from registry.central_spec import FUNCTION_SPECS, list_all_functions
+from registry.function_registry import registry, register
+from utils.logger import log, get_shared_logger
+from browser.playwright_helpers import PlaywrightHelpers
 
 
-async def auto_action(inputs: Dict, context: Dict, method: str) -> Dict[str, Any]:
-    """Auto wrapper for browser actions"""
-    # Get required inputs from central spec
-    required_inputs = get_required_inputs("browser", "action", method)
-    if required_inputs:
-        PlaywrightHelpers.validate_required_inputs(inputs, required_inputs)
+def get_browser_logger(name: str = 'browser') -> 'log.Logger':
+    """Get a browser-specific logger instance"""
+    return get_shared_logger(f'commander.browser.{name}')
+
+
+def register_all_browser_functions():
+    """
+    Register all functions from FUNCTION_SPECS into the function registry.
+    This creates wrapper functions that can be called through the registry.
+    """
     
-    page = PlaywrightHelpers.get_session_page(context)
-    return await PlaywrightHelpers.call_playwright_method(page, method, inputs, context)
-
-
-async def auto_observation(inputs: Dict, context: Dict, method: str) -> Dict[str, Any]:
-    """Auto wrapper for browser observations"""
-    # Get required inputs from central spec
-    required_inputs = get_required_inputs("browser", "observation", method)
-    if required_inputs:
-        PlaywrightHelpers.validate_required_inputs(inputs, required_inputs)
-    
-    page = PlaywrightHelpers.get_session_page(context)
-    return await PlaywrightHelpers.call_playwright_method(page, method, inputs, context)
-
-
-async def auto_event(inputs: Dict, context: Dict, method: str) -> Dict[str, Any]:
-    """Auto wrapper for browser events"""
-    # Get required inputs from central spec
-    required_inputs = get_required_inputs("browser", "event", method)
-    if required_inputs:
-        PlaywrightHelpers.validate_required_inputs(inputs, required_inputs)
-    
-    page = PlaywrightHelpers.get_session_page(context)
-    return await PlaywrightHelpers.call_playwright_method(page, method, inputs, context)
-
-
-async def auto_notification(inputs: Dict, context: Dict, method: str) -> Dict[str, Any]:
-    """Auto wrapper for browser notifications"""
-    # Get required inputs from central spec
-    required_inputs = get_required_inputs("browser", "notification", method)
-    if required_inputs:
-        PlaywrightHelpers.validate_required_inputs(inputs, required_inputs)
-    
-    # Handle different notification types
-    if method == "console_log":
-        message = inputs.get('message', '')
-        level = inputs.get('level', 'info')
+    def create_browser_wrapper(domain: str, type_name: str, subtype: str, spec: Dict) -> Callable:
+        """Create a wrapper function for a browser operation"""
         
-        # Log with appropriate level
-        if level == 'error':
-            logger.error(message)
-        elif level == 'warning':
-            logger.warning(message)
-        elif level == 'success':
-            logger.info(message)  # Use info for success messages
-        else:
-            logger.info(message)
+        async def browser_wrapper(inputs: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+            """Wrapper function that executes browser operations"""
+            try:
+                # Validate required inputs first
+                required_inputs = spec.get("required_inputs", [])
+                PlaywrightHelpers.validate_required_inputs(inputs, required_inputs)
+                
+                # Get the Playwright method name
+                playwright_method = spec.get("playwright_method", subtype)
+                
+                # Handle cases where playwright_method is None or not a string
+                if playwright_method is None:
+                    # For notifications and other non-playwright operations
+                    if spec.get("custom_implementation", False):
+                        # Handle custom implementations
+                        if subtype == "console_log":
+                            message = inputs.get("message", "No message provided")
+                            log.info(f"[CONSOLE] {message}")
+                            result = {
+                                "method": subtype,
+                                "success": True,
+                                "result": f"Logged: {message}",
+                                "method_type": "notification"
+                            }
+                        else:
+                            result = {
+                                "method": subtype,
+                                "success": True,
+                                "result": "Operation completed",
+                                "method_type": "notification"
+                            }
+                    else:
+                        result = {
+                            "method": subtype,
+                            "success": True,
+                            "result": "Operation completed",
+                            "method_type": "notification"
+                        }
+                elif not isinstance(playwright_method, str):
+                    raise ValueError(f"Invalid playwright_method type: {type(playwright_method)}. Expected string, got {playwright_method}")
+                else:
+                    # Only get the page for actual Playwright methods
+                    page = PlaywrightHelpers.get_session_page(context)
+                    
+                    # Execute the Playwright method
+                    result = await PlaywrightHelpers.call_playwright_method(
+                        page, playwright_method, inputs, context
+                    )
+                
+                # Add metadata from spec
+                result.update({
+                    "domain": domain,
+                    "type": type_name,
+                    "subtype": subtype,
+                    "description": spec.get("description", f"{domain}.{type_name}.{subtype}")
+                })
+                
+                return result
+                
+            except Exception as e:
+                log.error(f"Error in browser wrapper {domain}.{type_name}.{subtype}: {e}")
+                return {
+                    "domain": domain,
+                    "type": type_name,
+                    "subtype": subtype,
+                    "success": False,
+                    "error": str(e),
+                    "method_type": "browser"
+                }
         
-        return {
-            'message': message,
-            'level': level,
-            'success': True,
-            'method_type': 'console'
-        }
+        return browser_wrapper
     
-    elif method == "console_result":
-        result_key = inputs.get('result_key', '')
-        message = inputs.get('message', 'Result')
-        
-        # Get results from context
-        results = context.get('results', {})
-        
-        if result_key and result_key in results:
-            value = results[result_key]
-            logger.info(f"{message}: {value}")
-        else:
-            logger.info(f"{message}: {results}")
-        
-        return {
-            'message': message,
-            'result_key': result_key,
-            'success': True,
-            'method_type': 'console'
-        }
+    # Register all functions from FUNCTION_SPECS
+    browser_specs = FUNCTION_SPECS.get("browser", {})
     
-    else:
-        raise ValueError(f"Unknown notification method: {method}")
+    for type_name, subtypes in browser_specs.items():
+        for subtype, spec in subtypes.items():
+            # Create the wrapper function
+            wrapper_func = create_browser_wrapper("browser", type_name, subtype, spec)
+            
+            # Register it in the registry
+            registry.register_function("browser", type_name, subtype, wrapper_func)
+            
+            log.debug(f"Registered browser function: browser.{type_name}.{subtype}")
+    
+    log.info(f"Registered {sum(len(subtypes) for subtypes in browser_specs.values())} browser functions")
 
 
-def get_page(context: Dict):
-    """Get page from context with error handling"""
-    return PlaywrightHelpers.get_session_page(context)
+def get_registered_browser_functions() -> Dict[str, Dict[str, list]]:
+    """Get all registered browser functions - reuses registry.list_functions()"""
+    return registry.list_functions().get("browser", {})
 
 
-def validate_inputs(inputs: Dict, required_fields: List[str]):
-    """Validate required input fields"""
-    PlaywrightHelpers.validate_required_inputs(inputs, required_fields) 
+def register_browser_function(domain: str, type_name: str, subtype: str, spec: Dict):
+    """
+    Register a single browser function with custom spec.
+    Uses the existing register decorator from function_registry.
+    """
+    return register(domain, type_name, subtype)
+
+
+# Auto-register all functions when module is imported
+register_all_browser_functions() 

@@ -12,6 +12,15 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
   const [currentURL, setCurrentURL] = useState<string>('');
   const [isBrowserReady, setIsBrowserReady] = useState<boolean>(false);
   const browserViewRef = useRef<HTMLDivElement>(null);
+  const hasInitialized = useRef(false);
+  
+  // Get window dimensions
+  const windowDimensions = {
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+  
+
 
   // Call parent callbacks when state changes
   useEffect(() => {
@@ -24,25 +33,44 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
   useEffect(() => {
     const initializeBrowser = async () => {
       try {
+        console.log('Starting browser initialization...');
+        
         // Initialize BrowserView with default URL
         if (window.electronAPI?.initializeBrowserView) {
+          console.log('Calling initializeBrowserView...');
           await window.electronAPI.initializeBrowserView();
+          console.log('initializeBrowserView completed');
+        } else {
+          console.log('initializeBrowserView not available');
         }
         
         // Get current URL from main process
         if (window.electronAPI?.getCurrentURL) {
+          console.log('Getting current URL...');
           const url = await window.electronAPI.getCurrentURL();
+          console.log('Current URL:', url);
           setCurrentURL(url);
+        } else {
+          console.log('getCurrentURL not available');
         }
         
         // Mark browser as ready
+        console.log('Marking browser as ready');
         setIsBrowserReady(true);
       } catch (error) {
         console.error('Failed to initialize browser:', error);
+        // Still mark as ready even if there's an error to show the interface
+        setIsBrowserReady(true);
       }
     };
 
-    initializeBrowser();
+    console.log('Browser initialization effect running, hasInitialized:', hasInitialized.current);
+    console.log('electronAPI available:', !!window.electronAPI);
+    
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      initializeBrowser();
+    }
   }, []);
 
   // Listen for browser navigation events
@@ -50,6 +78,14 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     const handleBrowserViewNavigated = async (data: { url: string }) => {
       logger.debug('BrowserView navigated:', { url: data.url });
       setCurrentURL(data.url);
+      
+      // Call navigation state change callback if provided
+      if (onNavigationStateChange) {
+        onNavigationStateChange(
+          true,  // canGoBack - This would need to be determined from the browser view
+          false  // canGoForward - This would need to be determined from the browser view
+        );
+      }
     };
 
     // Set up event listeners
@@ -61,152 +97,12 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     return () => {
       // Cleanup event listeners
       logger.debug('Cleaning up event listeners');
-      if (window.electronAPI?.removeBrowserViewNavigatedListener) {
-        window.electronAPI.removeBrowserViewNavigatedListener();
-      }
+      // Note: removeBrowserViewNavigatedListener is not implemented in the current API
+      // The listener will be cleaned up automatically when the component unmounts
     };
-  }, []); // Keep empty dependency array
+  }, [onNavigationStateChange]); // Include onNavigationStateChange in dependencies
 
-  // Handle window resize and DevTools events
-  useEffect(() => {
-    const handleResize = () => {
-      // Send bounds update instead of just updateLayout
-      const rect = browserViewRef.current?.getBoundingClientRect();
-      if (rect) {
-        window.electronAPI?.updateBrowserViewBoundsFromClient?.({
-          x: Math.floor(rect.left),
-          y: Math.floor(rect.top),
-          width: Math.floor(rect.width),
-          height: Math.floor(rect.height)
-        });
-      }
-    };
 
-    const handleDevToolsToggle = () => {
-      // Small delay to ensure DevTools state is updated
-      setTimeout(() => {
-        const rect = browserViewRef.current?.getBoundingClientRect();
-        if (rect) {
-          window.electronAPI?.updateBrowserViewBoundsFromClient?.({
-            x: Math.floor(rect.left),
-            y: Math.floor(rect.top),
-            width: Math.floor(rect.width),
-            height: Math.floor(rect.height)
-          });
-        }
-      }, 100);
-    };
-
-    // Listen for DevTools events (if available)
-    if (window.electronAPI?.onDevToolsToggle) {
-      window.electronAPI.onDevToolsToggle(handleDevToolsToggle);
-    }
-
-    return () => {
-      // Cleanup handled by the bounds sending useEffect
-    };
-  }, []);
-
-  // Update browser bounds when sidebar visibility changes
-  useEffect(() => {
-    if (isBrowserReady) {
-      // Immediate update for responsiveness
-      const rect = browserViewRef.current?.getBoundingClientRect();
-      if (rect) {
-        window.electronAPI?.updateBrowserViewBoundsFromClient?.({
-          x: Math.floor(rect.left),
-          y: Math.floor(rect.top),
-          width: Math.floor(rect.width),
-          height: Math.floor(rect.height)
-        });
-      }
-      
-      // Delayed update after sidebar animation completes
-      setTimeout(() => {
-        // Update sidebar visibility in main process
-        if (window.electronAPI?.updateSidebarVisibility) {
-          window.electronAPI.updateSidebarVisibility(isSidebarVisible);
-        }
-        
-        // Send updated bounds after sidebar animation
-        const rect = browserViewRef.current?.getBoundingClientRect();
-        if (rect) {
-          window.electronAPI?.updateBrowserViewBoundsFromClient?.({
-            x: Math.floor(rect.left),
-            y: Math.floor(rect.top),
-            width: Math.floor(rect.width),
-            height: Math.floor(rect.height)
-          });
-        }
-      }, 350); // Match the sidebar transition duration (300ms) + buffer
-    }
-  }, [isSidebarVisible, isBrowserReady]);
-
-  // Send browser view bounds to Electron
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout | null = null;
-    
-    const sendBounds = () => {
-      const rect = browserViewRef.current?.getBoundingClientRect();
-      if (rect) {
-        window.electronAPI?.updateBrowserViewBoundsFromClient?.({
-          x: Math.floor(rect.left),
-          y: Math.floor(rect.top),
-          width: Math.floor(rect.width),
-          height: Math.floor(rect.height)
-        });
-      }
-    };
-
-    const debouncedSendBounds = () => {
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-      resizeTimeout = setTimeout(sendBounds, 100); // Debounce resize events
-    };
-
-    // Initial send
-    sendBounds();
-
-    // Use ResizeObserver for more responsive updates
-    let resizeObserver: ResizeObserver | null = null;
-    if (browserViewRef.current) {
-      resizeObserver = new ResizeObserver(() => {
-        debouncedSendBounds(); // Use debounced version
-      });
-      resizeObserver.observe(browserViewRef.current);
-    }
-
-    // Use MutationObserver to watch for layout changes (like sidebar animations)
-    let mutationObserver: MutationObserver | null = null;
-    if (browserViewRef.current?.parentElement) {
-      mutationObserver = new MutationObserver(() => {
-        // Small delay to let layout settle
-        setTimeout(sendBounds, 50);
-      });
-      mutationObserver.observe(browserViewRef.current.parentElement, {
-        attributes: true,
-        childList: true,
-        subtree: true
-      });
-    }
-
-    // Also listen for window resize as fallback
-    window.addEventListener('resize', debouncedSendBounds); // Use debounced version
-    
-    return () => {
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-      if (mutationObserver) {
-        mutationObserver.disconnect();
-      }
-      window.removeEventListener('resize', debouncedSendBounds);
-    };
-  }, []);
 
   // Handle control+click for context menu
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -222,9 +118,22 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
+    <div 
+      className={`flex flex-col h-full ${className}`}
+      style={{
+        '--browser-pane-width': `${windowDimensions.width}px`,
+        '--browser-pane-height': `${windowDimensions.height}px`,
+      } as React.CSSProperties}
+    >
       {/* Browser Area */}
-      <div className={`flex-1 relative ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div 
+        className={`flex-1 relative ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
+        style={{
+          width: '100%',
+          height: '100%',
+          minHeight: '0', // Prevent flex item from growing beyond container
+        }}
+      >
         {!isBrowserReady ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
@@ -241,7 +150,17 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
             </div>
           </div>
         ) : (
-          <div ref={browserViewRef} className="w-full h-full">
+          <div 
+            ref={browserViewRef} 
+            className="w-full h-full"
+            style={{
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden', // Prevent content overflow during resize
+              position: 'relative',
+            }}
+            onMouseDown={handleMouseDown}
+          >
             {/* WebContentsView is managed by the main process */}
             {/* The actual WebContentsView content is embedded by the main process */}
           </div>

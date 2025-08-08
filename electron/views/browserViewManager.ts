@@ -1,18 +1,44 @@
-import { BrowserView, BrowserWindow, ipcMain } from 'electron';
+import { BrowserView, BrowserWindow } from 'electron';
 import { CONFIG } from '../constants/config';
-import { calculateBrowserViewBounds, updateBrowserViewBounds, getBoundsFromClient, Bounds } from '../utils/bounds';
 import { setupBrowserViewContextMenu } from '../utils/contextMenu';
 import logger from '../utils/logger';
 import path from 'path';
 
 let browserView: BrowserView | undefined;
-let sidebarVisible = true;
-let devToolsOpen = false;
+let sidebarVisible = CONFIG.sidebar_default_state;
+let mainWindow: BrowserWindow | undefined;
+
+function tagPageAsMainApp(): void {
+  if (browserView) {
+    browserView.webContents.executeJavaScript(`
+      window._isMainAppPage = true;
+      window._appTaggedAt = new Date().toISOString();
+    `).catch((error) => {
+      logger.error('Failed to tag page as main app page:', error);
+    });
+  }
+}
+
+function cleanupBrowserView(): void {
+  if (browserView) {
+    // Remove all event listeners from the webContents
+    browserView.webContents.removeAllListeners('did-start-loading');
+    browserView.webContents.removeAllListeners('did-stop-loading');
+    browserView.webContents.removeAllListeners('did-navigate');
+    browserView.webContents.removeAllListeners('page-title-updated');
+    browserView.webContents.removeAllListeners('did-fail-load');
+    
+    // Clear the reference
+    browserView = undefined;
+  }
+}
 
 export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView {
   logger.debug('Creating new BrowserView with URL:', { url });
   
-  // Create new BrowserView with preload script
+  // Clean up existing BrowserView if it exists
+  cleanupBrowserView();
+  
   browserView = new BrowserView({
     webPreferences: {
       nodeIntegration: false,
@@ -21,23 +47,15 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
       allowRunningInsecureContent: true,
       sandbox: false,
       experimentalFeatures: true,
-      preload: path.join(__dirname, '../../dist/browserViewPreload.js') // Fixed path to dist root
+      preload: path.join(__dirname, '../../dist/browserViewPreload.js')
     }
   });
-
-  // Set up event listeners
+  browserView.webContents.openDevTools({ mode: 'undocked', activate: true });
   setupBrowserViewEvents(browserView);
-  
-  // Load the URL
   browserView.webContents.loadURL(url);
-  
-  // Set up context menu
   setupBrowserViewContextMenu(browserView);
   
-  logger.debug('BrowserView created and added to main window');
-  logger.debug('BrowserView webContents.id:', { id: browserView.webContents.id });
-  logger.debug('BrowserView bounds:', { bounds: browserView.getBounds() });
-  
+  logger.debug('BrowserView created');
   return browserView;
 }
 
@@ -49,37 +67,16 @@ export function getBrowserViewId(): number | undefined {
   return browserView?.webContents.id;
 }
 
-export function updateBrowserViewBoundsFromClient(bounds: Bounds): void {
-  if (!browserView) return;
-  
-  const adjustedBounds = getBoundsFromClient(bounds);
-  logger.debug('Using dynamic bounds from React:', adjustedBounds);
-  updateBrowserViewBounds(browserView, adjustedBounds);
-}
-
-export function updateBrowserViewBoundsFromWindow(mainWindow: BrowserWindow): void {
-  if (!browserView) return;
-  
-  const bounds = calculateBrowserViewBounds(mainWindow, sidebarVisible, devToolsOpen);
-  logger.debug('Setting BrowserView bounds (fallback):', { 
-    bounds, 
-    devToolsOpen, 
-    sidebarVisible 
-  });
-  updateBrowserViewBounds(browserView, bounds);
-}
-
 export function setSidebarVisible(visible: boolean): void {
   sidebarVisible = visible;
 }
 
-export function setDevToolsOpen(open: boolean): void {
-  devToolsOpen = open;
+export function getSidebarVisible(): boolean {
+  return sidebarVisible;
 }
 
 export function loadURLInBrowserView(url: string): void {
   if (!browserView) {
-    logger.info('Initializing BrowserView with default URL');
     createBrowserView(url);
     return;
   }
@@ -94,26 +91,29 @@ export function focusBrowserView(): void {
   }
 }
 
+
 function setupBrowserViewEvents(browserView: BrowserView): void {
-  // BrowserView loading events
+  // Loading events
   browserView.webContents.on('did-start-loading', () => {
-    logger.debug('BrowserView started loading:', { url: browserView.webContents.getURL() });
     mainWindow?.webContents.send('browser-view-loading-state-changed', { isLoading: true });
   });
 
   browserView.webContents.on('did-stop-loading', () => {
-    logger.debug('BrowserView finished loading:', { url: browserView.webContents.getURL() });
     mainWindow?.webContents.send('browser-view-loading-state-changed', { isLoading: false });
     mainWindow?.webContents.send('browser-view-loaded', {});
+    tagPageAsMainApp();
   });
 
   browserView.webContents.on('did-navigate', (event, navigationUrl) => {
-    logger.debug('BrowserView navigated to:', { url: navigationUrl });
     mainWindow?.webContents.send('browser-view-navigated', { url: navigationUrl });
+    
+    // Re-tag the page after navigation
+    setTimeout(() => {
+      tagPageAsMainApp();
+    }, 100);
   });
 
   browserView.webContents.on('page-title-updated', (event, title) => {
-    logger.debug('BrowserView title changed:', { title });
     mainWindow?.webContents.send('browser-view-title-changed', { title });
   });
 
@@ -133,9 +133,6 @@ function setupBrowserViewEvents(browserView: BrowserView): void {
   });
 }
 
-// Reference to main window (will be set by main.ts)
-let mainWindow: BrowserWindow | undefined;
-
 export function setMainWindow(window: BrowserWindow): void {
   mainWindow = window;
-} 
+}

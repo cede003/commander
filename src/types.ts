@@ -85,45 +85,46 @@ declare global {
   interface Window {
     electronAPI?: {
       // BrowserView management APIs
-      createBrowserView?: (url: string) => Promise<any>;
-      loadURLInBrowserView?: (url: string) => Promise<any>;
-      focusBrowserView?: () => Promise<any>;
-      goBackInBrowserView?: () => Promise<boolean>;
-      goForwardInBrowserView?: () => Promise<boolean>;
-      reloadBrowserView?: () => Promise<any>;
-      getBrowserViewCanGoBack?: () => Promise<boolean>;
-      getBrowserViewCanGoForward?: () => Promise<boolean>;
-      updateBrowserViewBounds?: () => Promise<any>;
-      updateBrowserViewBoundsFromClient?: (bounds: { x: number; y: number; width: number; height: number }) => Promise<any>;
+      createBrowserView: (url: string) => Promise<any>;
+      loadURLInBrowserView: (url: string) => Promise<any>;
+      focusBrowserView: () => Promise<any>;
+      goBackInBrowserView: () => Promise<any>;
+      goForwardInBrowserView: () => Promise<any>;
+      reloadBrowserView: () => Promise<any>;
+      getBrowserViewCanGoBack: () => Promise<any>;
+      getBrowserViewCanGoForward: () => Promise<any>;
+      updateBrowserViewBounds: () => Promise<any>;
       
       // BrowserView event listeners
-      onBrowserViewNavigated?: (callback: (data: { url: string }) => void) => void;
-      onBrowserViewTitleChanged?: (callback: (data: { title: string }) => void) => void;
-      onBrowserViewLoaded?: (callback: (data: {}) => void) => void;
-      onBrowserViewLoadFailed?: (callback: (data: { error: any }) => void) => void;
-      onBrowserViewLoadingStateChanged?: (callback: (data: { isLoading: boolean }) => void) => void;
+      onBrowserViewNavigated: (callback: (data: { url: string }) => void) => void;
+      removeBrowserViewNavigatedListener: () => void;
+      onBrowserViewTitleChanged: (callback: (data: { title: string }) => void) => void;
+      onBrowserViewLoaded: (callback: (data: {}) => void) => void;
+      onBrowserViewLoadFailed: (callback: (data: { error: any }) => void) => void;
+      onBrowserViewLoadingStateChanged: (callback: (data: { isLoading: boolean }) => void) => void;
+      onDevToolsToggle: (callback: (data: { open: boolean }) => void) => void;
       
-      // Context menu and workflow management
-      openLinkInNewTab?: (url: string) => Promise<any>;
-      showContextMenu?: (x: number, y: number, params: any) => Promise<void>;
-      showContextMenuAtPosition?: (x: number, y: number) => Promise<void>;
-      getAppVersion?: () => Promise<string>;
-      getPlatform?: () => Promise<string>;
+      // Context menu and utility APIs
+      showContextMenu: (x: number, y: number, params: any) => Promise<void>;
+      showContextMenuAtPosition: (x: number, y: number) => Promise<void>;
+      getAppVersion: () => Promise<string>;
+      getPlatform: () => Promise<string>;
       
       // BrowserPane API
-      loadURL?: (url: string) => Promise<void>;
-      navigate?: (direction: 'back' | 'forward') => Promise<void>;
-      getCurrentURL?: () => Promise<string>;
-      updateLayout?: () => Promise<void>;
-      updateSidebarVisibility?: (visible: boolean) => Promise<void>;
-      initializeBrowserView?: () => Promise<void>;
-      openCreateWorkflowModal?: () => Promise<void>;
-      createWorkflow?: (workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => Promise<void>;
-      onWorkflowCreated?: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => void;
-      removeWorkflowCreatedListener?: () => void;
-      onDevToolsToggle?: (callback: () => void) => void;
-      executeWorkflow: (workflowData: string) => Promise<any>;
-      testIpc?: () => Promise<string>;
+      loadURL: (url: string) => Promise<void>;
+      navigate: (direction: 'back' | 'forward') => Promise<void>;
+      getCurrentURL: () => Promise<string>;
+      updateLayout: () => Promise<void>;
+      updateSidebarVisibility: (visible: boolean) => Promise<void>;
+      initializeBrowserView: () => Promise<void>;
+      openCreateWorkflowModal: () => Promise<void>;
+      createWorkflow: (workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => Promise<void>;
+      onWorkflowCreated: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => void;
+      removeWorkflowCreatedListener: () => void;
+      executeWorkflow: (workflowData: string) => Promise<void>;
+      executeWorkflowCommand: (command: string, data: any) => Promise<any>;
+      testIpc: () => Promise<string>;
+      logEntry: (logEntry: any) => Promise<void>;
     };
     browserViewTracker?: Map<string, any>;
   }

@@ -26,11 +26,11 @@ export function setupIpcHandlers(): void {
   logger.debug('[IPC] Available IPC handlers:');
   logger.debug('[IPC] - initialize-browser-view');
   logger.debug('[IPC] - load-url');
-  logger.debug('[IPC] - load-url-in-browser-view');
   logger.debug('[IPC] - get-current-url');
   logger.debug('[IPC] - navigate');
   logger.debug('[IPC] - focus-browser-view');
-  logger.debug('[IPC] - update-browser-view-bounds-from-client');
+  logger.debug('[IPC] - update-browser-view-bounds');
+
   logger.debug('[IPC] - update-sidebar-visibility');
   logger.debug('[IPC] - test-ipc');
   logger.debug('[IPC] - execute-workflow');

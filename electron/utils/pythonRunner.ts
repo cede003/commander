@@ -199,7 +199,6 @@ export async function initializePythonProcess(): Promise<void> {
     // Check for ready signal
     if (text.includes('READY') || text.includes('Persistent runner ready')) {
       isProcessReady = true;
-      logger.info('Python process is ready');
       return;
     }
     
