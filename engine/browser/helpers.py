@@ -5,7 +5,7 @@ Browser Helpers - Wrapper functions for registering all browser functions from F
 from typing import Dict, Any, Callable
 from registry.central_spec import FUNCTION_SPECS, list_all_functions
 from registry.function_registry import registry, register
-from utils.logger import log, get_shared_logger
+from engine.utils import log, get_shared_logger
 from browser.playwright_helpers import PlaywrightHelpers
 
 
@@ -108,7 +108,7 @@ def register_all_browser_functions():
             
             log.debug(f"Registered browser function: browser.{type_name}.{subtype}")
     
-    log.info(f"Registered {sum(len(subtypes) for subtypes in browser_specs.values())} browser functions")
+    log.debug(f"Registered {sum(len(subtypes) for subtypes in browser_specs.values())} browser functions")
 
 
 def get_registered_browser_functions() -> Dict[str, Dict[str, list]]:

@@ -1,0 +1,197 @@
+{
+  "metadata": {
+    "name": "Playwright Observations Demo",
+    "description": "Demonstrates Playwright observation functions: title/url, visibility, attributes, HTML, bounding boxes, query selector(s)",
+    "workflow_version": "1.0.0",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "url": "https://example.com",
+    "form_url": "https://www.w3schools.com/howto/howto_css_custom_checkbox.asp"
+  },
+  "default_error_handling": {
+    "strategy": "retry",
+    "max_attempts": 2,
+    "retry_delay": 0.5
+  },
+  "nodes": {
+    "start_log": {
+      "id": "start_log",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Starting Playwright Observations Demo" }
+    },
+    "goto_form": {
+      "id": "goto_form",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": { "url": "{{inputs.form_url}}" }
+    },
+    "wait_form": {
+      "id": "wait_form",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_timeout",
+      "inputs": { "timeout": 500 }
+    },
+    "text_content_h1": {
+      "id": "text_content_h1",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "text_content",
+      "inputs": { "selector": "h1, h2" }
+    },
+    "is_checkbox_enabled": {
+      "id": "is_checkbox_enabled",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "is_enabled",
+      "inputs": { "selector": "input[type='checkbox']" }
+    },
+    "is_checkbox_disabled": {
+      "id": "is_checkbox_disabled",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "is_disabled",
+      "inputs": { "selector": "input[type='checkbox']" }
+    },
+    "is_checkbox_checked": {
+      "id": "is_checkbox_checked",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "is_checked",
+      "inputs": { "selector": "input[type='checkbox']" }
+    },
+    "goto": {
+      "id": "goto",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": { "url": "{{inputs.url}}" }
+    },
+    "wait": {
+      "id": "wait",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_timeout",
+      "inputs": { "timeout": 500 }
+    },
+    "get_title": {
+      "id": "get_title",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "title",
+      "inputs": {}
+    },
+    "get_title_alias": {
+      "id": "get_title_alias",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "get_title",
+      "inputs": {}
+    },
+    "get_url": {
+      "id": "get_url",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "url",
+      "inputs": {}
+    },
+    "is_h1_visible": {
+      "id": "is_h1_visible",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "is_visible",
+      "inputs": { "selector": "h1" }
+    },
+    "is_h1_hidden": {
+      "id": "is_h1_hidden",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "is_hidden",
+      "inputs": { "selector": "h1.nonexistent" }
+    },
+    "query_selector_h1": {
+      "id": "query_selector_h1",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "query_selector",
+      "inputs": { "selector": "h1" }
+    },
+    "query_selector_all_p": {
+      "id": "query_selector_all_p",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "query_selector_all",
+      "inputs": { "selector": "p" }
+    },
+    "get_attr_lang": {
+      "id": "get_attr_lang",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "get_attribute",
+      "inputs": { "selector": "html", "attribute": "lang" }
+    },
+    "content": {
+      "id": "content",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "content",
+      "inputs": {}
+    },
+    "inner_html_h1": {
+      "id": "inner_html_h1",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "inner_html",
+      "inputs": { "selector": "h1" }
+    },
+    "outer_html_h1": {
+      "id": "outer_html_h1",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "outer_html",
+      "inputs": { "selector": "h1" }
+    },
+    "bbox_h1": {
+      "id": "bbox_h1",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "bounding_box",
+      "inputs": { "selector": "h1" }
+    },
+    "end_log": {
+      "id": "end_log",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Finished Playwright Observations Demo. Title={{results.get_title.result}} URL={{results.get_url.result}}" }
+    }
+  },
+  "edges": [
+    { "from": "start_log", "to": "goto" },
+    { "from": "goto", "to": "wait" },
+    { "from": "wait", "to": "get_title" },
+    { "from": "get_title", "to": "get_title_alias" },
+    { "from": "get_title_alias", "to": "get_url" },
+    { "from": "get_url", "to": "is_h1_visible" },
+    { "from": "is_h1_visible", "to": "is_h1_hidden" },
+    { "from": "is_h1_hidden", "to": "query_selector_h1" },
+    { "from": "query_selector_h1", "to": "query_selector_all_p" },
+    { "from": "query_selector_all_p", "to": "get_attr_lang" },
+    { "from": "get_attr_lang", "to": "content" },
+    { "from": "content", "to": "inner_html_h1" },
+    { "from": "inner_html_h1", "to": "outer_html_h1" },
+    { "from": "outer_html_h1", "to": "bbox_h1" },
+    { "from": "bbox_h1", "to": "goto_form" },
+    { "from": "goto_form", "to": "wait_form" },
+    { "from": "wait_form", "to": "text_content_h1" },
+    { "from": "text_content_h1", "to": "is_checkbox_enabled" },
+    { "from": "is_checkbox_enabled", "to": "is_checkbox_disabled" },
+    { "from": "is_checkbox_disabled", "to": "is_checkbox_checked" },
+    { "from": "is_checkbox_checked", "to": "end_log" }
+  ]
+}
+

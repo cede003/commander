@@ -4,6 +4,8 @@ import fs from 'fs';
 import which from 'which';
 import { CONFIG } from '../constants/config';
 import logger from './logger';
+import { BrowserWindow } from 'electron';
+import { getMainWindow } from '../windows/mainWindow';
 
 // Cache for Python command to avoid repeated discovery
 let cachedPythonCommand: string | null = null;
@@ -35,39 +37,6 @@ function stripAnsiColors(text: string): string {
   return text.replace(/\u001b\[[0-9;]*m/g, '');
 }
 
-// Format Python log output to be cleaner
-function formatPythonLog(line: string): string | null {
-  // Skip empty lines
-  if (!line.trim()) return null;
-  
-  // Try to parse JSON log format
-  try {
-    const logData = JSON.parse(line);
-    if (logData.service === 'commander' && logData.output) {
-      // Extract just the message from the output
-      const output = logData.output;
-      const messageMatch = output.match(/^.*?\[(INFO|DEBUG|WARNING|ERROR)\]: (.+)$/);
-      
-      if (messageMatch) {
-        const [, level, message] = messageMatch;
-        return `[PYTHON] ${message}`;
-      } else {
-        // Fallback - just show the output
-        return `[PYTHON] ${output}`;
-      }
-    }
-  } catch (e) {
-    // Not JSON, try to extract message from plain log
-    const messageMatch = line.match(/^.*?\[(INFO|DEBUG|WARNING|ERROR)\]: (.+)$/);
-    if (messageMatch) {
-      const [, level, message] = messageMatch;
-      return `[PYTHON] ${message}`;
-    }
-  }
-  
-  // Fallback for unrecognized formats
-  return `[PYTHON] ${line}`;
-}
 
 // Parse version string from `python --version` output
 function parsePythonVersion(output: string): number[] {
@@ -175,7 +144,19 @@ export async function initializePythonProcess(): Promise<void> {
     ...process.env,
     PYTHONPATH: CONFIG.enginePath,
     LOG_NO_COLORS: '1',
+    // Ensure Python gets LOG_LEVEL if set
+    LOG_LEVEL: process.env.LOG_LEVEL || '',
+    // Ensure Python writes to the same logs directory as Electron
+    LOG_DIR: path.join(process.cwd(), 'logs'),
   };
+
+  // Enable Playwright verbose API logs only when debug/verbose
+  const lvl = (process.env.LOG_LEVEL || '').toLowerCase();
+  if (lvl === 'debug' || lvl === 'verbose') {
+    (env as any).DEBUG = 'pw:api';
+  } else {
+    delete (env as any).DEBUG;
+  }
 
   persistentPythonProcess = spawn(
     pythonCmd,
@@ -193,71 +174,60 @@ export async function initializePythonProcess(): Promise<void> {
   let outputBuffer = '';
   persistentPythonProcess.stdout?.on('data', (data: Buffer) => {
     const text = data.toString();
-    logger.debug('Received Python output:', { text: text.trim() });
     outputBuffer += text;
-    
-    // Check for ready signal
-    if (text.includes('READY') || text.includes('Persistent runner ready')) {
-      isProcessReady = true;
-      return;
-    }
-    
-    // Try to parse JSON responses
+
     const lines = outputBuffer.split('\n');
-    outputBuffer = lines.pop() || ''; // Keep incomplete line in buffer
-    
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      
-      // Log all stdout during initialization for debugging
-      if (!isProcessReady) {
-        logger.debug('Python stdout during initialization:', { output: line.trim() });
+    outputBuffer = lines.pop() || '';
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+
+      // Detect readiness message
+      if (line.includes('READY') || line.includes('Persistent runner ready')) {
+        isProcessReady = true;
+        continue;
       }
-      
+
+      // Try JSON first
       try {
-        const response = JSON.parse(line);
-        if (response.id && (response.success !== undefined || response.error)) {
-          // This is a response to a request
-          const requestIndex = pendingRequests.findIndex(req => req.id === response.id);
+        const parsed = JSON.parse(line);
+        // Progress event forwarded to renderer
+        if (parsed && parsed.type === 'progress') {
+          const mainWindow: BrowserWindow | undefined = getMainWindow();
+          mainWindow?.webContents.send('workflow-progress', parsed);
+          continue;
+        }
+        // Response to a previously sent request
+        if (parsed && parsed.id && (parsed.success !== undefined || parsed.error)) {
+          const requestIndex = pendingRequests.findIndex(req => req.id === parsed.id);
           if (requestIndex !== -1) {
             const request = pendingRequests.splice(requestIndex, 1)[0];
             clearTimeout(request.timeout);
-            
-            if (response.success) {
+            if (parsed.success) {
               request.resolve({
                 success: true,
-                output: JSON.stringify(response.result?.results || {}),
-                errorOutput: response.result?.errorOutput || ''
+                output: JSON.stringify(parsed.result?.results || {}),
+                errorOutput: parsed.result?.errorOutput || ''
               });
             } else {
-              request.reject(new Error(response.error || 'Unknown error'));
+              request.reject(new Error(parsed.error || 'Unknown error'));
             }
           }
-        } else {
-          // Regular log output - parse and format
-          const cleanLine = stripAnsiColors(line.trim());
-          const formattedLine = formatPythonLog(cleanLine);
-          if (formattedLine) {
-            // Skip duplicate messages that are already logged by Python
-            if (!formattedLine.includes('Python process is ready') && 
-                !formattedLine.includes('Python process initialized successfully')) {
-              // Use the proper logger instead of console.log for consistent formatting
-              logger.info(formattedLine);
-            }
-          }
+          continue;
         }
-      } catch (e) {
-        // Not JSON, treat as regular output - parse and format
-        const cleanLine = stripAnsiColors(line.trim());
-        const formattedLine = formatPythonLog(cleanLine);
-        if (formattedLine) {
-          // Skip duplicate messages that are already logged by Python
-          if (!formattedLine.includes('Python process is ready') && 
-              !formattedLine.includes('Python process initialized successfully')) {
-            // Use the proper logger instead of console.log for consistent formatting
-            logger.info(formattedLine);
-          }
-        }
+        // Unknown JSON: fall through to console
+      } catch {
+        // Not JSON; fall through to console
+      }
+
+      // Classify Playwright auto-wait verbosity as debug-only
+      const clean = stripAnsiColors(line);
+      const isPlaywrightVerbose = /^(?:-\s|waiting\s|element\s|attempt\s|retrying\s)/i.test(clean);
+      if (isPlaywrightVerbose) {
+        logger.debug(clean);
+      } else {
+        logger.info(clean);
       }
     }
   });
@@ -265,14 +235,7 @@ export async function initializePythonProcess(): Promise<void> {
   persistentPythonProcess.stderr?.on('data', (data: Buffer) => {
     const text = data.toString();
     const cleanText = stripAnsiColors(text.trim());
-    
-    // Log all stderr output during initialization for debugging
-    if (!isProcessReady) {
-      logger.debug('Python stderr during initialization:', { error: cleanText });
-    }
-    
-    logger.error('Python Error:', { error: cleanText });
-    logger.debug('Raw Python stderr:', { text: text.trim() });
+    logger.error(cleanText);
   });
 
   persistentPythonProcess.on('close', (code) => {

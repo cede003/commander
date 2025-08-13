@@ -4,7 +4,7 @@ Function Registry - Simple registry for function definitions and wrappers
 
 import asyncio
 from typing import Dict, Any, Callable, Optional
-from utils.logger import log
+from engine.utils import log
 
 
 class FunctionRegistry:

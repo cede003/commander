@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./error_handling_schema.json",
+  "title": "Error Handling Config",
+  "description": "Error handling configuration for a node or workflow. Determines what happens when an error occurs in a process.",
+  "type": "object",
+  "oneOf": [
+    {
+      "description": "Retry strategy: Retry the operation on error with optional delay and retry limits.",
+      "properties": {
+        "strategy": {
+          "const": "retry",
+          "description": "Retry the operation on failure."
+        },
+        "max_retry_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Maximum number of retry attempts before giving up."
+        },
+        "retry_delay": {
+          "type": "number",
+          "minimum": 0,
+          "default": 1,
+          "description": "Delay in seconds between each retry attempt."
+        }
+      },
+      "required": ["strategy"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Pause strategy: Pause the workflow for a number of seconds before continuing.",
+      "properties": {
+        "strategy": {
+          "const": "pause",
+          "description": "Pause execution for a set time before continuing."
+        },
+        "pause_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "default": 5,
+          "description": "Number of seconds to pause before continuing execution."
+        }
+      },
+      "required": ["strategy"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Continue strategy: Skip the error and continue execution immediately.",
+      "properties": {
+        "strategy": {
+          "const": "continue",
+          "description": "Ignore the error and continue execution."
+        }
+      },
+      "required": ["strategy"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Exit strategy: Stop execution completely on error.",
+      "properties": {
+        "strategy": {
+          "const": "exit",
+          "description": "Stop execution entirely when an error occurs."
+        }
+      },
+      "required": ["strategy"],
+      "additionalProperties": false
+    }
+  ],
+  "default": {
+    "strategy": "continue"
+  }
+}

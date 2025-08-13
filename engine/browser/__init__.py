@@ -8,7 +8,7 @@ from .helpers import register_all_browser_functions, get_registered_browser_func
 from .config import BrowserConfig
 
 # Import logger from utils
-from utils.logger import log as logger
+from engine.utils import log as logger
 
 # Import modules only once to prevent duplicate registrations
 if not hasattr(globals(), '_modules_registered'):
@@ -20,7 +20,7 @@ if not hasattr(globals(), '_modules_registered'):
     
     # Mark as registered to prevent duplicates
     globals()['_modules_registered'] = True
-    logger.info("🎯 Browser package initialization complete")
+    logger.debug("🎯 Browser package initialization complete")
 
 __all__ = [
     'BrowserSession',

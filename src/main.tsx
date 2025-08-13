@@ -7,8 +7,12 @@ import './index.css'
 // Check if we're in modal mode based on URL hash
 const isModal = window.location.hash === '#/modal';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    {isModal ? <WorkflowModal /> : <App />}
-  </React.StrictMode>,
-) 
+const root = document.getElementById('root')!
+const RootComponent = isModal ? <WorkflowModal /> : <App />
+const app = import.meta.env.DEV ? (
+  RootComponent
+) : (
+  <React.StrictMode>{RootComponent}</React.StrictMode>
+)
+
+ReactDOM.createRoot(root).render(app)

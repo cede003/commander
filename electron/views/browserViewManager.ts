@@ -50,7 +50,9 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
       preload: path.join(__dirname, '../../dist/browserViewPreload.js')
     }
   });
-  browserView.webContents.openDevTools({ mode: 'undocked', activate: true });
+  if (CONFIG.openDevToolsOnStart) {
+    browserView.webContents.openDevTools({ mode: 'undocked' });
+  }
   setupBrowserViewEvents(browserView);
   browserView.webContents.loadURL(url);
   setupBrowserViewContextMenu(browserView);

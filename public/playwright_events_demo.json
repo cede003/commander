@@ -1,0 +1,141 @@
+{
+  "metadata": {
+    "name": "Playwright Events Demo",
+    "description": "Demonstrates Playwright wait and event functions: wait_for_selector, wait_for_load_state, wait_for_function, wait_for_event, wait_for_response, wait_for_request, wait_for_url, wait_for_timeout, wait_for_download, wait_for_file_chooser, wait_for_popup",
+    "workflow_version": "1.0.0",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "url": "https://example.com",
+    "network_url": "https://www.wikipedia.org"
+  },
+  "default_error_handling": {
+    "strategy": "retry",
+    "max_attempts": 2,
+    "retry_delay": 0.5
+  },
+  "nodes": {
+    "start_log": {
+      "id": "start_log",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Starting Playwright Events Demo" }
+    },
+    "goto_network": {
+      "id": "goto_network",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": { "url": "{{inputs.network_url}}" }
+    },
+    "wait_request": {
+      "id": "wait_request",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_request",
+      "inputs": { "url_or_predicate": "**wikipedia**" }
+    },
+    "wait_response": {
+      "id": "wait_response",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_response",
+      "inputs": { "url_or_predicate": "**wikipedia**" }
+    },
+    "wait_console_event": {
+      "id": "wait_console_event",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_event",
+      "inputs": { "event": "console" }
+    },
+    "goto": {
+      "id": "goto",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": { "url": "{{inputs.url}}" }
+    },
+    "wait_load_dom": {
+      "id": "wait_load_dom",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_load_state",
+      "inputs": { "state": "domcontentloaded" }
+    },
+    "wait_h1": {
+      "id": "wait_h1",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_selector",
+      "inputs": { "selector": "h1" }
+    },
+    "wait_fn": {
+      "id": "wait_fn",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_function",
+      "inputs": { "function": "() => document.title.length > 0" }
+    },
+    "wait_url": {
+      "id": "wait_url",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_url",
+      "inputs": { "url": "**example**" }
+    },
+    "wait_timeout": {
+      "id": "wait_timeout",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_timeout",
+      "inputs": { "timeout": 250 }
+    },
+    "try_wait_download": {
+      "id": "try_wait_download",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_download",
+      "inputs": {}
+    },
+    "try_wait_file_chooser": {
+      "id": "try_wait_file_chooser",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_file_chooser",
+      "inputs": {}
+    },
+    "try_wait_popup": {
+      "id": "try_wait_popup",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_popup",
+      "inputs": {}
+    },
+    "end_log": {
+      "id": "end_log",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Finished Playwright Events Demo" }
+    }
+  },
+  "edges": [
+    { "from": "start_log", "to": "goto" },
+    { "from": "goto", "to": "wait_load_dom" },
+    { "from": "wait_load_dom", "to": "wait_h1" },
+    { "from": "wait_h1", "to": "wait_fn" },
+    { "from": "wait_fn", "to": "wait_url" },
+    { "from": "wait_url", "to": "wait_timeout" },
+    { "from": "wait_timeout", "to": "goto_network" },
+    { "from": "goto_network", "to": "wait_request" },
+    { "from": "wait_request", "to": "wait_response" },
+    { "from": "wait_response", "to": "wait_console_event" },
+    { "from": "wait_console_event", "to": "try_wait_download" },
+    { "from": "try_wait_download", "to": "try_wait_file_chooser" },
+    { "from": "try_wait_file_chooser", "to": "try_wait_popup" },
+    { "from": "try_wait_popup", "to": "end_log" }
+  ]
+}
+

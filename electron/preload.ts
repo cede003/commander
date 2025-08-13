@@ -71,6 +71,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   executeWorkflow: (workflowData: string) => ipcRenderer.invoke('execute-workflow', workflowData),
   executeWorkflowCommand: (command: string, data: any) => ipcRenderer.invoke('execute-workflow-command', command, data),
   logEntry: (logEntry: any) => ipcRenderer.invoke('logEntry', logEntry),
+
+  // Workflow progress from Python engine
+  onWorkflowProgress: (callback: (event: any) => void) => {
+    ipcRenderer.on('workflow-progress', (_event, data) => callback(data));
+  },
+  removeWorkflowProgressListener: () => {
+    ipcRenderer.removeAllListeners('workflow-progress');
+  },
 });
 
  

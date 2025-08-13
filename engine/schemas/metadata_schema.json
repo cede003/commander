@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./metadata_schema.json",
+  "title": "Workflow Metadata Schema",
+  "type": "object",
+  "required": ["name", "schema_version"],
+  "properties": {
+    "name": { "type": "string", "description": "Name of the workflow" },
+    "author": { "type": "string", "description": "Author of the workflow" },
+    "description": { "type": "string", "description": "Description of the workflow" },
+    "workflow_version": { "type": "string", "description": "Version of the workflow" },
+    "schema_version": { "type": "string", "description": "Version of the schema used in workflow" }
+  },
+  "additionalProperties": false
+}

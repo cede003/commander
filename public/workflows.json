@@ -24,6 +24,27 @@
       "filename": "status_demo_workflow.json",
       "name": "Status Demo Workflow",
       "description": "Demonstrates workflow status tracking and logging"
+    },
+    {
+      "filename": "test_workflow_execution.json",
+      "name": "Test Workflow Execution",
+      "description": "Sequential browser steps to validate execution engine"
+    }
+    ,
+    {
+      "filename": "playwright_actions_demo.json",
+      "name": "Playwright Actions Demo",
+      "description": "Covers most Playwright action functions"
+    },
+    {
+      "filename": "playwright_observations_demo.json",
+      "name": "Playwright Observations Demo",
+      "description": "Covers Playwright observation functions with simple pages"
+    },
+    {
+      "filename": "playwright_events_demo.json",
+      "name": "Playwright Events Demo",
+      "description": "Covers Playwright wait/event functions with short timeouts"
     }
   ]
 } 

@@ -3,8 +3,9 @@ Playwright Helpers - Minimal utilities for calling Playwright methods
 """
 
 from typing import Dict, Any, List
+import inspect
 from playwright.async_api import Page
-from utils.logger import log
+from engine.utils import log
 
 
 class PlaywrightHelpers:
@@ -12,23 +13,55 @@ class PlaywrightHelpers:
     
     @staticmethod
     async def call_playwright_method(page: Page, method_name: str, inputs: Dict, context: Dict) -> Dict[str, Any]:
-        """Call any Playwright method with basic error handling"""
-        
+        """Call any Playwright method or read attribute with basic error handling.
+
+        Supports both async methods (e.g. title()) and simple attributes (e.g. url).
+        """
+
+        # Try to resolve attribute on Page first; if missing and a selector is provided,
+        # try resolving on a Locator from the selector (for element-only methods like scroll_into_view_if_needed)
+        target_obj = page
         if not hasattr(page, method_name):
-            raise Exception(f"Method {method_name} not found on page")
-        
-        method = getattr(page, method_name)
-        
+            if 'selector' in (inputs or {}):
+                locator = page.locator(inputs['selector'])
+                if hasattr(locator, method_name):
+                    target_obj = locator
+                else:
+                    raise Exception(f"Method {method_name} not found on page or locator")
+            else:
+                raise Exception(f"Method {method_name} not found on page")
+
+        attr = getattr(target_obj, method_name)
+
+        # Normalize inputs copy for safe mutation
+        call_kwargs = dict(inputs or {})
+
         # Convert timeout string to int if needed
-        if 'timeout' in inputs and isinstance(inputs['timeout'], str):
-            inputs['timeout'] = int(inputs['timeout'])
-        
+        if 'timeout' in call_kwargs and isinstance(call_kwargs['timeout'], str):
+            call_kwargs['timeout'] = int(call_kwargs['timeout'])
+
         try:
-            result = await method(**inputs)
+            # If attribute is callable, call it (and await if needed). Otherwise, treat as property.
+            if callable(attr):
+                # Special-case argument mapping for certain Playwright methods
+                if method_name == 'wait_for_function' and 'function' in call_kwargs:
+                    expression = call_kwargs.pop('function')
+                    maybe_result = attr(expression, **call_kwargs)
+                else:
+                    # If we are calling on a Locator, drop selector from kwargs
+                    if target_obj is not page and 'selector' in call_kwargs:
+                        call_kwargs.pop('selector', None)
+                    # Prefer calling with kwargs when provided; otherwise no-arg call
+                    maybe_result = attr(**call_kwargs) if call_kwargs else attr()
+                result_value = await maybe_result if inspect.isawaitable(maybe_result) else maybe_result
+            else:
+                # Property access (e.g., page.url)
+                result_value = attr
+
             return {
                 'method': method_name,
                 'success': True,
-                'result': str(result),
+                'result': str(result_value),
                 'method_type': 'playwright'
             }
         except Exception as e:

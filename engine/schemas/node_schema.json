@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./node_schema.json",
+  "title": "Workflow Node Schema",
+  "type": "object",
+  "required": ["id", "domain", "type", "subtype"],
+  "$defs": {
+    "ExecutionRun": {
+      "type": "object",
+      "description": "One execution attempt/run of this node",
+      "properties": {
+        "attempt": { "type": "integer", "minimum": 1, "description": "1-based attempt index" },
+        "started_at": { "type": "string", "format": "date-time", "description": "When this run started" },
+        "completed_at": { "type": "string", "format": "date-time", "description": "When this run completed" },
+        "execution_time_seconds": { "type": "number", "minimum": 0, "description": "Duration of this run in seconds" },
+        "execution_result": {
+          "type": "string",
+          "enum": ["success", "error", "skipped"],
+          "description": "Outcome of this run (distinct from the node's current top-level status)"
+        },
+        "status_message": { "type": "string", "description": "Additional info or error for this run" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the node"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain/environment of the node",
+      "enum": ["browser", "spreadsheet", "email", "file", "llm", "api"]
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of node",
+      "enum": ["action", "observation", "event", "notification", "wait_for_input"]
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Subtype/specific operation of the node"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current execution status of the node",
+      "enum": ["queued", "running", "complete", "error", "skipped", "paused"],
+      "default": "queued"
+    },
+    "status_message": {
+      "type": "string",
+      "description": "Additional status information or error message"
+    },
+    "execution_info": {
+      "type": "object",
+      "description": "Execution metadata for this node, including multiple runs (e.g., loops or retries)",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ExecutionRun" },
+          "description": "Chronological list of runs for this node"
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "properties": {
+      "type": "object",
+      "description": "Static configuration for the node. These values are fixed at design-time (e.g., timeout seconds, hardcoded selector).",
+      "properties": {
+        "timeout_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum time to allow this node to run before timing out"
+        },
+        "selector": {
+          "type": "string",
+          "description": "Hardcoded selector or identifier to use at runtime"
+        }
+      },
+      "additionalProperties": true,
+      "default": {}
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Dynamic runtime variables for this node. Values are resolved at execution time (e.g., templated expressions or values from previous nodes).",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Outputs exposed by the node",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "output_mapping": {
+      "type": "object",
+      "description": "Outputs mapped to by the node",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "conditions": {
+      "type": "string",
+      "description": "Optional boolean expression to conditionally run this node"
+    },
+    "error_handling": {
+      "$ref": "./error_handling_schema.json",
+      "description": "Node-specific error handling configuration"
+    },
+    "async": {
+      "type": "boolean",
+      "description": "If true, node runs asynchronously"
+    }
+  },
+  "additionalProperties": false
+}

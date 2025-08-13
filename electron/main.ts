@@ -1,11 +1,11 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 import { CONFIG } from './constants/config';
 import { createMainWindow } from './windows/mainWindow';
 import { createBrowserView, setMainWindow, getSidebarVisible } from './views/browserViewManager';
 import { setupIpcHandlers } from './ipc/handlers';
 import { initializePythonProcess, cleanupPythonProcess } from './utils/pythonRunner';
 import { setupBrowserViewAutoResize, calculateBrowserViewBounds, updateBrowserViewBounds } from './utils/bounds';
-import logger from './utils/logger';
+import logger, { applyLogLevelFromArgv } from './utils/logger';
 
 // Layout constants
 const LAYOUT = {
@@ -14,6 +14,57 @@ const LAYOUT = {
 } as const;
 
 let mainWindow: BrowserWindow | undefined;
+
+// Readiness tracking
+let electronReady = false;
+let pythonReady = false;
+let appReadyLogged = false;
+
+function maybeLogAppReady(): void {
+  if (electronReady && pythonReady && !appReadyLogged) {
+    appReadyLogged = true;
+    logger.info('🚀 App is ready');
+  }
+}
+
+function initializePythonWhenRendererReady(window: BrowserWindow): void {
+  const startPython = () => {
+    initializePythonProcess()
+      .then(() => {
+        pythonReady = true;
+        logger.info('Python is ready');
+        maybeLogAppReady();
+      })
+      .catch((error) => {
+        logger.error('Failed to initialize Python process:', error);
+      });
+  };
+
+  if (window.webContents.isLoading()) {
+    window.webContents.once('did-finish-load', startPython);
+    // Fallback: if load fails, still initialize so workflows can run
+    window.webContents.once('did-fail-load', () => {
+      logger.warn('Renderer failed to load; initializing Python process anyway');
+      startPython();
+    });
+  } else {
+    // If already loaded (e.g., on reload), start immediately
+    startPython();
+  }
+}
+
+// Ensure single instance to avoid duplicate initialization/logs during dev restarts
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
 
 function createWindowWithBrowserView(): BrowserWindow {
   // Create the main window
@@ -48,14 +99,19 @@ function createWindowWithBrowserView(): BrowserWindow {
   return window;
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  logger.info('🚀 Electron app is ready');
-  logger.debug('🔧 CONFIG:', CONFIG);
-  logger.debug('🔧 CONFIG.mainWindow:', CONFIG.mainWindow);
-  logger.debug('🔧 CONFIG.preloadPath:', CONFIG.preloadPath);
+// Use whenReady() instead of 'ready' event
+app.whenReady().then(() => {
+  electronReady = true;
+  logger.info('Electron is ready');
+  maybeLogAppReady();
+  // Apply log level flags from argv and propagate to env
+  applyLogLevelFromArgv(process.argv.slice(1));
+
+  // Ensure no cached renderer assets between rebuilds
+  session.defaultSession.clearCache().catch(() => {});
+  logger.debug('CONFIG:', CONFIG);
+  logger.debug('CONFIG.mainWindow:', CONFIG.mainWindow);
+  logger.debug('CONFIG.preloadPath:', CONFIG.preloadPath);
   
   // Enable remote debugging
   app.commandLine.appendSwitch('remote-debugging-port', CONFIG.remoteDebuggingPort.toString());
@@ -67,16 +123,14 @@ app.on('ready', () => {
   // Create the main window with browser view
   mainWindow = createWindowWithBrowserView();
   
-  // Initialize Python process after a short delay
-  setTimeout(() => {
-    initializePythonProcess().then(() => {
-      logger.info('Python process initialized successfully');
-    }).catch((error) => {
-      logger.error('Failed to initialize Python process:', error);
-    });
-  }, 2000); // Wait 2 seconds for app to be fully ready
+  // Initialize Python process when the renderer has finished loading
+  if (mainWindow) {
+    initializePythonWhenRendererReady(mainWindow);
+  }
   
-  logger.info('✅ Main window and BrowserView created successfully');
+  logger.info('Main window and BrowserView created successfully');
+}).catch((err) => {
+  logger.error('Error during app.whenReady initialization:', err);
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

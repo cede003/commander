@@ -205,8 +205,8 @@ PLAYWRIGHT_SPECS = {
                 "playwright_method": "wait_for_selector"
             },
             "wait_for_load_state": {
-                "required_inputs": ["state"],
-                "description": "Waits for a specific load state",
+                "required_inputs": [],
+                "description": "Waits for a specific load state (default 'load')",
                 "playwright_method": "wait_for_load_state"
             },
             "wait_for_function": {
@@ -237,11 +237,6 @@ PLAYWRIGHT_SPECS = {
                 "required_inputs": ["url"],
                 "description": "Waits for URL to match",
                 "playwright_method": "wait_for_url"
-            },
-            "wait_for_load_state": {
-                "required_inputs": [],
-                "description": "Waits for load to complete",
-                "playwright_method": "wait_for_load_state"
             },
             "wait_for_timeout": {
                 "required_inputs": ["timeout"],

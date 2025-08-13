@@ -30,15 +30,12 @@ const fileFormat = winston.format.combine(
 
 // Get log level from environment variable
 const getLogLevel = (): string => {
-  const envLevel = process.env.LOG_LEVEL?.toLowerCase();
-  const validLevels = ['error', 'warn', 'info', 'debug', 'verbose'];
-  
-  if (envLevel && validLevels.includes(envLevel)) {
-    return envLevel;
-  }
-  
-  // Default based on environment
-  return process.env.NODE_ENV === 'development' ? 'debug' : 'info';
+  const envLevel = (process.env.LOG_LEVEL || '').toLowerCase();
+  // Treat "verbose" as an alias for "debug" to include debug logs
+  if (envLevel === 'verbose') return 'debug';
+  if (['error', 'warn', 'info', 'debug'].includes(envLevel)) return envLevel;
+  // Default
+  return 'info';
 };
 
 // Create logger instance
@@ -75,6 +72,36 @@ if (process.env.NODE_ENV !== 'production') {
     silent: false,
   }));
 }
+
+// Allow runtime log level override
+export const setLogLevel = (level: string) => {
+  const normalized = (level || '').toLowerCase();
+  const mapped = normalized === 'verbose' ? 'debug' : normalized;
+  const valid = ['error', 'warn', 'info', 'debug'];
+  if (valid.includes(mapped)) {
+    logger.level = mapped;
+  }
+};
+
+// Apply log level based on argv flags
+// Supports: --verbose | -v, --log_level=info, --log-level=debug
+export const applyLogLevelFromArgv = (argv: string[]) => {
+  const hasVerbose = argv.includes('--verbose') || argv.includes('-v');
+  const explicitArg = argv.find(a => a.startsWith('--log_level=') || a.startsWith('--log-level='));
+
+  if (hasVerbose) {
+    setLogLevel('verbose');
+    process.env.LOG_LEVEL = 'verbose';
+  }
+
+  if (explicitArg) {
+    const level = (explicitArg.split('=')[1] || '').toLowerCase();
+    if (level) {
+      setLogLevel(level);
+      process.env.LOG_LEVEL = level;
+    }
+  }
+};
 
 // Create workflow-specific logger
 export const createWorkflowLogger = (workflowId: string, workflowName?: string) => {

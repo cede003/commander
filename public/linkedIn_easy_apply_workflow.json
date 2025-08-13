@@ -15,9 +15,6 @@
         "inputs": {
           "selector": "#jobs-apply-button-id",
           "timeout": 5000
-        },
-        "outputs": {
-          "clicked": "boolean"
         }
       },
       "log_click_result": {

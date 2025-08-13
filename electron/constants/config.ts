@@ -4,6 +4,7 @@ import path from 'path';
 export const CONFIG = {
   // Development flags
   isDev: process.env.NODE_ENV === 'development' || !app.isPackaged,
+  openDevToolsOnStart: false,
   
   // Debug preload path
   preloadPath: path.join(__dirname, '..', 'preload.js'),

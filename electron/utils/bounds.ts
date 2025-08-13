@@ -12,7 +12,6 @@ export interface Bounds {
 export function calculateBrowserViewBounds(
   mainWindow: BrowserWindow,
   sidebarVisible: boolean = true,
-  devToolsOpen: boolean = false
 ): Bounds {
   const { width, height } = mainWindow.getContentBounds();
   
@@ -49,11 +48,6 @@ export function updateBrowserViewBounds(
   
   const newBounds = calculateBrowserViewBounds(mainWindow, sidebarVisible);
   browserView.setBounds(newBounds);
-  
-  logger.info('BrowserView bounds updated for sidebar visibility change:', {
-    sidebarVisible,
-    newBounds
-  });
 }
 
 // Set up auto-resize properly (call once during initialization)
@@ -77,6 +71,6 @@ export function setupBrowserViewAutoResize(
     // Set bounds manually for full control
     browserView.setBounds(initialBounds);
     
-    console.log('Manual bounds control enabled for BrowserView with initial bounds:', initialBounds);
+    logger.debug('Manual bounds control enabled for BrowserView with initial bounds:', initialBounds);
   }
 }

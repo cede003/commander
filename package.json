@@ -1,32 +1,25 @@
 {
   "name": "commander",
+  "author": "Christopher Ede",
   "version": "1.0.0",
   "description": "Electron desktop app with React, TypeScript, and Tailwind CSS",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\" \"npm run dev:copy\" \"npm run dev:watch\"",
+    "dev": "concurrently -k \"npm:dev:vite\" \"npm:dev:types\" \"npm:dev:electron\" \"npm:dev:public\"",
     "dev:vite": "vite",
-    "dev:electron": "wait-on tcp:5174 && electron . --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1",
-    "dev:copy": "cp -r public dist/",
-    "dev:watch": "nodemon --watch public --ext json --exec \"npm run dev:copy\"",
-    "dev:watch:mac": "fswatch -o public | xargs -n1 -I{} npm run dev:copy",
-    "dev:verbose": "LOG_LEVEL=debug concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
-    "dev:debug": "LOG_LEVEL=debug concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
-    "dev:info": "LOG_LEVEL=info concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:types": "tsc -w -p electron/tsconfig.json",
+    "dev:electron": "wait-on tcp:5174 && nodemon -q --watch dist/main.js --watch dist/electron --exec \"electron . --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1\"",
+    "dev:public": "nodemon -q --watch public --ext json --exec \"rsync -a --delete public/ dist/public/\"",
+
     "clean": "rm -rf dist/ node_modules/.cache/ .vite/ logs/",
-    "clean:full": "rm -rf dist/ node_modules/.cache/ .vite/ logs/ && npm install && npm run build",
-    "build": "npm run build:vite && npm run build:electron && npm run copy:engine && npm run copy:public",
+    "build": "npm run clean && npm run build:vite && npm run build:electron && npm run copy:engine && npm run copy:public",
     "build:vite": "vite build",
     "build:electron": "tsc -p electron/tsconfig.json",
-    "copy:engine": "cp -r engine dist/",
-    "copy:public": "cp -r public dist/",
-    "sync:public": "cp -r public dist/ && echo '✅ Public files synced to dist/'",
+    "copy:engine": "mkdir -p dist/engine && rsync -av --delete engine/ dist/engine/",
+    "copy:public": "mkdir -p dist/public && rsync -av --delete public/ dist/public/",
+
     "dist": "npm run build && electron-builder",
     "preview": "vite preview",
-    "logs:clear": "rm -rf logs/*",
-    "logs:view": "tail -f logs/combined.log",
-    "test:logging": "node test-logging.js",
-    "test:python-logging": "python test-python-logging.py",
     "kill": "pkill -f 'electron' || true && pkill -f 'vite' || true && pkill -f 'node.*commander' || true && pkill -f 'python.*runner' || true && pkill -f 'nodemon' || true && echo '✅ All commander processes killed'"
   },
   "keywords": [
@@ -35,7 +28,6 @@
     "typescript",
     "tailwind"
   ],
-  "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.10.0",
