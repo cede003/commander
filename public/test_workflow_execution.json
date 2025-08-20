@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "name": "Test Workflow Execution",
+    "description": "Sequential browser steps to validate execution engine",
+    "workflow_version": "1.0.0",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "skip_conditional": false
+  },
+  "default_error_handling": {
+    "strategy": "continue",
+    "max_attempts": 2,
+    "retry_delay": 1,
+    "pause_seconds": 1
+  },
+  "nodes": {
+    "notify_start": {
+      "id": "notify_start",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Starting test workflow", "level": "info" }
+    },
+    "go_example": {
+      "id": "go_example",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": { "url": "https://example.com" }
+    },
+    "wait_short": {
+      "id": "wait_short",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_timeout",
+      "inputs": { "timeout": 500 }
+    },
+    "get_title_example": {
+      "id": "get_title_example",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "get_title",
+      "inputs": {}
+    },
+    "log_title_if_example": {
+      "id": "log_title_if_example",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Title: {{results.get_title_example.result}}" }
+    },
+    "go_wikipedia": {
+      "id": "go_wikipedia",
+      "domain": "browser",
+      "type": "action",
+      "subtype": "goto",
+      "inputs": { "url": "https://www.wikipedia.org" }
+    },
+    "wait_short_2": {
+      "id": "wait_short_2",
+      "domain": "browser",
+      "type": "event",
+      "subtype": "wait_for_timeout",
+      "inputs": { "timeout": 500 }
+    },
+    "get_current_url": {
+      "id": "get_current_url",
+      "domain": "browser",
+      "type": "observation",
+      "subtype": "url",
+      "inputs": {}
+    },
+    "conditional_log": {
+      "id": "conditional_log",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "conditions": "not inputs.skip_conditional",
+      "inputs": { "message": "URL: {{results.get_current_url.result}}" }
+    },
+    "notify_end": {
+      "id": "notify_end",
+      "domain": "browser",
+      "type": "notification",
+      "subtype": "console_log",
+      "inputs": { "message": "Finished test workflow", "level": "success" }
+    }
+  },
+  "edges": [
+    { "from": "notify_start", "to": "go_example" },
+    { "from": "go_example", "to": "wait_short" },
+    { "from": "wait_short", "to": "get_title_example" },
+    { "from": "get_title_example", "to": "log_title_if_example", "condition": "results.get_title_example.result == 'Example Domain'" },
+    { "from": "log_title_if_example", "to": "go_wikipedia" },
+    { "from": "get_title_example", "to": "go_wikipedia", "condition": "results.get_title_example.result != 'Example Domain'" },
+    { "from": "go_wikipedia", "to": "wait_short_2" },
+    { "from": "wait_short_2", "to": "get_current_url" },
+    { "from": "get_current_url", "to": "conditional_log" },
+    { "from": "conditional_log", "to": "notify_end" }
+  ]
+}
+

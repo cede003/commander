@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./workflow_schema.json",
+  "title": "Workflow Schema",
+  "type": "object",
+  "required": ["metadata", "nodes", "edges"],
+  "properties": {
+    "metadata": {
+      "$ref": "./metadata_schema.json"
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Global inputs for the workflow",
+      "additionalProperties": true
+    },
+    "nodes": {
+      "type": "object",
+      "description": "Nodes of the workflow, keyed by node id",
+      "propertyNames": { "pattern": "^[a-zA-Z0-9_-]+$" },
+      "additionalProperties": { "$ref": "./node_schema.json" }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Directed edges between nodes",
+      "items": { "$ref": "./edge_schema.json" }
+    },
+    "default_error_handling": {
+      "$ref": "./error_handling_schema.json"
+    }
+  },
+  "additionalProperties": false
+}

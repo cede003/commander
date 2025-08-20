@@ -1,13 +1,11 @@
 # Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Build outputs
 dist/
-build/
+dist-ssr/
 out/
+dist-electron/
 
 # Electron specific
 release/
@@ -18,6 +16,9 @@ release/
 *.AppImage
 *.exe
 *.msi
+
+# User data (browser cache, cookies, etc.)
+userData/
 
 # Development
 .env
@@ -43,8 +44,13 @@ ehthumbs.db
 Thumbs.db
 
 # Logs
-logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Runtime data
 pids
@@ -58,9 +64,6 @@ coverage/
 
 # nyc test coverage
 .nyc_output
-
-# Dependency directories
-jspm_packages/
 
 # Optional npm cache directory
 .npm
@@ -87,34 +90,21 @@ jspm_packages/
 .cache
 .parcel-cache
 
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
 # Temporary folders
 tmp/
-temp/
+temp/ 
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Electron specific
-app/
-packages/ 
+# Python cache and virtualenvs
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.coverage
+.tox/
+.env/
+.venv/
+env/
+venv/ 

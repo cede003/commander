@@ -1,0 +1,50 @@
+{
+  "workflows": [
+    {
+      "filename": "calculator_workflow.json",
+      "name": "Calculator Workflow",
+      "description": "Use an online calculator to perform mathematical calculations"
+    },
+    {
+      "filename": "custom_actions_demo.json",
+      "name": "Custom Actions Demo",
+      "description": "Demonstrates custom action functions and their usage"
+    },
+    {
+      "filename": "linkedIn_easy_apply_workflow.json",
+      "name": "LinkedIn Easy Apply Workflow",
+      "description": "Clicks Easy Apply and checks form field completeness"
+    },
+    {
+      "filename": "linkedIn_easy_apply_2.json",
+      "name": "LinkedIn Easy Apply 2",
+      "description": "Clicks Next repeatedly until it no longer exists"
+    },
+    {
+      "filename": "status_demo_workflow.json",
+      "name": "Status Demo Workflow",
+      "description": "Demonstrates workflow status tracking and logging"
+    },
+    {
+      "filename": "test_workflow_execution.json",
+      "name": "Test Workflow Execution",
+      "description": "Sequential browser steps to validate execution engine"
+    }
+    ,
+    {
+      "filename": "playwright_actions_demo.json",
+      "name": "Playwright Actions Demo",
+      "description": "Covers most Playwright action functions"
+    },
+    {
+      "filename": "playwright_observations_demo.json",
+      "name": "Playwright Observations Demo",
+      "description": "Covers Playwright observation functions with simple pages"
+    },
+    {
+      "filename": "playwright_events_demo.json",
+      "name": "Playwright Events Demo",
+      "description": "Covers Playwright wait/event functions with short timeouts"
+    }
+  ]
+} 

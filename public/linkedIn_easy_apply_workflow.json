@@ -1,0 +1,51 @@
+{
+    "metadata": {
+      "name": "LinkedIn Easy Apply Workflow",
+      "author": "cede",
+      "description": "Clicks Easy Apply and checks form field completeness",
+      "version": "1.0.0"
+    },
+    "inputs": {},
+    "nodes": {
+      "click_easy_apply": {
+        "id": "click_easy_apply",
+        "domain": "browser",
+        "type": "action",
+        "subtype": "click",
+        "inputs": {
+          "selector": "#jobs-apply-button-id",
+          "timeout": 5000
+        }
+      },
+      "log_click_result": {
+        "id": "log_click_result",
+        "domain": "browser",
+        "type": "notification",
+        "subtype": "console_log",
+        "inputs": {
+            "message": "Click successful: {{results.click_easy_apply.success}}",
+            "level": "success"
+        }
+      },
+      "log_node_status": {
+        "id": "log_node_status",
+        "domain": "browser",
+        "type": "notification",
+        "subtype": "console_log",
+        "inputs": {
+            "message": "Node status will be available after execution",
+            "level": "info"
+        }
+      }
+    },
+    "edges": [
+      {
+        "from": "click_easy_apply",
+        "to": "log_click_result"
+      },
+      {
+        "from": "log_click_result",
+        "to": "log_node_status"
+      }
+    ]   
+}

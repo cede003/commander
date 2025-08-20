@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./edge_schema.json",
+  "title": "Workflow Edge Schema",
+  "type": "object",
+  "required": ["from", "to"],
+  "properties": {
+    "from": {
+      "type": "string",
+      "description": "ID of the source node"
+    },
+    "to": {
+      "type": "string",
+      "description": "ID of the target node"
+    },
+    "condition": {
+      "type": "string",
+      "description": "Optional condition expression to follow this edge"
+    }
+  },
+  "additionalProperties": false
+}
