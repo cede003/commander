@@ -5,7 +5,7 @@
     "workflow_version": "1.0.0",
     "schema_version": "1.0.0"
   },
-  "inputs": {
+  "properties": {
     "url": "https://example.com",
     "form_url": "https://www.w3schools.com/howto/howto_css_custom_checkbox.asp"
   },
@@ -18,180 +18,257 @@
     "start_log": {
       "id": "start_log",
       "domain": "browser",
-      "type": "notification",
-      "subtype": "console_log",
-      "inputs": { "message": "Starting Playwright Observations Demo" }
+      "properties": {
+        "message": "Starting Playwright Observations Demo"
+      },
+      "operation": "console_log"
     },
     "goto_form": {
       "id": "goto_form",
       "domain": "browser",
-      "type": "action",
-      "subtype": "goto",
-      "inputs": { "url": "{{inputs.form_url}}" }
+      "properties": {
+        "url": "{{inputs.form_url}}"
+      },
+      "operation": "goto"
     },
     "wait_form": {
       "id": "wait_form",
       "domain": "browser",
-      "type": "event",
-      "subtype": "wait_for_timeout",
-      "inputs": { "timeout": 500 }
+      "properties": {
+        "timeout": 500
+      },
+      "operation": "wait_for_timeout"
     },
     "text_content_h1": {
       "id": "text_content_h1",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "text_content",
-      "inputs": { "selector": "h1, h2" }
+      "properties": {
+        "selector": "h1, h2"
+      },
+      "operation": "text_content"
     },
     "is_checkbox_enabled": {
       "id": "is_checkbox_enabled",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "is_enabled",
-      "inputs": { "selector": "input[type='checkbox']" }
+      "properties": {
+        "selector": "input[type='checkbox']"
+      },
+      "operation": "is_enabled"
     },
     "is_checkbox_disabled": {
       "id": "is_checkbox_disabled",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "is_disabled",
-      "inputs": { "selector": "input[type='checkbox']" }
+      "properties": {
+        "selector": "input[type='checkbox']"
+      },
+      "operation": "is_disabled"
     },
     "is_checkbox_checked": {
       "id": "is_checkbox_checked",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "is_checked",
-      "inputs": { "selector": "input[type='checkbox']" }
+      "properties": {
+        "selector": "input[type='checkbox']"
+      },
+      "operation": "is_checked"
     },
     "goto": {
       "id": "goto",
       "domain": "browser",
-      "type": "action",
-      "subtype": "goto",
-      "inputs": { "url": "{{inputs.url}}" }
+      "properties": {
+        "url": "{{inputs.url}}"
+      },
+      "operation": "goto"
     },
     "wait": {
       "id": "wait",
       "domain": "browser",
-      "type": "event",
-      "subtype": "wait_for_timeout",
-      "inputs": { "timeout": 500 }
+      "properties": {
+        "timeout": 500
+      },
+      "operation": "wait_for_timeout"
     },
     "get_title": {
       "id": "get_title",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "title",
-      "inputs": {}
+      "properties": {},
+      "operation": "title"
     },
     "get_title_alias": {
       "id": "get_title_alias",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "get_title",
-      "inputs": {}
+      "properties": {},
+      "operation": "get_title"
     },
     "get_url": {
       "id": "get_url",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "url",
-      "inputs": {}
+      "properties": {},
+      "operation": "url"
     },
     "is_h1_visible": {
       "id": "is_h1_visible",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "is_visible",
-      "inputs": { "selector": "h1" }
+      "properties": {
+        "selector": "h1"
+      },
+      "operation": "is_visible"
     },
     "is_h1_hidden": {
       "id": "is_h1_hidden",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "is_hidden",
-      "inputs": { "selector": "h1.nonexistent" }
+      "properties": {
+        "selector": "h1.nonexistent"
+      },
+      "operation": "is_hidden"
     },
     "query_selector_h1": {
       "id": "query_selector_h1",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "query_selector",
-      "inputs": { "selector": "h1" }
+      "properties": {
+        "selector": "h1"
+      },
+      "operation": "query_selector"
     },
     "query_selector_all_p": {
       "id": "query_selector_all_p",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "query_selector_all",
-      "inputs": { "selector": "p" }
+      "properties": {
+        "selector": "p"
+      },
+      "operation": "query_selector_all"
     },
     "get_attr_lang": {
       "id": "get_attr_lang",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "get_attribute",
-      "inputs": { "selector": "html", "attribute": "lang" }
+      "properties": {
+        "selector": "html",
+        "attribute": "lang"
+      },
+      "operation": "get_attribute"
     },
     "content": {
       "id": "content",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "content",
-      "inputs": {}
+      "properties": {},
+      "operation": "content"
     },
     "inner_html_h1": {
       "id": "inner_html_h1",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "inner_html",
-      "inputs": { "selector": "h1" }
+      "properties": {
+        "selector": "h1"
+      },
+      "operation": "inner_html"
     },
     "outer_html_h1": {
       "id": "outer_html_h1",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "outer_html",
-      "inputs": { "selector": "h1" }
+      "properties": {
+        "selector": "h1"
+      },
+      "operation": "outer_html"
     },
     "bbox_h1": {
       "id": "bbox_h1",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "bounding_box",
-      "inputs": { "selector": "h1" }
+      "properties": {
+        "selector": "h1"
+      },
+      "operation": "bounding_box"
     },
     "end_log": {
       "id": "end_log",
       "domain": "browser",
-      "type": "notification",
-      "subtype": "console_log",
-      "inputs": { "message": "Finished Playwright Observations Demo. Title={{results.get_title.result}} URL={{results.get_url.result}}" }
+      "properties": {
+        "message": "Finished Playwright Observations Demo. Title={{results.get_title.result}} URL={{results.get_url.result}}"
+      },
+      "operation": "console_log"
     }
   },
   "edges": [
-    { "from": "start_log", "to": "goto" },
-    { "from": "goto", "to": "wait" },
-    { "from": "wait", "to": "get_title" },
-    { "from": "get_title", "to": "get_title_alias" },
-    { "from": "get_title_alias", "to": "get_url" },
-    { "from": "get_url", "to": "is_h1_visible" },
-    { "from": "is_h1_visible", "to": "is_h1_hidden" },
-    { "from": "is_h1_hidden", "to": "query_selector_h1" },
-    { "from": "query_selector_h1", "to": "query_selector_all_p" },
-    { "from": "query_selector_all_p", "to": "get_attr_lang" },
-    { "from": "get_attr_lang", "to": "content" },
-    { "from": "content", "to": "inner_html_h1" },
-    { "from": "inner_html_h1", "to": "outer_html_h1" },
-    { "from": "outer_html_h1", "to": "bbox_h1" },
-    { "from": "bbox_h1", "to": "goto_form" },
-    { "from": "goto_form", "to": "wait_form" },
-    { "from": "wait_form", "to": "text_content_h1" },
-    { "from": "text_content_h1", "to": "is_checkbox_enabled" },
-    { "from": "is_checkbox_enabled", "to": "is_checkbox_disabled" },
-    { "from": "is_checkbox_disabled", "to": "is_checkbox_checked" },
-    { "from": "is_checkbox_checked", "to": "end_log" }
+    {
+      "from": "start_log",
+      "to": "goto"
+    },
+    {
+      "from": "goto",
+      "to": "wait"
+    },
+    {
+      "from": "wait",
+      "to": "get_title"
+    },
+    {
+      "from": "get_title",
+      "to": "get_title_alias"
+    },
+    {
+      "from": "get_title_alias",
+      "to": "get_url"
+    },
+    {
+      "from": "get_url",
+      "to": "is_h1_visible"
+    },
+    {
+      "from": "is_h1_visible",
+      "to": "is_h1_hidden"
+    },
+    {
+      "from": "is_h1_hidden",
+      "to": "query_selector_h1"
+    },
+    {
+      "from": "query_selector_h1",
+      "to": "query_selector_all_p"
+    },
+    {
+      "from": "query_selector_all_p",
+      "to": "get_attr_lang"
+    },
+    {
+      "from": "get_attr_lang",
+      "to": "content"
+    },
+    {
+      "from": "content",
+      "to": "inner_html_h1"
+    },
+    {
+      "from": "inner_html_h1",
+      "to": "outer_html_h1"
+    },
+    {
+      "from": "outer_html_h1",
+      "to": "bbox_h1"
+    },
+    {
+      "from": "bbox_h1",
+      "to": "goto_form"
+    },
+    {
+      "from": "goto_form",
+      "to": "wait_form"
+    },
+    {
+      "from": "wait_form",
+      "to": "text_content_h1"
+    },
+    {
+      "from": "text_content_h1",
+      "to": "is_checkbox_enabled"
+    },
+    {
+      "from": "is_checkbox_enabled",
+      "to": "is_checkbox_disabled"
+    },
+    {
+      "from": "is_checkbox_disabled",
+      "to": "is_checkbox_checked"
+    },
+    {
+      "from": "is_checkbox_checked",
+      "to": "end_log"
+    }
   ]
 }
-

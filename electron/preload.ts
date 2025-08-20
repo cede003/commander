@@ -58,8 +58,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateLayout: () => ipcRenderer.invoke('update-layout'),
   updateSidebarVisibility: (visible: boolean) => ipcRenderer.invoke('update-sidebar-visibility', visible),
   initializeBrowserView: () => ipcRenderer.invoke('initialize-browser-view'),
-  openCreateWorkflowModal: () => ipcRenderer.invoke('open-create-workflow-modal'),
-  createWorkflow: (workflow: { id?: string; name: string; description: string; workflowData: string; isEditing?: boolean }) => ipcRenderer.invoke('create-workflow', workflow),
   testIpc: () => ipcRenderer.invoke('test-ipc'),
   onWorkflowCreated: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => {
     ipcRenderer.on('workflow-created', (event, workflow) => callback(workflow));
@@ -69,7 +67,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   executeWorkflow: (workflowData: string) => ipcRenderer.invoke('execute-workflow', workflowData),
-  executeWorkflowCommand: (command: string, data: any) => ipcRenderer.invoke('execute-workflow-command', command, data),
   logEntry: (logEntry: any) => ipcRenderer.invoke('logEntry', logEntry),
 
   // Workflow progress from Python engine

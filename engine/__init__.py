@@ -1,19 +1,90 @@
 """
-Engine Package - Main workflow execution engine
+Commander Engine - Streamlined workflow execution engine
+Provides a clean, efficient interface for executing complex workflows using LangGraph.
 """
 
-from .runner import ScalableWorkflowRunner
-from .registry.function_registry import registry, execute_node, register
-from .browser.playwright_helpers import PlaywrightHelpers
-from .utils.template_engine import TemplateEngine
-from .execution.validator import validate_workflow
+# Core execution components
+from .execution.commander_engine import CommanderEngine
 
+# Import the new TypedDict-based state management
+from .execution.workflow_state import (
+    WorkflowState,
+    create_initial_state,
+    add_message,
+    add_human_message,
+    add_ai_message,
+    add_tool_message,
+)
+
+# Browser session management
+from .browser.session_manager import (
+    BrowserSessionManager,
+    session_manager,
+    initialize_browser_session,
+    get_browser_session,
+    get_browser_session_async,
+    cleanup_browser_session,
+    is_browser_session_ready,
+)
+
+# Registry and tools
+from .registry.tool_registry import (
+    ToolRegistry,
+    tool_registry,
+    execute_tool,
+)
+
+# Browser tools
+from .browser.browser_tool import BrowserTool
+from .browser.session import BrowserSession
+
+# Custom functions
+from .browser.custom_functions import console_log
+
+# Utility functions
+from .utils.logging.logger import logger
+from .utils.templating.template_engine import TemplateEngine
+
+# Version and metadata
+__version__ = "2.0.0"
+__author__ = "Commander Team"
+__description__ = "Streamlined workflow execution engine with TypedDict state management"
+
+# Public API
 __all__ = [
-    'ScalableWorkflowRunner',
-    'registry',
-    'execute_node', 
-    'register',
-    'PlaywrightHelpers',
-    'TemplateEngine',
-    'validate_workflow',
+    # Core engine
+    "CommanderEngine",
+    
+    # State management
+    "WorkflowState",
+    "create_initial_state",
+    "add_message",
+    "add_human_message",
+    "add_ai_message",
+    "add_tool_message",
+    
+    # Browser session management
+    "BrowserSessionManager",
+    "session_manager",
+    "initialize_browser_session",
+    "get_browser_session",
+    "get_browser_session_async",
+    "cleanup_browser_session",
+    "is_browser_session_ready",
+    
+    # Registry
+    "ToolRegistry",
+    "tool_registry",
+    "execute_tool",
+    
+    # Browser tools
+    "BrowserTool",
+    "BrowserSession",
+    
+    # Custom functions
+    "console_log",
+    
+    # Utilities
+    "logger",
+    "TemplateEngine",
 ]

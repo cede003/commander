@@ -1,51 +1,48 @@
 {
-    "metadata": {
-      "name": "LinkedIn Easy Apply Workflow",
-      "author": "cede",
-      "description": "Clicks Easy Apply and checks form field completeness",
-      "version": "1.0.0"
+  "metadata": {
+    "name": "LinkedIn Easy Apply Workflow",
+    "author": "cede",
+    "description": "Clicks Easy Apply and checks form field completeness",
+    "version": "1.0.0"
+  },
+  "properties": {},
+  "nodes": {
+    "click_easy_apply": {
+      "id": "click_easy_apply",
+      "domain": "browser",
+      "properties": {
+        "selector": "#jobs-apply-button-id",
+        "timeout": 5000
+      },
+      "operation": "click"
     },
-    "inputs": {},
-    "nodes": {
-      "click_easy_apply": {
-        "id": "click_easy_apply",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "click",
-        "inputs": {
-          "selector": "#jobs-apply-button-id",
-          "timeout": 5000
-        }
+    "log_click_result": {
+      "id": "log_click_result",
+      "domain": "browser",
+      "properties": {
+        "message": "Click successful: {{results.click_easy_apply.success}}",
+        "level": "success"
       },
-      "log_click_result": {
-        "id": "log_click_result",
-        "domain": "browser",
-        "type": "notification",
-        "subtype": "console_log",
-        "inputs": {
-            "message": "Click successful: {{results.click_easy_apply.success}}",
-            "level": "success"
-        }
-      },
-      "log_node_status": {
-        "id": "log_node_status",
-        "domain": "browser",
-        "type": "notification",
-        "subtype": "console_log",
-        "inputs": {
-            "message": "Node status will be available after execution",
-            "level": "info"
-        }
-      }
+      "operation": "console_log"
     },
-    "edges": [
-      {
-        "from": "click_easy_apply",
-        "to": "log_click_result"
+    "log_node_status": {
+      "id": "log_node_status",
+      "domain": "browser",
+      "properties": {
+        "message": "Node status will be available after execution",
+        "level": "info"
       },
-      {
-        "from": "log_click_result",
-        "to": "log_node_status"
-      }
-    ]   
+      "operation": "console_log"
+    }
+  },
+  "edges": [
+    {
+      "from": "click_easy_apply",
+      "to": "log_click_result"
+    },
+    {
+      "from": "log_click_result",
+      "to": "log_node_status"
+    }
+  ]
 }

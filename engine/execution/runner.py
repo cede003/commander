@@ -110,7 +110,7 @@ class PersistentWorkflowRunner:
                 "success": results.get("status") == "completed",
                 "result": results
             }
-            logger.info(f"📤 Sending Electron response: {json.dumps(electron_response, indent=2)}")
+            # logger.info(f"📤 Sending Electron response: {json.dumps(electron_response, indent=2)}")
             # Send without indentation to avoid line splitting issues
             print(json.dumps(electron_response), file=sys.stdout, flush=True)
         else:

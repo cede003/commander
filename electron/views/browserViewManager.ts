@@ -47,7 +47,7 @@ export function createBrowserView(url: string = CONFIG.defaultUrl): BrowserView 
       allowRunningInsecureContent: true,
       sandbox: false,
       experimentalFeatures: true,
-      preload: path.join(__dirname, '../../dist/browserViewPreload.js')
+      preload: path.join(__dirname, '../../dist/views/browserViewPreload.js')
     }
   });
   if (CONFIG.openDevToolsOnStart) {

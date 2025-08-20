@@ -1,77 +1,73 @@
 {
-    "metadata": {
-      "name": "Status Demo Workflow",
-      "author": "cede",
-      "description": "Demonstrates node status tracking with different scenarios",
-      "version": "1.0.0"
+  "metadata": {
+    "name": "Status Demo Workflow",
+    "author": "cede",
+    "description": "Demonstrates node status tracking with different scenarios",
+    "version": "1.0.0"
+  },
+  "properties": {},
+  "nodes": {
+    "success_node": {
+      "id": "success_node",
+      "domain": "browser",
+      "status": "queued",
+      "properties": {
+        "message": "This node will complete successfully",
+        "level": "success"
+      },
+      "operation": "console_log"
     },
-    "inputs": {},
-    "nodes": {
-      "success_node": {
-        "id": "success_node",
-        "domain": "browser",
-        "type": "notification",
-        "subtype": "console_log",
-        "status": "queued",
-        "inputs": {
-          "message": "This node will complete successfully",
-          "level": "success"
-        }
+    "error_node": {
+      "id": "error_node",
+      "domain": "browser",
+      "status": "queued",
+      "properties": {
+        "selector": "#non-existent-element",
+        "timeout": 1000
       },
-      "error_node": {
-        "id": "error_node",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "click",
-        "status": "queued",
-        "inputs": {
-          "selector": "#non-existent-element",
-          "timeout": 1000
-        },
-        "error_handling": {
-          "strategy": "continue",
-          "error_message": "Element not found - continuing anyway"
-        }
+      "error_handling": {
+        "strategy": "continue",
+        "error_message": "Element not found - continuing anyway"
       },
-      "skip_node": {
-        "id": "skip_node",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "click",
-        "status": "queued",
-        "inputs": {
-          "selector": "#another-non-existent-element",
-          "timeout": 1000
-        },
-        "error_handling": {
-          "strategy": "skip",
-          "error_message": "Skipping this node"
-        }
-      },
-      "final_node": {
-        "id": "final_node",
-        "domain": "browser",
-        "type": "notification",
-        "subtype": "console_log",
-        "status": "queued",
-        "inputs": {
-          "message": "Workflow completed - check node statuses!",
-          "level": "info"
-        }
-      }
+      "operation": "click"
     },
-    "edges": [
-      {
-        "from": "success_node",
-        "to": "error_node"
+    "skip_node": {
+      "id": "skip_node",
+      "domain": "browser",
+      "status": "queued",
+      "properties": {
+        "selector": "#another-non-existent-element",
+        "timeout": 1000
       },
-      {
-        "from": "error_node",
-        "to": "skip_node"
+      "error_handling": {
+        "strategy": "skip",
+        "error_message": "Skipping this node"
       },
-      {
-        "from": "skip_node",
-        "to": "final_node"
-      }
-    ]
-} 
+      "operation": "click"
+    },
+    "final_node": {
+      "id": "final_node",
+      "domain": "browser",
+      "status": "queued",
+      "properties": {
+        "message": "Workflow completed - check node statuses!",
+        "level": "info"
+      },
+      "operation": "console_log"
+    }
+  },
+  "edges": [
+    {
+      "from": "success_node",
+      "to": "error_node"
+    },
+    {
+      "from": "error_node",
+      "to": "skip_node"
+    },
+    {
+      "from": "skip_node",
+      "to": "final_node"
+    }
+  ]
+}

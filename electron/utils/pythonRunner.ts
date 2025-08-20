@@ -96,12 +96,21 @@ async function findPythonPaths(): Promise<string[]> {
   return [...new Set(found)];
 }
 
-// Find the best Python path, prioritize python3 ≥ 3.7
+// Find the best Python path, prioritize virtual environment then python3 ≥ 3.7
 async function getBestPythonCommand(): Promise<string> {
   // Return cached result if available and validated
   if (cachedPythonCommand && cachedPythonValid) {
     logger.debug('Using cached Python command:', { command: cachedPythonCommand });
     return cachedPythonCommand;
+  }
+
+  // First check for virtual environment Python
+  const venvPython = path.join(process.cwd(), '.venv', 'bin', 'python');
+  if (fs.existsSync(venvPython) && await checkPythonCommand(venvPython)) {
+    logger.info('Using virtual environment Python:', { path: venvPython });
+    cachedPythonCommand = venvPython;
+    cachedPythonValid = true;
+    return venvPython;
   }
 
   const fromEnv = process.env.PYTHON_PATH || process.env.PYTHON;
@@ -133,7 +142,7 @@ export async function initializePythonProcess(): Promise<void> {
 
   logger.info('Initializing persistent Python process');
 
-  const runnerPath = path.join(CONFIG.enginePath, 'runner.py');
+  const runnerPath = path.join(CONFIG.enginePath, 'execution', 'runner.py');
   if (!fs.existsSync(runnerPath)) {
     throw new Error(`runner.py not found at ${runnerPath}`);
   }
@@ -142,12 +151,13 @@ export async function initializePythonProcess(): Promise<void> {
   
   const env = {
     ...process.env,
-    PYTHONPATH: CONFIG.enginePath,
     LOG_NO_COLORS: '1',
     // Ensure Python gets LOG_LEVEL if set
     LOG_LEVEL: process.env.LOG_LEVEL || '',
     // Ensure Python writes to the same logs directory as Electron
     LOG_DIR: path.join(process.cwd(), 'logs'),
+    // Ensure Python can find the system packages and the engine package
+    PYTHONPATH: process.env.PYTHONPATH ? `${process.env.PYTHONPATH}:${path.dirname(CONFIG.enginePath)}` : path.dirname(CONFIG.enginePath),
   };
 
   // Enable Playwright verbose API logs only when debug/verbose
@@ -160,7 +170,7 @@ export async function initializePythonProcess(): Promise<void> {
 
   persistentPythonProcess = spawn(
     pythonCmd,
-    ['runner.py', '--persistent'],
+    [path.join('execution', 'runner.py')],
     {
       cwd: CONFIG.enginePath,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -183,15 +193,31 @@ export async function initializePythonProcess(): Promise<void> {
       const line = raw.trim();
       if (!line) continue;
 
+      logger.debug('Processing stdout line:', { line: line.substring(0, 100) });
+
       // Detect readiness message
       if (line.includes('READY') || line.includes('Persistent runner ready')) {
         isProcessReady = true;
         continue;
       }
 
+      // Detect test output
+      if (line.startsWith('TEST_OUTPUT:')) {
+        logger.info('Test output received:', { line });
+        continue;
+      }
+
       // Try JSON first
       try {
         const parsed = JSON.parse(line);
+        logger.debug('Parsed JSON from stdout:', { 
+          hasId: !!parsed.id, 
+          hasSuccess: parsed.success !== undefined,
+          hasError: !!parsed.error,
+          hasResult: !!parsed.result,
+          type: typeof parsed
+        });
+        
         // Progress event forwarded to renderer
         if (parsed && parsed.type === 'progress') {
           const mainWindow: BrowserWindow | undefined = getMainWindow();
@@ -200,19 +226,23 @@ export async function initializePythonProcess(): Promise<void> {
         }
         // Response to a previously sent request
         if (parsed && parsed.id && (parsed.success !== undefined || parsed.error)) {
+          logger.debug('Processing response:', { id: parsed.id, success: parsed.success, hasResult: !!parsed.result });
           const requestIndex = pendingRequests.findIndex(req => req.id === parsed.id);
           if (requestIndex !== -1) {
             const request = pendingRequests.splice(requestIndex, 1)[0];
             clearTimeout(request.timeout);
+            logger.info('Resolving request:', { id: parsed.id, success: parsed.success });
             if (parsed.success) {
               request.resolve({
                 success: true,
-                output: JSON.stringify(parsed.result?.results || {}),
-                errorOutput: parsed.result?.errorOutput || ''
+                output: JSON.stringify(parsed.result || {}),
+                errorOutput: parsed.result?.error || ''
               });
             } else {
               request.reject(new Error(parsed.error || 'Unknown error'));
             }
+          } else {
+            logger.warn('Received response for unknown request:', { id: parsed.id });
           }
           continue;
         }
@@ -285,13 +315,16 @@ async function sendToPersistentProcess(workflowData: string, timeout: number): P
   }
 
   return new Promise((resolve, reject) => {
-    const requestId = Date.now().toString();
+    const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    logger.debug('Sending workflow request:', { requestId, timeout });
+    
     const timeoutId = setTimeout(() => {
       // Remove from pending requests
       const index = pendingRequests.findIndex(req => req.id === requestId);
       if (index !== -1) {
         pendingRequests.splice(index, 1);
       }
+      logger.error('Workflow execution timed out:', { requestId, timeout });
       reject(new Error(`Workflow execution timed out after ${timeout}ms`));
     }, timeout);
 
@@ -301,12 +334,19 @@ async function sendToPersistentProcess(workflowData: string, timeout: number): P
       reject,
       timeout: timeoutId
     });
+    
+    logger.debug('Added to pending requests:', { 
+      requestId, 
+      totalPending: pendingRequests.length 
+    });
 
     // Send workflow data to Python process
     persistentPythonProcess!.stdin?.write(JSON.stringify({
       id: requestId,
       workflow: workflowData
     }) + '\n');
+    
+    logger.debug('Workflow request sent to Python process:', { requestId });
   });
 }
 
@@ -337,11 +377,32 @@ export async function runPythonWorkflow(options: PythonRunnerOptions): Promise<P
 }
 
 // Cleanup function for app shutdown
-export function cleanupPythonProcess(): void {
+export async function cleanupPythonProcess(): Promise<void> {
   if (persistentPythonProcess) {
-    logger.info('Shutting down persistent Python process');
+    logger.info('Shutting down persistent Python process and cleaning up browser session');
+    
+    // Send cleanup signal to Python process
+    try {
+      persistentPythonProcess.stdin?.write(JSON.stringify({ action: 'cleanup' }) + '\n');
+      
+      // Give Python process time to clean up gracefully
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    } catch (error) {
+      logger.warn('Error sending cleanup signal to Python process:', error);
+    }
+    
+    // Kill the process
     persistentPythonProcess.kill();
     persistentPythonProcess = null;
     isProcessReady = false;
+    
+    // Clear any pending requests
+    pendingRequests.forEach(request => {
+      clearTimeout(request.timeout);
+      request.reject(new Error('Python process terminated during cleanup'));
+    });
+    pendingRequests = [];
+    
+    logger.info('Python process cleanup completed');
   }
 }
