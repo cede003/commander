@@ -1,267 +1,302 @@
-# Workflow Executor
+# Commander - AI-Powered Browser Automation Platform
 
-A Python CLI tool for executing browser automation workflows using Playwright. Designed to work with Electron apps and read workflow schemas from stdin.
+Commander is a sophisticated desktop application that combines browser automation, workflow execution, and AI capabilities to create a powerful platform for autonomous web interactions. Built with Electron, React, TypeScript, and Python, it enables users to create, share, and execute deterministic JSON workflows while incorporating AI agents for intelligent browser automation.
 
-## 🚀 Features
+## 🚀 Core Features
 
-- **JSON-based workflows** - Define workflows using simple JSON schemas
-- **Browser automation** - Fill forms, navigate pages using Playwright
-- **Variable interpolation** - Use `{{variable}}` syntax in inputs
-- **Conditional execution** - Add conditions to edges for branching logic
-- **Node-based architecture** - Extensible handler system for different node types
-- **Electron integration** - Connect to existing Chromium tabs
+### **Browser Automation Engine**
+- **Playwright Integration**: Full browser automation using Playwright with 50+ built-in actions
+- **Session Management**: Persistent browser sessions with CDP (Chrome DevTools Protocol) integration
+- **Real-time Control**: Direct manipulation of browser elements, forms, and navigation
+- **Cross-platform**: Works on Windows, macOS, and Linux
 
-## 📦 Installation
+### **Workflow System**
+- **JSON-based Workflows**: Define complex automation sequences using declarative JSON schemas
+- **Node-based Architecture**: Extensible system with domain.operation tool structure
+- **Variable Interpolation**: Dynamic content using Jinja2 templating with `{{variable}}` syntax
+- **Conditional Execution**: Branching logic and error handling with retry mechanisms
+- **Workflow Sharing**: Export/import workflows for collaboration and distribution
 
+### **AI Integration**
+- **LangChain Integration**: Built-in support for AI agents and language models
+- **Conversation Memory**: Maintains context across workflow executions
+- **Tool Registry**: Extensible tool system for AI agents to interact with the browser
+- **State Management**: TypedDict-based workflow state with conversation history
+
+### **Modern Desktop App**
+- **Electron Framework**: Native desktop application with web technologies
+- **React + TypeScript**: Modern, responsive UI with type safety
+- **Tailwind CSS**: Beautiful, customizable interface with dark/light mode
+- **Real-time Updates**: Live workflow execution monitoring and progress tracking
+
+## 🏗️ Architecture Overview
+
+```
+Commander Application
+├── Frontend (React + TypeScript)
+│   ├── Main App Interface
+│   ├── Workflow Management
+│   ├── Browser Pane Integration
+│   └── Real-time Execution Monitoring
+├── Backend (Electron + Python)
+│   ├── Browser View Management
+│   ├── IPC Communication
+│   ├── Python Process Management
+│   └── Workflow Execution Engine
+└── Engine (Python + LangGraph)
+    ├── Commander Engine
+    ├── Tool Registry & Factory
+    ├── Browser Session Management
+    ├── Workflow State Management
+    └── AI Agent Integration
+```
+
+## 📦 Technology Stack
+
+### **Frontend**
+- **React 18** with TypeScript for type-safe development
+- **Tailwind CSS** for modern, responsive styling
+- **Vite** for fast development and building
+- **Electron** for cross-platform desktop deployment
+
+### **Backend**
+- **Electron 28** with remote debugging capabilities
+- **Node.js** IPC handlers for frontend-backend communication
+- **Python 3.7+** for workflow execution engine
+- **Playwright** for browser automation
+
+### **AI & Workflow Engine**
+- **LangChain** for AI agent framework
+- **LangGraph** for workflow orchestration
+- **Jinja2** for template processing
+- **Pydantic** for data validation
+
+## 🔧 Installation & Setup
+
+### Prerequisites
+- **Node.js 18+** and npm
+- **Python 3.7+** with pip
+- **Git** for version control
+
+### Quick Start
 ```bash
-# Install dependencies
+# Clone the repository
+git clone <repository-url>
+cd commander
+
+# Install Node.js dependencies
+npm install
+
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Install Playwright browsers
 playwright install
+
+# Start development mode
+npm run dev
 ```
 
-## 🏗️ Architecture
-
-```
-workflow_executor.py          # Main entry point
-engine/                       # Core workflow engine
-├── __init__.py              # Engine package initialization
-├── workflow_runner.py        # Core execution engine
-├── handlers/                 # Node type implementations
-│   ├── __init__.py          # Handler registry
-│   ├── browser_autofill.py  # Form filling automation
-│   ├── notification.py      # Message printing
-│   └── llm_generate.py      # LLM integration (stub)
-├── schemas/                  # JSON schema validation
-│   └── workflow_schema.json # Workflow schema definition
-└── examples/                 # Example workflows
-    ├── example_workflow.json
-    └── example_conditional_workflow.json
-requirements.txt              # Dependencies
-test_engine.py               # Engine testing
-```
-
-## 📝 Usage
-
-### Basic Usage
-
+### Build & Distribution
 ```bash
-# Execute a workflow from JSON file
-python workflow_executor.py < engine/examples/example_workflow.json
+# Build for production
+npm run build
 
-# Execute from stdin
-echo '{"nodes": {...}}' | python workflow_executor.py
+# Create distributable packages
+npm run dist
 
-# Test the engine
-python test_engine.py
+# Clean build artifacts
+npm run clean
 ```
 
-### Workflow JSON Structure
+## 📋 Workflow System
+
+### **Workflow Structure**
+Workflows are defined using a JSON schema with nodes, edges, and metadata:
 
 ```json
 {
   "metadata": {
     "name": "Workflow Name",
-    "author": "Author Name"
+    "description": "Workflow description",
+    "version": "1.0.0"
   },
-  "inputs": {
-    "variable_name": "value"
+  "properties": {
+    "base_url": "https://example.com"
   },
   "nodes": {
-    "node_id": {
-      "type": "node_type",
-      "inputs": {
-        "param1": "value1",
-        "param2": "{{variable_name}}"
+    "navigate": {
+      "domain": "browser",
+      "operation": "goto",
+      "properties": {
+        "url": "{{inputs.base_url}}"
       }
     }
   },
   "edges": [
     {
-      "from": "node_id",
-      "to": "next_node_id",
-      "condition": "optional_condition"
+      "from": "navigate",
+      "to": "next_action"
     }
   ]
 }
 ```
 
-## 🔧 Node Types
+### **Available Browser Operations**
+The platform provides 50+ Playwright actions organized by domain:
 
-### notification
-Prints messages with different levels.
+#### **Navigation**
+- `goto`, `reload`, `go_back`, `go_forward`
 
-**Inputs:**
-- `message` (string): The message to display
-- `level` (string): Message level (info, warning, error, success)
+#### **Interaction**
+- `click`, `dblclick`, `fill`, `type`, `press`, `hover`, `focus`, `blur`
 
-**Example:**
+#### **Form Controls**
+- `select_option`, `check`, `uncheck`, `drag_to`
+
+#### **Information Extraction**
+- `text_content`, `get_attribute`, `title`, `url`, `content`
+
+#### **Waiting & Synchronization**
+- `wait_for_selector`, `wait_for_load_state`, `wait_for_function`
+
+### **Variable Interpolation**
+Use Jinja2 templating for dynamic content:
 ```json
 {
-  "type": "notification",
-  "inputs": {
-    "message": "Starting workflow...",
-    "level": "info"
+  "properties": {
+    "url": "{{inputs.base_url}}/{{inputs.page}}",
+    "selector": "input[name='{{inputs.field_name}}']"
   }
 }
 ```
 
-### browser_autofill
-Fills form fields in a web page.
+## 🤖 AI Agent Integration
 
-**Inputs:**
-- `url` (string): The URL to navigate to
-- `fields` (object): CSS selectors mapped to values
+### **LangChain Tools**
+The platform automatically registers all browser operations as LangChain tools, enabling AI agents to:
+- Navigate websites autonomously
+- Fill forms based on natural language instructions
+- Extract information using semantic understanding
+- Make decisions based on page content
 
-**Example:**
-```json
-{
-  "type": "browser_autofill",
-  "inputs": {
-    "url": "https://example.com/form",
-    "fields": {
-      "#name": "John Doe",
-      "#email": "john@example.com"
-    }
-  }
-}
-```
+### **Conversation Memory**
+- Maintains context across workflow executions
+- Stores conversation history for AI agents
+- Enables multi-turn interactions and learning
 
-### llm_generate (Stub)
-Placeholder for LLM text generation.
+### **Tool Registry**
+- **Domain.Operation Structure**: Organized tool naming (e.g., `browser.click`, `browser.fill`)
+- **Automatic Registration**: Tools are automatically available to AI agents
+- **Extensible**: Easy to add custom tools and operations
 
-**Inputs:**
-- `prompt` (string): The prompt to send to the LLM
-- `model` (string): The model to use
+## 🎯 Use Cases
 
-## 🔄 Variable Interpolation
+### **Business Automation**
+- **Form Filling**: Automate repetitive data entry tasks
+- **Data Extraction**: Scrape and collect information from websites
+- **Testing**: Automated testing of web applications
+- **Monitoring**: Check website status and functionality
 
-Use `{{variable_name}}` syntax to reference:
-- Global inputs
-- Outputs from previous nodes
-- Context variables
+### **AI-Powered Interactions**
+- **Intelligent Navigation**: AI agents that understand user intent
+- **Content Analysis**: Automated content processing and decision making
+- **Conversational Interfaces**: Natural language workflow creation
+- **Learning Systems**: Agents that improve with experience
 
-**Example:**
-```json
-{
-  "inputs": {
-    "name": "John Doe"
-  },
-  "nodes": {
-    "fill_form": {
-      "type": "browser_autofill",
-      "inputs": {
-        "url": "https://example.com",
-        "fields": {
-          "#name": "{{name}}"
-        }
-      }
-    }
-  }
-}
-```
+### **Workflow Sharing**
+- **Template Library**: Pre-built workflows for common tasks
+- **Collaboration**: Share workflows with team members
+- **Distribution**: Package workflows for end users
+- **Version Control**: Track workflow changes and improvements
 
-## 🔀 Conditional Execution
+## 🚧 Future Roadmap
 
-Add conditions to edges using Python expressions:
+### **Phase 1: Enhanced AI Capabilities**
+- [ ] **Natural Language Workflow Creation**: Generate workflows from text descriptions
+- [ ] **AI-Powered Error Recovery**: Intelligent handling of automation failures
+- [ ] **Contextual Decision Making**: AI agents that understand page context
+- [ ] **Multi-modal Input**: Support for voice, image, and text inputs
 
-```json
-{
-  "edges": [
-    {
-      "from": "node1",
-      "to": "node2",
-      "condition": "len(outputs['node1']['result']) > 0"
-    }
-  ]
-}
-```
+### **Phase 2: Advanced Workflow Features**
+- [ ] **Visual Workflow Builder**: Drag-and-drop workflow creation interface
+- [ ] **Conditional Logic**: Advanced branching and decision trees
+- [ ] **Parallel Execution**: Concurrent workflow execution
+- [ ] **Workflow Templates**: Industry-specific workflow libraries
 
-## 🔌 Electron Integration
+### **Phase 3: Enterprise Features**
+- [ ] **Multi-user Support**: Team collaboration and role-based access
+- [ ] **Workflow Analytics**: Execution metrics and performance insights
+- [ ] **API Integration**: REST API for external system integration
+- [ ] **Cloud Synchronization**: Workflow backup and sharing across devices
 
-The browser autofill handler can connect to existing Chromium tabs:
+### **Phase 4: Ecosystem Expansion**
+- [ ] **Plugin System**: Third-party tool and integration support
+- [ ] **Marketplace**: Workflow and tool marketplace
+- [ ] **Mobile Support**: Companion mobile applications
+- [ ] **API Gateway**: Cloud-based workflow execution service
 
-1. Launch Electron with remote debugging:
-   ```bash
-   electron --remote-debugging-port=9222
-   ```
+## 🧪 Development & Testing
 
-2. The workflow executor will automatically connect to the existing browser instance.
-
-### 🚀 Using with the Commander App
-
-The workflow executor is designed to work with the Commander Electron app:
-
-1. **Start the Commander app** (which now has remote debugging enabled)
-2. **Run workflows** that will execute in the existing browser window:
-
+### **Development Commands**
 ```bash
+# Start development environment
+npm run dev
+
+# Build TypeScript
+npm run dev:types
+
+# Build Electron
+npm run dev:electron
+
+# Kill all processes
+npm run kill
+```
+
+### **Testing**
+```bash
+# Test workflow execution
+python engine/execution/runner.py
+
 # Test browser connection
 python test_browser_connection.py
 
-# Execute workflow in existing browser
-python engine/workflow_executor.py < engine/examples/electron_workflow.json
+# Validate workflow schemas
+python -m engine.utils.evaluation.workflow_validation
 ```
 
-### 🔧 Browser Integration Features
+### **Logging**
+The application uses structured logging with configurable levels:
+- **Minimal Logging**: Only logs when tools run and when they fail (as per user preference)
+- **Debug Mode**: Enable with `LOG_LEVEL=debug`
+- **Log Directory**: Stored in `logs/` folder
 
-- ✅ **Connects to existing browser** - No need to launch new browser instances
-- ✅ **Uses current page** - Works with the page already open in the app
-- ✅ **Form filling** - Automatically fills forms in the existing browser window
-- ✅ **Navigation** - Can navigate to new URLs within the app
-- ✅ **Graceful fallback** - Falls back to new browser if connection fails
+## 🤝 Contributing
 
-### 📋 Example Workflow for Electron
+### **Code Structure**
+- **Frontend**: React components in `src/components/`
+- **Backend**: Electron main process in `electron/`
+- **Engine**: Python workflow engine in `engine/`
+- **Examples**: Sample workflows in `public/`
 
-The `engine/examples/electron_workflow.json` demonstrates:
-- Connecting to the existing browser window
-- Filling forms in the current page
-- Using variable interpolation
-- Providing user feedback through notifications
-
-## 🧪 Testing
-
-```bash
-# Test with example workflow
-python workflow_executor.py < engine/examples/example_workflow.json
-
-# Test the engine
-python test_engine.py
-
-# Expected output:
-# 🚀 Starting workflow: Contact Form Automation
-# 👤 Author: Workflow Builder
-# 📍 Starting with 1 node(s): start_notification
-# 🔧 Executing node 'start_notification' (type: notification)
-# ℹ️  Starting contact form automation...
-# ✅ Node 'start_notification' completed successfully
-# ➡️  Following edge to 'fill_contact_form'
-# ...
-```
-
-## 🔧 Development
-
-### Adding New Node Types
-
-1. Create a new handler in `engine/handlers/`:
-   ```python
-   class MyHandler:
-       async def execute(self, inputs, context):
-           # Your logic here
-           return output
-   ```
-
-2. Register it in `engine/handlers/__init__.py`:
-   ```python
-   from .my_handler import MyHandler
-   _HANDLERS['my_type'] = MyHandler
-   ```
-
-### Error Handling
-
-The executor provides detailed error messages and continues execution where possible. Failed nodes are logged but don't stop the entire workflow.
+### **Development Guidelines**
+- Follow TypeScript best practices
+- Use async/await for asynchronous operations
+- Implement proper error handling
+- Add comprehensive logging
+- Write unit tests for new features
 
 ## 📄 License
 
 MIT License - see LICENSE file for details.
+
+## 🔗 Links
+
+- **Documentation**: [Project Wiki]
+- **Issues**: [GitHub Issues]
+- **Discussions**: [GitHub Discussions]
+- **Releases**: [GitHub Releases]
+
+---
+
+**Commander** - Empowering users to automate the web with intelligence and precision.
