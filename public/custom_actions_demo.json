@@ -1,90 +1,84 @@
 {
-    "metadata": {
-      "name": "Custom Actions Demo",
-      "author": "cede",
-      "description": "Demonstrates custom actions including LinkedIn Easy Apply",
-      "version": "1.0.0"
+  "metadata": {
+    "name": "Custom Actions Demo",
+    "author": "cede",
+    "description": "Demonstrates custom actions including LinkedIn Easy Apply",
+    "version": "1.0.0"
+  },
+  "properties": {},
+  "nodes": {
+    "navigate_to_linkedin": {
+      "id": "navigate_to_linkedin",
+      "domain": "browser",
+      "properties": {
+        "url": "https://www.linkedin.com/jobs/",
+        "max_retries": 2,
+        "timeout": 15000
+      },
+      "operation": "smart_navigation"
     },
-    "inputs": {},
-    "nodes": {
-      "navigate_to_linkedin": {
-        "id": "navigate_to_linkedin",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "smart_navigation",
-        "inputs": {
-          "url": "https://www.linkedin.com/jobs/",
-          "max_retries": 2,
-          "timeout": 15000
-        }
-      },
-      "try_easy_apply": {
-        "id": "try_easy_apply",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "linkedin_easy_apply",
-        "inputs": {}
-      },
-      "check_form": {
-        "id": "check_form",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "check_form_completeness",
-        "inputs": {}
-      },
-      "log_results": {
-        "id": "log_results",
-        "domain": "browser",
-        "type": "notification",
-        "subtype": "console_log",
-        "inputs": {
-          "message": "Easy Apply clicked: {{results.try_easy_apply.easy_apply_clicked}}, Form complete: {{results.check_form.form_complete}}",
-          "level": "info"
-        }
-      },
-      "test_wait_and_click": {
-        "id": "test_wait_and_click",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "wait_and_click",
-        "inputs": {
-          "selector": "button",
-          "timeout": 3000
-        }
-      },
-      "test_fill_form": {
-        "id": "test_fill_form",
-        "domain": "browser",
-        "type": "action",
-        "subtype": "fill_form",
-        "inputs": {
-          "fields": {
-            "input[name='email']": "test@example.com",
-            "input[name='password']": "password123"
-          }
-        }
-      }
+    "try_easy_apply": {
+      "id": "try_easy_apply",
+      "domain": "browser",
+      "properties": {},
+      "operation": "linkedin_easy_apply"
     },
-    "edges": [
-      {
-        "from": "navigate_to_linkedin",
-        "to": "try_easy_apply"
+    "check_form": {
+      "id": "check_form",
+      "domain": "browser",
+      "properties": {},
+      "operation": "check_form_completeness"
+    },
+    "log_results": {
+      "id": "log_results",
+      "domain": "browser",
+      "properties": {
+        "message": "Easy Apply clicked: {{results.try_easy_apply.easy_apply_clicked}}, Form complete: {{results.check_form.form_complete}}",
+        "level": "info"
       },
-      {
-        "from": "try_easy_apply",
-        "to": "check_form"
+      "operation": "console_log"
+    },
+    "test_wait_and_click": {
+      "id": "test_wait_and_click",
+      "domain": "browser",
+      "properties": {
+        "selector": "button",
+        "timeout": 3000
       },
-      {
-        "from": "check_form",
-        "to": "log_results"
+      "operation": "wait_and_click"
+    },
+    "test_fill_form": {
+      "id": "test_fill_form",
+      "domain": "browser",
+      "properties": {
+        "fields": {
+          "input[name='email']": "test@example.com",
+          "input[name='password']": "password123"
+        }
       },
-      {
-        "from": "log_results",
-        "to": "test_wait_and_click"
-      },
-      {
-        "from": "test_wait_and_click",
-        "to": "test_fill_form"
-      }
-    ]
-} 
+      "operation": "fill_form"
+    }
+  },
+  "edges": [
+    {
+      "from": "navigate_to_linkedin",
+      "to": "try_easy_apply"
+    },
+    {
+      "from": "try_easy_apply",
+      "to": "check_form"
+    },
+    {
+      "from": "check_form",
+      "to": "log_results"
+    },
+    {
+      "from": "log_results",
+      "to": "test_wait_and_click"
+    },
+    {
+      "from": "test_wait_and_click",
+      "to": "test_fill_form"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { registerBrowserCommands } from './commands/browserCommands';
-import { registerWorkflowCommands } from './commands/workflowCommands';
 import { registerLoggingCommands } from './commands/loggingCommands';
 import { registerUiCommands } from './commands/uiCommands';
+import { registerWorkflowCommands } from './commands/workflowCommands';
 import logger from '../utils/logger';
 
 // Declare global variables
@@ -19,9 +19,9 @@ export function setupIpcHandlers(): void {
   
   // Register all command handlers
   registerBrowserCommands();
-  registerWorkflowCommands();
   registerLoggingCommands();
   registerUiCommands();
+  registerWorkflowCommands();
   
   global.__ipcHandlersInitialized = true;
   logger.info('[IPC] IPC handlers setup complete');

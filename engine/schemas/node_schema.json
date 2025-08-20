@@ -1,116 +1,53 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "./node_schema.json",
-  "title": "Workflow Node Schema",
+  "title": "Structured Workflow Node Schema",
   "type": "object",
-  "required": ["id", "domain", "type", "subtype"],
-  "$defs": {
-    "ExecutionRun": {
-      "type": "object",
-      "description": "One execution attempt/run of this node",
-      "properties": {
-        "attempt": { "type": "integer", "minimum": 1, "description": "1-based attempt index" },
-        "started_at": { "type": "string", "format": "date-time", "description": "When this run started" },
-        "completed_at": { "type": "string", "format": "date-time", "description": "When this run completed" },
-        "execution_time_seconds": { "type": "number", "minimum": 0, "description": "Duration of this run in seconds" },
-        "execution_result": {
-          "type": "string",
-          "enum": ["success", "error", "skipped"],
-          "description": "Outcome of this run (distinct from the node's current top-level status)"
-        },
-        "status_message": { "type": "string", "description": "Additional info or error for this run" }
-      },
-      "additionalProperties": false
-    }
-  },
+  "required": ["id", "domain", "operation"],
   "properties": {
     "id": {
       "type": "string",
-      "description": "Unique identifier for the node"
+      "description": "Unique identifier for the node."
     },
     "domain": {
       "type": "string",
-      "description": "Domain/environment of the node",
+      "description": "High-level domain for the node.",
       "enum": ["browser", "spreadsheet", "email", "file", "llm", "api"]
     },
-    "type": {
+    "operation": {
       "type": "string",
-      "description": "Type of node",
-      "enum": ["action", "observation", "event", "notification", "wait_for_input"]
-    },
-    "subtype": {
-      "type": "string",
-      "description": "Subtype/specific operation of the node"
-    },
-    "status": {
-      "type": "string",
-      "description": "Current execution status of the node",
-      "enum": ["queued", "running", "complete", "error", "skipped", "paused"],
-      "default": "queued"
-    },
-    "status_message": {
-      "type": "string",
-      "description": "Additional status information or error message"
-    },
-    "execution_info": {
-      "type": "object",
-      "description": "Execution metadata for this node, including multiple runs (e.g., loops or retries)",
-      "properties": {
-        "runs": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/ExecutionRun" },
-          "description": "Chronological list of runs for this node"
-        }
-      },
-      "additionalProperties": false,
-      "default": {}
-    },
-    "properties": {
-      "type": "object",
-      "description": "Static configuration for the node. These values are fixed at design-time (e.g., timeout seconds, hardcoded selector).",
-      "properties": {
-        "timeout_seconds": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Maximum time to allow this node to run before timing out"
-        },
-        "selector": {
-          "type": "string",
-          "description": "Hardcoded selector or identifier to use at runtime"
-        }
-      },
-      "additionalProperties": true,
-      "default": {}
+      "description": "Specific operation or action performed by this node (e.g., 'click', 'read_screen', 'extract_text')."
     },
     "inputs": {
       "type": "object",
-      "description": "Dynamic runtime variables for this node. Values are resolved at execution time (e.g., templated expressions or values from previous nodes).",
-      "additionalProperties": true,
-      "default": {}
+      "description": "Runtime inputs such as selectors or text values. Shape depends on the operation.",
+      "additionalProperties": true
+    },
+    "config": {
+      "type": "object",
+      "description": "Static configuration like timeouts, constants, and other parameters.",
+      "additionalProperties": true
     },
     "outputs": {
       "type": "object",
-      "description": "Outputs exposed by the node",
-      "additionalProperties": true,
-      "default": {}
+      "description": "Optional schema describing outputs produced by the node.",
+      "additionalProperties": true
     },
-    "output_mapping": {
-      "type": "object",
-      "description": "Outputs mapped to by the node",
-      "additionalProperties": true,
-      "default": {}
-    },
-    "conditions": {
+    "condition": {
       "type": "string",
-      "description": "Optional boolean expression to conditionally run this node"
+      "description": "Optional expression to determine if this node should execute (e.g., JavaScript, JMESPath)."
     },
     "error_handling": {
-      "$ref": "./error_handling_schema.json",
-      "description": "Node-specific error handling configuration"
+      "$ref": "./error_handling_schema.json"
     },
     "async": {
       "type": "boolean",
-      "description": "If true, node runs asynchronously"
+      "description": "Whether the node runs asynchronously.",
+      "default": false
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the node."
     }
   },
   "additionalProperties": false

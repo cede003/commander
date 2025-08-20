@@ -28,7 +28,10 @@ function maybeLogAppReady(): void {
 }
 
 function initializePythonWhenRendererReady(window: BrowserWindow): void {
+  logger.info('Setting up Python initialization for renderer...');
+  
   const startPython = () => {
+    logger.info('Starting Python process initialization...');
     initializePythonProcess()
       .then(() => {
         pythonReady = true;
@@ -41,13 +44,18 @@ function initializePythonWhenRendererReady(window: BrowserWindow): void {
   };
 
   if (window.webContents.isLoading()) {
-    window.webContents.once('did-finish-load', startPython);
+    logger.info('Renderer is still loading, waiting for did-finish-load event...');
+    window.webContents.once('did-finish-load', () => {
+      logger.info('Renderer finished loading, starting Python process...');
+      startPython();
+    });
     // Fallback: if load fails, still initialize so workflows can run
     window.webContents.once('did-fail-load', () => {
       logger.warn('Renderer failed to load; initializing Python process anyway');
       startPython();
     });
   } else {
+    logger.info('Renderer already loaded, starting Python process immediately...');
     // If already loaded (e.g., on reload), start immediately
     startPython();
   }
@@ -126,6 +134,22 @@ app.whenReady().then(() => {
   // Initialize Python process when the renderer has finished loading
   if (mainWindow) {
     initializePythonWhenRendererReady(mainWindow);
+    
+    // Fallback: if renderer doesn't load within 10 seconds, start Python anyway
+    setTimeout(() => {
+      if (!pythonReady) {
+        logger.warn('Renderer load timeout, starting Python process anyway...');
+        initializePythonProcess()
+          .then(() => {
+            pythonReady = true;
+            logger.info('Python is ready (fallback)');
+            maybeLogAppReady();
+          })
+          .catch((error) => {
+            logger.error('Failed to initialize Python process (fallback):', error);
+          });
+      }
+    }, 10000);
   }
   
   logger.info('Main window and BrowserView created successfully');
@@ -143,9 +167,14 @@ app.on('window-all-closed', () => {
 });
 
 // Cleanup on app quit
-app.on('before-quit', () => {
-  logger.info('App quitting, cleaning up Python process');
-  cleanupPythonProcess();
+app.on('before-quit', async () => {
+  logger.info('App quitting, cleaning up Python process and browser session');
+  try {
+    await cleanupPythonProcess();
+    logger.info('Cleanup completed successfully');
+  } catch (error) {
+    logger.error('Error during cleanup:', error);
+  }
 });
 
 app.on('activate', () => {

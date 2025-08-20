@@ -76,7 +76,7 @@ export const CONFIG = {
   },
   
   // Timeouts
-  workflowTimeout: 60000, // 60 seconds
+  workflowTimeout: 120000, // 120 seconds (2 minutes)
   connectionRetries: 3,
   retryDelay: 2000, // 2 seconds
 }; 

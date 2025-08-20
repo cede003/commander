@@ -5,35 +5,33 @@
     "description": "Clicks Next repeatedly until it no longer exists",
     "version": "1.0.0"
   },
-  "inputs": {},
+  "properties": {},
   "nodes": {
     "kickoff_click": {
       "id": "kickoff_click",
       "domain": "browser",
-      "type": "action",
-      "subtype": "click",
-      "inputs": {
+      "properties": {
         "selector": "#jobs-apply-button-id",
         "timeout": 3000
       },
       "error_handling": {
         "strategy": "skip",
         "error_message": "Initial Next not found; skipping to loop"
-      }
+      },
+      "operation": "click"
     },
     "loop_click": {
       "id": "loop_click",
       "domain": "browser",
-      "type": "action",
-      "subtype": "click",
-      "inputs": {
+      "properties": {
         "selector": "button[data-easy-apply-next-button]",
         "timeout": 1500
       },
       "error_handling": {
         "strategy": "exit",
         "error_message": "No more Next buttons; finishing workflow"
-      }
+      },
+      "operation": "click"
     }
   },
   "edges": [

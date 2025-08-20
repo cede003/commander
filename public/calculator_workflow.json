@@ -8,16 +8,14 @@
   "inputs": {
     "calculator_url": "https://www.calculator.net",
     "first_number": "5",
-    "second_number": "7",
-    "operation": "multiply"
+    "second_number": "7"
   },
   "nodes": {
     "start_notification": {
       "id": "start_notification",
       "domain": "browser",
-      "type": "notification",
-      "subtype": "console_log",
-      "inputs": {
+      "operation": "console_log",
+      "properties": {
         "message": "Starting calculator workflow",
         "level": "info"
       }
@@ -25,10 +23,9 @@
     "navigate_to_calculator": {
       "id": "navigate_to_calculator",
       "domain": "browser",
-      "type": "action",
-      "subtype": "goto",
-      "inputs": {
-        "url": "{{inputs.calculator_url}}"
+      "operation": "goto",
+      "properties": {
+        "url": "$calculator_url"
       },
       "error_handling": {
         "strategy": "retry",
@@ -38,82 +35,73 @@
     "wait_for_page_load": {
       "id": "wait_for_page_load",
       "domain": "browser",
-      "type": "event",
-      "subtype": "wait_for_timeout",
-      "inputs": {
+      "operation": "wait_for_timeout",
+      "properties": {
         "timeout": 1000
       }
     },
     "click_first_number": {
       "id": "click_first_number",
       "domain": "browser",
-      "type": "action",
-      "subtype": "click",
-      "inputs": {
-        "selector": "span[onclick*='{{inputs.first_number}}'], span.scinm:has-text('{{inputs.first_number}}')"
+      "operation": "click",
+      "properties": {
+        "selector": "span[onclick*='$first_number'], span.scinm:has-text('$first_number')"
       }
     },
     "click_operation": {
       "id": "click_operation",
       "domain": "browser",
-      "type": "action",
-      "subtype": "click",
-      "inputs": {
+      "operation": "click",
+      "properties": {
         "selector": "span[onclick*='*'], span.scinm:has-text('*'), span[onclick*='multiply']"
       }
     },
     "click_second_number": {
       "id": "click_second_number",
       "domain": "browser",
-      "type": "action",
-      "subtype": "click",
-      "inputs": {
-        "selector": "span[onclick*='{{inputs.second_number}}'], span.scinm:has-text('{{inputs.second_number}}')"
+      "operation": "click",
+      "properties": {
+        "selector": "span[onclick*='$second_number'], span.scinm:has-text('$second_number')"
       }
     },
     "click_equals": {
       "id": "click_equals",
       "domain": "browser",
-      "type": "action",
-      "subtype": "click",
-      "inputs": {
+      "operation": "click",
+      "properties": {
         "selector": "span[onclick*='='], span.scinm:has-text('='), span[onclick*='equals']"
       }
     },
     "wait_for_result": {
       "id": "wait_for_result",
       "domain": "browser",
-      "type": "event",
-      "subtype": "wait_for_timeout",
-      "inputs": {
+      "operation": "wait_for_timeout",
+      "properties": {
         "timeout": 1000
       }
     },
     "get_calculation_result": {
       "id": "get_calculation_result",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "text_content",
-      "inputs": {
+      "operation": "text_content",
+      "properties": {
         "selector": "#sciOutPut"
       },
       "outputs": {
-        "result": "string"
+        "calculation_result": "string"
       }
     },
     "get_page_title": {
       "id": "get_page_title",
       "domain": "browser",
-      "type": "observation",
-      "subtype": "get_title"
+      "operation": "title"
     },
     "log_calculation": {
       "id": "log_calculation",
       "domain": "browser",
-      "type": "notification",
-      "subtype": "console_log",
-      "inputs": {
-        "message": "{{results.get_calculation_result.result}}"
+      "operation": "console_log",
+      "properties": {
+        "message": "Output exists: $outputs.get_calculation_result, Result field: $outputs.get_calculation_result.calculation_result"
       }
     }
   },
@@ -159,4 +147,4 @@
       "to": "log_calculation"
     }
   ]
-} 
+}

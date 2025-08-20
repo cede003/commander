@@ -1,5 +1,5 @@
 import { contextBridge } from 'electron';
-import logger from './utils/logger';
+import logger from '../utils/logger'
 
 logger.debug('BrowserView preload script loaded');
 

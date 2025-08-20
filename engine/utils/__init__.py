@@ -1,31 +1,27 @@
 """
 Unified utils namespace for the engine package.
+
+This package provides organized access to various utility modules:
+- logging: Logging and log management
+- tracking: Workflow and node execution tracking
+- templating: Template variable processing
+- evaluation: Condition and expression evaluation
+- context: Workflow context management
+- execution: Execution-related utilities
+- async: Async operation utilities
 """
 
-from .template_engine import TemplateEngine
-from .expression_evaluator import ExpressionEvaluator, SafeExpressionError
-from .logger import (
-    setup_logger,
-    create_workflow_logger_instance,
-    log,
-    get_shared_logger,
-    WorkflowLogger,
-    safe_log,
-)
+from .logging import *
+from .tracking import *
+from .templating import *
+from .execution_utils import *
+from .async_utils import *
+
+# Note: evaluation package is not imported by default to avoid circular imports
+# Import it explicitly when needed: from .evaluation import *
 
 __all__ = [
-    "TemplateEngine",
-    "ExpressionEvaluator",
-    "SafeExpressionError",
-    "setup_logger",
-    "create_workflow_logger_instance",
-    "log",
-    "get_shared_logger",
-    "WorkflowLogger",
-    "safe_log",
-    "format_node_status",
-    "display_workflow_status",
-    "get_node_status_summary",
-    "print_workflow_status",
-    "StatusTracker",
+    # All names from the imported modules are now available
+    # This makes all public functions, classes, and variables accessible
+    # when importing from the utils package
 ]

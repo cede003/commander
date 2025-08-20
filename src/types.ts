@@ -122,7 +122,6 @@ declare global {
       onWorkflowCreated: (callback: (workflow: { name: string; description: string; workflowData: string }) => void) => void;
       removeWorkflowCreatedListener: () => void;
       executeWorkflow: (workflowData: string) => Promise<void>;
-      executeWorkflowCommand: (command: string, data: any) => Promise<any>;
       testIpc: () => Promise<string>;
       logEntry: (logEntry: any) => Promise<void>;
     };

@@ -1,18 +1,25 @@
 """
-Registry Package - Central function registry and specifications
+Registry Package - Tool registry and specifications
 """
 
-from .function_registry import registry, execute_node, register
-from .central_spec import FUNCTION_SPECS, list_all_functions, get_function_spec, get_required_inputs, get_playwright_method, get_description
+# Tool registry imports
+from .tool_registry import tool_registry, execute_tool
+
+# Tool factory imports
+from .tool_factory import ToolFactory
+
+def register_all_tools():
+    """Register all available tools in the registry"""
+    factory = ToolFactory()
+    # The ToolFactory constructor automatically registers all tools
+    return factory
 
 __all__ = [
-    'registry',
-    'execute_node',
-    'register',
-    'FUNCTION_SPECS',
-    'list_all_functions',
-    'get_function_spec',
-    'get_required_inputs',
-    'get_playwright_method',
-    'get_description'
+    # Tool registry exports
+    'tool_registry',
+    'execute_tool',
+    
+    # Tool factory exports
+    'ToolFactory',
+    'register_all_tools',
 ] 
