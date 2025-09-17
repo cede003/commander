@@ -107,16 +107,16 @@ function App() {
               loadedCount++;
               logger.info('Loaded workflow:', { name: workflowData.metadata.name });
             } else {
-              console.warn(`⚠️  Workflow file not found: ${filename}`);
+              console.warn(`Workflow file not found: ${filename}`);
             }
           } catch (error) {
-            console.warn(`⚠️  Failed to load workflow file: ${filename}`, error);
+            console.warn(`Failed to load workflow file: ${filename}`, error);
             // Continue loading other files even if one fails
           }
         }
 
         if (loadedCount === 0) {
-          console.warn('⚠️  No workflow files were loaded successfully');
+          console.warn('No workflow files were loaded successfully');
         } else {
           logger.info('Successfully loaded workflows:', { count: loadedCount });
         }
@@ -124,7 +124,7 @@ function App() {
         setCurrentWorkflows(loadedWorkflows);
         workflowsLoadedRef.current = true;
       } catch (error) {
-        console.error('❌ Failed to load workflows from files:', error);
+        console.error('Failed to load workflows from files:', error);
         setCurrentWorkflows([]);
         workflowsLoadedRef.current = true;
       } finally {
@@ -231,7 +231,7 @@ function App() {
             const testResult = await window.electronAPI.testIpc();
             logger.info('Test IPC call successful', { result: testResult });
           } catch (error) {
-            console.error('❌ Test IPC call failed:', error);
+            console.error('Test IPC call failed:', error);
           }
         }
         
@@ -292,11 +292,11 @@ function App() {
         logger.info('Test IPC result', { result });
         alert('Electron API is working!');
       } catch (error) {
-        console.error('❌ Test IPC failed:', error);
+        console.error('Test IPC failed:', error);
         alert('Electron API test failed: ' + error);
       }
     } else {
-      console.error('❌ testIpc not available');
+      console.error('testIpc not available');
       alert('testIpc not available');
     }
   };

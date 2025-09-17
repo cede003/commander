@@ -5,12 +5,12 @@
     "description": "Demonstrates custom actions including LinkedIn Easy Apply",
     "version": "1.0.0"
   },
-  "properties": {},
+  "arguments": {},
   "nodes": {
     "navigate_to_linkedin": {
       "id": "navigate_to_linkedin",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "https://www.linkedin.com/jobs/",
         "max_retries": 2,
         "timeout": 15000
@@ -20,19 +20,19 @@
     "try_easy_apply": {
       "id": "try_easy_apply",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "linkedin_easy_apply"
     },
     "check_form": {
       "id": "check_form",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "check_form_completeness"
     },
     "log_results": {
       "id": "log_results",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Easy Apply clicked: {{results.try_easy_apply.easy_apply_clicked}}, Form complete: {{results.check_form.form_complete}}",
         "level": "info"
       },
@@ -41,7 +41,7 @@
     "test_wait_and_click": {
       "id": "test_wait_and_click",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "button",
         "timeout": 3000
       },
@@ -50,7 +50,7 @@
     "test_fill_form": {
       "id": "test_fill_form",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "fields": {
           "input[name='email']": "test@example.com",
           "input[name='password']": "password123"

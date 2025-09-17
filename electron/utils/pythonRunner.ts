@@ -156,8 +156,8 @@ export async function initializePythonProcess(): Promise<void> {
     LOG_LEVEL: process.env.LOG_LEVEL || '',
     // Ensure Python writes to the same logs directory as Electron
     LOG_DIR: path.join(process.cwd(), 'logs'),
-    // Ensure Python can find the system packages and the engine package
-    PYTHONPATH: process.env.PYTHONPATH ? `${process.env.PYTHONPATH}:${path.dirname(CONFIG.enginePath)}` : path.dirname(CONFIG.enginePath),
+    // Ensure Python can find the engine package - set PYTHONPATH to include the engine directory
+    PYTHONPATH: process.env.PYTHONPATH ? `${process.env.PYTHONPATH}:${CONFIG.enginePath}` : CONFIG.enginePath,
   };
 
   // Enable Playwright verbose API logs only when debug/verbose
@@ -170,9 +170,9 @@ export async function initializePythonProcess(): Promise<void> {
 
   persistentPythonProcess = spawn(
     pythonCmd,
-    [path.join('execution', 'runner.py')],
+    ['-m', 'engine.execution.runner'],
     {
-      cwd: CONFIG.enginePath,
+      cwd: path.dirname(CONFIG.enginePath), // Run from parent of engine directory
       stdio: ['pipe', 'pipe', 'pipe'],
       env,
     }
@@ -385,14 +385,18 @@ export async function cleanupPythonProcess(): Promise<void> {
     try {
       persistentPythonProcess.stdin?.write(JSON.stringify({ action: 'cleanup' }) + '\n');
       
-      // Give Python process time to clean up gracefully
+      // Wait a bit for graceful shutdown
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Force kill if still running
+      if (persistentPythonProcess.exitCode === null) {
+        logger.warn('Python process did not exit gracefully, force killing...');
+        persistentPythonProcess.kill();
+      }
     } catch (error) {
-      logger.warn('Error sending cleanup signal to Python process:', error);
+      logger.error('Error during Python process cleanup:', error);
     }
     
-    // Kill the process
-    persistentPythonProcess.kill();
     persistentPythonProcess = null;
     isProcessReady = false;
     
@@ -405,4 +409,11 @@ export async function cleanupPythonProcess(): Promise<void> {
     
     logger.info('Python process cleanup completed');
   }
+}
+
+/**
+ * Check if the Python process is currently running
+ */
+export function isPythonProcessRunning(): boolean {
+  return persistentPythonProcess !== null && persistentPythonProcess.exitCode === null;
 }

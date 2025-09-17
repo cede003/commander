@@ -1,0 +1,11 @@
+{
+  "watch": ["electron/main.ts", "electron/ipc/handlers.ts"],
+  "exec": "tsc -p electron/tsconfig.json && electron . --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1",
+  "ext": "ts",
+  "ignore": ["src/**/*", "public/**/*", "engine/**/*", "dist/**/*", "node_modules/**/*"],
+  "delay": 2000,
+  "verbose": false,
+  "env": {
+    "NODE_ENV": "development"
+  }
+} 

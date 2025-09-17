@@ -4,13 +4,11 @@ import { registerUiCommands } from './commands/uiCommands';
 import { registerWorkflowCommands } from './commands/workflowCommands';
 import logger from '../utils/logger';
 
-// Declare global variables
-declare global {
-  var __ipcHandlersInitialized: boolean;
-}
+// Use a more robust guard mechanism
+let ipcHandlersInitialized = false;
 
 export function setupIpcHandlers(): void {
-  if (global.__ipcHandlersInitialized) {
+  if (ipcHandlersInitialized) {
     logger.debug('[IPC] IPC handlers already initialized, skipping');
     return;
   }
@@ -23,7 +21,7 @@ export function setupIpcHandlers(): void {
   registerUiCommands();
   registerWorkflowCommands();
   
-  global.__ipcHandlersInitialized = true;
+  ipcHandlersInitialized = true;
   logger.info('[IPC] IPC handlers setup complete');
   // Handler list is now logged by each registration module.
 } 

@@ -18,14 +18,9 @@
       "type": "string",
       "description": "Specific operation or action performed by this node (e.g., 'click', 'read_screen', 'extract_text')."
     },
-    "inputs": {
+    "arguments": {
       "type": "object",
-      "description": "Runtime inputs such as selectors or text values. Shape depends on the operation.",
-      "additionalProperties": true
-    },
-    "config": {
-      "type": "object",
-      "description": "Static configuration like timeouts, constants, and other parameters.",
+      "description": "Arguments for the operation.",
       "additionalProperties": true
     },
     "outputs": {

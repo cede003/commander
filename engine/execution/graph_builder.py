@@ -1,18 +1,17 @@
 """
-Graph Builder - Creates executable LangGraph workflows from JSON definitions
-Updated to work with TypedDict-based state management.
+Graph Builder - Creates executable workflows from workflow definitions
+Updated to work with modular WorkflowState structure.
 """
 
-from typing import Dict, Any, Callable, Awaitable
+from typing import Dict, Any
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
 from engine.execution.node_factory import create_node_from_tool
-from engine.execution.workflow_state import WorkflowState
+from engine.execution.workflow_state import WorkflowState, set_error, set_success
 from engine.utils.logging.logger import logger
 
 
 def create_executable_workflow(workflow_json: Dict[str, Any], initial_workflow_state: WorkflowState = None) -> StateGraph:
-    """Create an executable workflow using LangGraph's executor with TypedDict state management"""
+    """Create an executable workflow using LangGraph's executor with modular WorkflowState structure"""
     
     # Create the state graph
     workflow = StateGraph(WorkflowState)
@@ -26,11 +25,9 @@ def create_executable_workflow(workflow_json: Dict[str, Any], initial_workflow_s
         except Exception as e:
             # If tool creation fails, create a placeholder node that logs the error
             error_message = f"Tool creation failed for {node_id}: {e}"
-            async def placeholder_node(state: Dict[str, Any]) -> Dict[str, Any]:
-                workflow_state = state.get("workflow_state", {})
-                if "error" not in workflow_state:
-                    workflow_state["error"] = error_message
-                workflow_state["success"] = False
+            async def placeholder_node(state: WorkflowState) -> WorkflowState:
+                set_error(state, error_message)
+                set_success(state, False)
                 return state
             
             workflow.add_node(node_id, placeholder_node)

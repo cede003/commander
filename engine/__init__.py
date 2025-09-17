@@ -4,10 +4,10 @@ Provides a clean, efficient interface for executing complex workflows using Lang
 """
 
 # Core execution components
-from .execution.commander_engine import CommanderEngine
+from engine.execution.commander_engine import CommanderEngine
 
 # Import the new TypedDict-based state management
-from .execution.workflow_state import (
+from engine.execution.workflow_state import (
     WorkflowState,
     create_initial_state,
     add_message,
@@ -17,7 +17,7 @@ from .execution.workflow_state import (
 )
 
 # Browser session management
-from .browser.session_manager import (
+from engine.browser.session_manager import (
     BrowserSessionManager,
     session_manager,
     initialize_browser_session,
@@ -25,25 +25,26 @@ from .browser.session_manager import (
     get_browser_session_async,
     cleanup_browser_session,
     is_browser_session_ready,
+    restart_browser_session,
 )
 
 # Registry and tools
-from .registry.tool_registry import (
+from engine.registry.tool_registry import (
     ToolRegistry,
     tool_registry,
     execute_tool,
 )
 
 # Browser tools
-from .browser.browser_tool import BrowserTool
-from .browser.session import BrowserSession
+from engine.browser.browser_tool import BrowserTool
+from engine.browser.session import BrowserSession
 
 # Custom functions
-from .browser.custom_functions import console_log
+from engine.browser.custom_functions import console_log
 
 # Utility functions
-from .utils.logging.logger import logger
-from .utils.templating.template_engine import TemplateEngine
+from engine.utils.logging.logger import logger
+from engine.utils.templating.template_engine import TemplateEngine
 
 # Version and metadata
 __version__ = "2.0.0"
@@ -71,6 +72,7 @@ __all__ = [
     "get_browser_session_async",
     "cleanup_browser_session",
     "is_browser_session_ready",
+    "restart_browser_session",
     
     # Registry
     "ToolRegistry",

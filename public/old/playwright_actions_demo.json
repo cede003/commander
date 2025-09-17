@@ -5,7 +5,7 @@
     "workflow_version": "1.0.0",
     "schema_version": "1.0.0"
   },
-  "properties": {
+  "arguments": {
     "base_url": "https://www.w3schools.com/howto/howto_css_custom_checkbox.asp",
     "example_url": "https://example.com"
   },
@@ -18,7 +18,7 @@
     "notify_start": {
       "id": "notify_start",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Starting Playwright Actions Demo"
       },
       "operation": "console_log"
@@ -26,7 +26,7 @@
     "go_base": {
       "id": "go_base",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "{{inputs.base_url}}"
       },
       "operation": "goto"
@@ -34,7 +34,7 @@
     "wait_ready": {
       "id": "wait_ready",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "timeout": 500
       },
       "operation": "wait_for_timeout"
@@ -42,7 +42,7 @@
     "scroll_to_demo": {
       "id": "scroll_to_demo",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "h2:has-text('Custom Checkbox')"
       },
       "operation": "scroll_to"
@@ -50,7 +50,7 @@
     "hover_header": {
       "id": "hover_header",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "h1, h2",
         "timeout": 5000
       },
@@ -59,7 +59,7 @@
     "focus_sample": {
       "id": "focus_sample",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "body"
       },
       "operation": "focus"
@@ -67,7 +67,7 @@
     "blur_sample": {
       "id": "blur_sample",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "body"
       },
       "operation": "blur"
@@ -75,7 +75,7 @@
     "check_box": {
       "id": "check_box",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "input[type='checkbox']"
       },
       "operation": "check"
@@ -83,7 +83,7 @@
     "uncheck_box": {
       "id": "uncheck_box",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "input[type='checkbox']"
       },
       "operation": "uncheck"
@@ -91,7 +91,7 @@
     "select_option_sample": {
       "id": "select_option_sample",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "select",
         "value": "2"
       },
@@ -100,7 +100,7 @@
     "fill_input": {
       "id": "fill_input",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "input[type='text'], input[type='search']",
         "value": "test input"
       },
@@ -109,7 +109,7 @@
     "type_input": {
       "id": "type_input",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "input[type='text'], input[type='search']",
         "text": " more"
       },
@@ -118,7 +118,7 @@
     "press_enter": {
       "id": "press_enter",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "key": "Enter"
       },
       "operation": "press"
@@ -126,7 +126,7 @@
     "goto_example": {
       "id": "goto_example",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "{{inputs.example_url}}"
       },
       "operation": "goto"
@@ -134,7 +134,7 @@
     "dblclick_h1": {
       "id": "dblclick_h1",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "h1"
       },
       "operation": "dblclick"
@@ -142,7 +142,7 @@
     "tap_body": {
       "id": "tap_body",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "body"
       },
       "operation": "tap"
@@ -150,7 +150,7 @@
     "drag_and_drop_demo": {
       "id": "drag_and_drop_demo",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "source": "body",
         "target": "body"
       },
@@ -159,7 +159,7 @@
     "screenshot_page": {
       "id": "screenshot_page",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "path": "logs/actions_demo_screenshot.png"
       },
       "operation": "screenshot"
@@ -167,25 +167,25 @@
     "reload_page": {
       "id": "reload_page",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "reload"
     },
     "go_back": {
       "id": "go_back",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "go_back"
     },
     "go_forward": {
       "id": "go_forward",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "go_forward"
     },
     "click_body": {
       "id": "click_body",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "body"
       },
       "operation": "click"
@@ -193,7 +193,7 @@
     "notify_end": {
       "id": "notify_end",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Finished Playwright Actions Demo"
       },
       "operation": "console_log"

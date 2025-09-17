@@ -5,12 +5,12 @@
     "description": "Clicks Next repeatedly until it no longer exists",
     "version": "1.0.0"
   },
-  "properties": {},
+  "arguments": {},
   "nodes": {
     "kickoff_click": {
       "id": "kickoff_click",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "#jobs-apply-button-id",
         "timeout": 3000
       },
@@ -23,7 +23,7 @@
     "loop_click": {
       "id": "loop_click",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "button[data-easy-apply-next-button]",
         "timeout": 1500
       },

@@ -15,7 +15,7 @@
       "id": "start_notification",
       "domain": "browser",
       "operation": "console_log",
-      "properties": {
+      "arguments": {
         "message": "Starting calculator workflow",
         "level": "info"
       }
@@ -24,7 +24,7 @@
       "id": "navigate_to_calculator",
       "domain": "browser",
       "operation": "goto",
-      "properties": {
+      "arguments": {
         "url": "$calculator_url"
       },
       "error_handling": {
@@ -36,7 +36,7 @@
       "id": "wait_for_page_load",
       "domain": "browser",
       "operation": "wait_for_timeout",
-      "properties": {
+      "arguments": {
         "timeout": 1000
       }
     },
@@ -44,7 +44,7 @@
       "id": "click_first_number",
       "domain": "browser",
       "operation": "click",
-      "properties": {
+      "arguments": {
         "selector": "span[onclick*='$first_number'], span.scinm:has-text('$first_number')"
       }
     },
@@ -52,7 +52,7 @@
       "id": "click_operation",
       "domain": "browser",
       "operation": "click",
-      "properties": {
+      "arguments": {
         "selector": "span[onclick*='*'], span.scinm:has-text('*'), span[onclick*='multiply']"
       }
     },
@@ -60,7 +60,7 @@
       "id": "click_second_number",
       "domain": "browser",
       "operation": "click",
-      "properties": {
+      "arguments": {
         "selector": "span[onclick*='$second_number'], span.scinm:has-text('$second_number')"
       }
     },
@@ -68,7 +68,7 @@
       "id": "click_equals",
       "domain": "browser",
       "operation": "click",
-      "properties": {
+      "arguments": {
         "selector": "span[onclick*='='], span.scinm:has-text('='), span[onclick*='equals']"
       }
     },
@@ -76,7 +76,7 @@
       "id": "wait_for_result",
       "domain": "browser",
       "operation": "wait_for_timeout",
-      "properties": {
+      "arguments": {
         "timeout": 1000
       }
     },
@@ -84,7 +84,7 @@
       "id": "get_calculation_result",
       "domain": "browser",
       "operation": "text_content",
-      "properties": {
+      "arguments": {
         "selector": "#sciOutPut"
       },
       "outputs": {
@@ -100,7 +100,7 @@
       "id": "log_calculation",
       "domain": "browser",
       "operation": "console_log",
-      "properties": {
+      "arguments": {
         "message": "Output exists: $outputs.get_calculation_result, Result field: $outputs.get_calculation_result.calculation_result"
       }
     }

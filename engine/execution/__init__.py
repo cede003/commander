@@ -8,14 +8,18 @@ This module contains the core components for executing workflows:
 - WorkflowTool: LangChain Tool wrapper for workflow nodes
 """
 
-from .graph_builder import (
+from engine.execution.commander_engine import CommanderEngine
+from engine.execution.graph_builder import (
     create_executable_workflow
 )
-from .node_factory import (
+from engine.execution.node_factory import (
     create_node_from_tool
 )
 
 __all__ = [
+    # Main engine
+    "CommanderEngine",
+    
     # Main builder
     "create_executable_workflow",
     

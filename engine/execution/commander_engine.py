@@ -1,40 +1,41 @@
 """
-Commander Engine - Unified workflow execution with TypedDict state management
-Replaces WorkflowState system with native Python dictionary operations for LangGraph compatibility.
+Commander Engine - Main workflow execution engine
+Updated to work with modular WorkflowState structure.
 """
 
+import asyncio
 from typing import Dict, Any, Optional
-from langgraph.graph import StateGraph
-
-from engine.execution.workflow_state import WorkflowState, create_initial_state
-
+from langgraph.graph import StateGraph, END
+from engine.execution.workflow_state import (
+    WorkflowState, 
+    create_initial_state,
+    set_status,
+    set_success,
+    set_current_node,
+    set_error,
+    add_log_entry
+)
 from engine.execution.graph_builder import create_executable_workflow
-from engine.utils.logging.logger import logger as log
 from engine.utils.evaluation.workflow_validation import validate_workflow
+from engine.utils.logging.logger import WorkflowLogger, logger as log
+from engine.registry import register_all_tools
 
 
 
 class CommanderEngine:
     """
-    Main workflow execution engine using unified WorkflowState state management.
-    
-    This engine supports both deterministic and AI-driven execution transparently
-    by using a single WorkflowState object that contains both data and conversation history.
+    Main workflow execution engine that manages workflow loading and execution.
     """
     
     def __init__(self):
-        self.graph: Optional[StateGraph] = None
-        self.compiled_graph = None
-        self.workflow_data: Optional[Dict[str, Any]] = None
+        """Initialize the Commander Engine."""
+        # Initialize tools first
+        log.info("Initializing tool registry...")
+        register_all_tools()
         
-        # Initialize all tools when engine is created
-        try:
-            from ..registry import register_all_tools
-            register_all_tools()
-            log.info("All tools registered successfully")
-        except Exception as e:
-            log.warning(f"Failed to register tools: {e}")
-            # Don't fail engine creation, but tools won't be available
+        self.workflow_data: Optional[Dict[str, Any]] = None
+        self.graph: Optional[StateGraph] = None
+        self.compiled_graph: Optional[Any] = None
     
     def load_workflow(self, workflow_json: Dict[str, Any]) -> None:
         """
@@ -51,68 +52,83 @@ class CommanderEngine:
         self.compiled_graph = self.graph.compile()
         log.info(f"Loaded workflow: {workflow_json.get('metadata', {}).get('name', 'Unknown')}")
     
-    async def create_initial_workflow_state(self, initial_data: Optional[Dict[str, Any]] = None, 
-                                           initial_messages: Optional[list] = None) -> WorkflowState:
-        """Create an initial workflow state for workflow execution."""
-        state = await create_initial_state(
+    def create_initial_workflow_state(self, messages: Optional[list] = None) -> WorkflowState:
+        """
+        Create an initial workflow state from the loaded workflow data.
+        
+        Args:
+            messages: Optional initial messages for the AI memory
+            
+        Returns:
+            WorkflowState: Initial workflow state initialized from workflow data
+            
+        Raises:
+            RuntimeError: If no workflow is loaded
+        """
+        if not self.workflow_data:
+            raise RuntimeError("No workflow loaded. Call load_workflow() first.")
+            
+        state = create_initial_state(
             workflow_data=self.workflow_data,
-            initial_data=initial_data,
-            messages=initial_messages
+            messages=messages
         )
         return state
     
-    async def execute_workflow(self, initial_workflow_state: Optional[WorkflowState] = None) -> WorkflowState:
+    async def execute_workflow(self, workflow_state: WorkflowState) -> WorkflowState:
         """
         Execute the loaded workflow with the given workflow state.
         
         Args:
-            initial_workflow_state: Initial workflow state for execution (creates new one if None)
+            workflow_state: Workflow state to execute (must be initialized from workflow data)
             
         Returns:
             WorkflowState: Final workflow state after workflow execution
+            
+        Raises:
+            RuntimeError: If no workflow is loaded
+            ValueError: If workflow_state is not properly initialized
         """
         if not self.compiled_graph:
             raise RuntimeError("No workflow loaded. Call load_workflow() first.")
         
-        # Create initial workflow state if not provided
-        if initial_workflow_state is None:
-            initial_workflow_state = await self.create_initial_workflow_state()
+        # Validate that the workflow state has the expected structure
+        if not isinstance(workflow_state, dict) or "execution" not in workflow_state:
+            raise ValueError("workflow_state must be a properly initialized WorkflowState")
         
         # Execute workflow
         log.info("Starting workflow execution")
         try:
-            # Set initial success state
-            initial_workflow_state["success"] = False
-            initial_workflow_state["current_node"] = None
-            
-            result = await self.compiled_graph.ainvoke(initial_workflow_state)
+            # Set initial execution state
+            set_success(workflow_state, False)
+            set_current_node(workflow_state, None)
+            add_log_entry(workflow_state, "Workflow execution started")
+            set_status(workflow_state, "running")
+            log.info(f"Workflow state: {workflow_state}")
+            result = await self.compiled_graph.ainvoke(workflow_state)
             
             # Ensure the result has the expected structure
             if isinstance(result, dict):
                 # Set success flag if no errors occurred
-                if not result.get("error"):
-                    result["success"] = True
+                if not result.get("execution", {}).get("error"):
+                    set_success(result, True)
+                    add_log_entry(result, "Workflow execution completed successfully")
                     log.info("Workflow execution completed successfully")
                 else:
-                    result["success"] = False
-                    log.error(f"Workflow execution failed with error: {result.get('error')}")
+                    set_success(result, False)
+                    error_msg = result.get("execution", {}).get("error", "Unknown error")
+                    add_log_entry(result, f"Workflow execution failed: {error_msg}")
+                    log.error(f"Workflow execution failed with error: {error_msg}")
             else:
-                # If result is not a dict, create a proper state
-                log.warning(f"Unexpected result type: {type(result)}")
-                result = {
-                    "success": True,
-                    "outputs": result if hasattr(result, 'get') else {},
-                    "current_node": "completed"
-                }
+                raise ValueError(f"Unexpected result type: {type(result)}")
             
             return result
             
         except Exception as e:
             log.error(f"Workflow execution failed: {e}")
-            initial_workflow_state["error"] = str(e)
-            initial_workflow_state["success"] = False
-            initial_workflow_state["current_node"] = "error"
-            return initial_workflow_state
+            set_error(workflow_state, str(e))
+            set_current_node(workflow_state, "error")
+            add_log_entry(workflow_state, f"Workflow execution failed with exception: {e}")
+            return workflow_state
     
 
     

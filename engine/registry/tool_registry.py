@@ -1,12 +1,19 @@
 """
-Tool Registry - Registry for LangChain Tool instances using domain.operation structure
-Updated to work with TypedDict-based state management.
+Tool Registry - Manages LangChain Tool instances
+Updated to work with modular WorkflowState structure.
 """
 
 from typing import Dict, Any, Optional, List
 from langchain_core.tools import BaseTool
 from engine.utils.logging.logger import logger
-from engine.execution.workflow_state import WorkflowState
+from engine.execution.workflow_state import (
+    WorkflowState, 
+    get_inputs, 
+    get_outputs, 
+    set_outputs, 
+    set_success, 
+    set_error
+)
 
 
 class ToolRegistry:
@@ -60,7 +67,7 @@ tool_registry = ToolRegistry()
 
 async def execute_tool(domain: str, operation: str, workflow_state: WorkflowState) -> WorkflowState:
     """
-    Execute a tool using the registry with TypedDict state management.
+    Execute a tool using the registry with modular WorkflowState structure.
     
     Args:
         domain: Tool domain (e.g., 'browser')
@@ -77,27 +84,25 @@ async def execute_tool(domain: str, operation: str, workflow_state: WorkflowStat
 
     try:
         # Extract inputs from workflow state
-        inputs = workflow_state.get("inputs", {}).copy()
-        
+        inputs = get_inputs(workflow_state).copy()
         
         # Execute the tool
         result = await tool.ainvoke(inputs)
         
         # Update workflow state with results
-        if "outputs" not in workflow_state:
-            workflow_state["outputs"] = {}
-            
-        if isinstance(result, dict):
-            workflow_state["outputs"].update(result)
-        else:
-            workflow_state["outputs"]["result"] = result
+        current_outputs = get_outputs(workflow_state)
         
-        workflow_state["success"] = True
-        workflow_state["outputs"]["method"] = f"{domain}.{operation}"
+        if isinstance(result, dict):
+            current_outputs.update(result)
+        else:
+            current_outputs["result"] = result
+        
+        current_outputs["method"] = f"{domain}.{operation}"
+        set_outputs(workflow_state, current_outputs)
+        set_success(workflow_state, True)
         
         return workflow_state
         
     except Exception as e:
-        workflow_state["error"] = str(e)
-        workflow_state["success"] = False
+        set_error(workflow_state, str(e))
         return workflow_state 

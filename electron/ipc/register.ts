@@ -24,6 +24,12 @@ export function registerIpcHandlers(namespace: string, handlers: Record<string, 
   });
 
   g[guardKey] = true;
-  logger.info(`[IPC] Registered ${Object.keys(handlers).length} '${namespace}' handler(s)`);
+  
+  // Only log registration once per process lifecycle
+  const logGuardKey = `__${namespace}LogRegistered`;
+  if (!g[logGuardKey]) {
+    logger.info(`[IPC] Registered ${Object.keys(handlers).length} '${namespace}' handler(s)`);
+    g[logGuardKey] = true;
+  }
 }
 

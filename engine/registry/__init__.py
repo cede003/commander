@@ -3,10 +3,10 @@ Registry Package - Tool registry and specifications
 """
 
 # Tool registry imports
-from .tool_registry import tool_registry, execute_tool
+from engine.registry.tool_registry import tool_registry, execute_tool, ToolRegistry
 
 # Tool factory imports
-from .tool_factory import ToolFactory
+from engine.registry.tool_factory import ToolFactory
 
 def register_all_tools():
     """Register all available tools in the registry"""
@@ -18,6 +18,7 @@ __all__ = [
     # Tool registry exports
     'tool_registry',
     'execute_tool',
+    'ToolRegistry',
     
     # Tool factory exports
     'ToolFactory',

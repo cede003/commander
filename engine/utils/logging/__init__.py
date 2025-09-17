@@ -4,7 +4,7 @@ Logging utilities package.
 This package contains modules for logging and log management.
 """
 
-from .logger import *
+from engine.utils.logging.logger import *
 
 __all__ = [
     # Re-export all names from the imported modules

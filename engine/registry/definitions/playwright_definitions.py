@@ -6,253 +6,253 @@ PLAYWRIGHT_SPECS = {
     "browser": {
         # Navigation
         "goto": {
-            "type": "playwright",
-            "required_properties": ["url"],
+            "target": "page",
+            "required_arguments": ["url"],
             "description": "Navigates to a URL"
         },
         "reload": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Reloads the current page"
         },
         "go_back": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Goes back in browser history"
         },
         "go_forward": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Goes forward in browser history"
         },
         
         # Basic Interaction
         "click": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Clicks an element"
         },
         "dblclick": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Double clicks an element"
         },
         "fill": {
-            "type": "playwright",
-            "required_properties": ["selector", "value"],
+            "target": "locator",
+            "required_arguments": ["selector", "value"],
             "description": "Fills a form field"
         },
         "type": {
-            "type": "playwright",
-            "required_properties": ["selector", "text"],
+            "target": "locator",
+            "required_arguments": ["selector", "text"],
             "description": "Types text into an element"
         },
         "press": {
-            "type": "playwright",
-            "required_properties": ["selector", "key"],
+            "target": "locator",
+            "required_arguments": ["selector", "key"],
             "description": "Presses a key"
         },
         "hover": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Hovers over an element"
         },
         "focus": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Focuses an element"
         },
         "blur": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Removes focus from an element"
         },
         "tap": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Taps an element (mobile)"
         },
         "drag_to": {
-            "type": "playwright",
-            "required_properties": ["source", "target"],
+            "target": "locator",
+            "required_arguments": ["source", "target"],
             "description": "Drags and drops an element"
         },
         
         # Basic Selection
         "select_option": {
-            "type": "playwright",
-            "required_properties": ["selector", "value"],
+            "target": "locator",
+            "required_arguments": ["selector", "value"],
             "description": "Selects an option from a dropdown"
         },
         "check": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Checks a checkbox"
         },
         "uncheck": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Unchecks a checkbox"
         },
         
         # Information extraction
         "text_content": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Extracts text from an element"
         },
         "get_attribute": {
-            "type": "playwright",
-            "required_properties": ["selector", "attribute"],
+            "target": "locator",
+            "required_arguments": ["selector", "attribute"],
             "description": "Gets an attribute from an element"
         },
         "query_selector": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "page",
+            "required_arguments": ["selector"],
             "description": "Gets a single element"
         },
         "query_selector_all": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "page",
+            "required_arguments": ["selector"],
             "description": "Gets multiple elements matching a selector"
         },
         "title": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Gets the page title"
         },
         "url": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Gets the current URL"
         },
         
         # Element properties
         "is_visible": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Checks if element is visible"
         },
         "is_hidden": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Checks if element is hidden"
         },
         "is_enabled": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Checks if element is enabled"
         },
         "is_disabled": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Checks if element is disabled"
         },
         "is_checked": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Checks if element is checked"
         },
         
         # Page information
         "content": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Gets page content"
         },
         "inner_html": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Gets inner HTML of element"
         },
         "outer_html": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Gets outer HTML of element"
         },
         "bounding_box": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Gets element bounding box"
         },
         "scroll_into_view_if_needed": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Scrolls to an element (Locator method)"
         },
         "scroll_to": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "locator",
+            "required_arguments": ["selector"],
             "description": "Scrolls to an element (alias for scroll_into_view_if_needed)"
         },
         
         # Basic Utilities
         "screenshot": {
-            "type": "playwright",
-            "required_properties": ["path"],
+            "target": "page",
+            "required_arguments": ["path"],
             "description": "Takes a screenshot of the page"
         },
         
         # Waiting for elements
         "wait_for_selector": {
-            "type": "playwright",
-            "required_properties": ["selector"],
+            "target": "page",
+            "required_arguments": ["selector"],
             "description": "Waits for an element to appear"
         },
         "wait_for_load_state": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Waits for a specific load state (default 'load')"
         },
         "wait_for_function": {
-            "type": "playwright",
-            "required_properties": ["function"],
+            "target": "page",
+            "required_arguments": ["function"],
             "description": "Waits for a JavaScript function to return true"
         },
         
         # Waiting for events
         "wait_for_event": {
-            "type": "playwright",
-            "required_properties": ["event"],
+            "target": "page",
+            "required_arguments": ["event"],
             "description": "Waits for a specific event"
         },
         "expect_response": {
-            "type": "playwright",
-            "required_properties": ["url_or_predicate"],
+            "target": "page",
+            "required_arguments": ["url_or_predicate"],
             "description": "Waits for a response"
         },
         "expect_request": {
-            "type": "playwright",
-            "required_properties": ["url_or_predicate"],
+            "target": "page",
+            "required_arguments": ["url_or_predicate"],
             "description": "Waits for a request"
         },
         
         # Waiting for navigation
         "wait_for_url": {
-            "type": "playwright",
-            "required_properties": ["url"],
+            "target": "page",
+            "required_arguments": ["url"],
             "description": "Waits for URL to match"
         },
         "wait_for_timeout": {
-            "type": "playwright",
-            "required_properties": ["timeout"],
+            "target": "page",
+            "required_arguments": ["timeout"],
             "description": "Waits for a timeout"
         },
         
         # Advanced waiting
         "expect_download": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Waits for a download"
         },
         "expect_file_chooser": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Waits for file chooser"
         },
         "expect_popup": {
-            "type": "playwright",
-            "required_properties": [],
+            "target": "page",
+            "required_arguments": [],
             "description": "Waits for a popup"
         }
     }

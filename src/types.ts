@@ -95,6 +95,12 @@ declare global {
       getBrowserViewCanGoForward: () => Promise<any>;
       updateBrowserViewBounds: () => Promise<any>;
       
+      // BrowserView health and recovery
+      getBrowserViewHealth: () => Promise<{ isHealthy: boolean; failedChecks: number; isRecovering: boolean }>;
+      manualBrowserViewRecovery: () => Promise<{ success: boolean; message?: string; error?: string }>;
+      restartPythonBrowserSession: () => Promise<{ success: boolean; message?: string; error?: string }>;
+      checkPythonSessionHealth: () => Promise<{ success: boolean; health?: any; error?: string }>;
+      
       // BrowserView event listeners
       onBrowserViewNavigated: (callback: (data: { url: string }) => void) => void;
       removeBrowserViewNavigatedListener: () => void;

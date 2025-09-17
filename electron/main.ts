@@ -3,7 +3,7 @@ import { CONFIG } from './constants/config';
 import { createMainWindow } from './windows/mainWindow';
 import { createBrowserView, setMainWindow, getSidebarVisible } from './views/browserViewManager';
 import { setupIpcHandlers } from './ipc/handlers';
-import { initializePythonProcess, cleanupPythonProcess } from './utils/pythonRunner';
+import { initializePythonProcess, cleanupPythonProcess, isPythonProcessRunning } from './utils/pythonRunner';
 import { setupBrowserViewAutoResize, calculateBrowserViewBounds, updateBrowserViewBounds } from './utils/bounds';
 import logger, { applyLogLevelFromArgv } from './utils/logger';
 
@@ -23,7 +23,7 @@ let appReadyLogged = false;
 function maybeLogAppReady(): void {
   if (electronReady && pythonReady && !appReadyLogged) {
     appReadyLogged = true;
-    logger.info('🚀 App is ready');
+    logger.info('App is ready');
   }
 }
 
@@ -137,7 +137,7 @@ app.whenReady().then(() => {
     
     // Fallback: if renderer doesn't load within 10 seconds, start Python anyway
     setTimeout(() => {
-      if (!pythonReady) {
+      if (!pythonReady && !isPythonProcessRunning()) {
         logger.warn('Renderer load timeout, starting Python process anyway...');
         initializePythonProcess()
           .then(() => {
@@ -148,6 +148,8 @@ app.whenReady().then(() => {
           .catch((error) => {
             logger.error('Failed to initialize Python process (fallback):', error);
           });
+      } else {
+        logger.debug('Python process already running or ready, skipping fallback initialization');
       }
     }, 10000);
   }

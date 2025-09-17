@@ -11,14 +11,13 @@ This package provides organized access to various utility modules:
 - async: Async operation utilities
 """
 
-from .logging import *
-from .tracking import *
-from .templating import *
-from .execution_utils import *
-from .async_utils import *
+from engine.utils.logging import *
+from engine.utils.templating import *
+from engine.utils.execution_utils import *
+from engine.utils.async_utils import *
 
 # Note: evaluation package is not imported by default to avoid circular imports
-# Import it explicitly when needed: from .evaluation import *
+# Import it explicitly when needed: from engine.utils.evaluation import *
 
 __all__ = [
     # All names from the imported modules are now available

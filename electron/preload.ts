@@ -20,6 +20,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getBrowserViewCanGoBack: () => ipcRenderer.invoke('get-browser-view-can-go-back'),
   getBrowserViewCanGoForward: () => ipcRenderer.invoke('get-browser-view-can-go-forward'),
   updateBrowserViewBounds: () => ipcRenderer.invoke('update-browser-view-bounds'),
+  
+  // BrowserView health and recovery
+  getBrowserViewHealth: () => ipcRenderer.invoke('get-browser-view-health'),
+  manualBrowserViewRecovery: () => ipcRenderer.invoke('manual-browser-view-recovery'),
+  restartPythonBrowserSession: () => ipcRenderer.invoke('restart-python-browser-session'),
+  checkPythonSessionHealth: () => ipcRenderer.invoke('check-python-session-health'),
 
   
   // BrowserView event listeners

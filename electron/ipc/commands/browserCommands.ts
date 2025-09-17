@@ -3,12 +3,15 @@ import {
   loadURLInBrowserView, 
   focusBrowserView,
   setSidebarVisible,
-  getSidebarVisible
+  getSidebarVisible,
+  manualRecovery,
+  getBrowserViewHealthStatus
 } from '../../views/browserViewManager';
 import { getMainWindow } from '../../windows/mainWindow';
 import { updateBrowserViewBounds } from '../../utils/bounds';
 import logger from '../../utils/logger';
 import { registerIpcHandlers } from '../register';
+import { runPythonWorkflow } from '../../utils/pythonRunner';
 
 export function registerBrowserCommands(): void {
   registerIpcHandlers('browserCommands', {
@@ -59,13 +62,28 @@ export function registerBrowserCommands(): void {
       setSidebarVisible(visible);
       const browserView = getBrowserView();
       const mainWindow = getMainWindow();
-      if (!browserView || !mainWindow) {
-        const msg = 'BrowserView or MainWindow not available';
-        logger.error(msg);
-        return { success: false, error: msg };
+      if (browserView && mainWindow) {
+        updateBrowserViewBounds(browserView, mainWindow, visible);
       }
-      updateBrowserViewBounds(browserView, mainWindow, visible);
       return { success: true };
+    },
+    
+    // BrowserView health and recovery
+    'get-browser-view-health': async () => {
+      const healthStatus = getBrowserViewHealthStatus();
+      logger.debug('BrowserView health status:', healthStatus);
+      return healthStatus;
+    },
+    
+    'manual-browser-view-recovery': async () => {
+      logger.info('Manual BrowserView recovery requested via IPC');
+      try {
+        await manualRecovery();
+        return { success: true, message: 'BrowserView recovery completed' };
+      } catch (error) {
+        logger.error('Manual BrowserView recovery failed:', error);
+        return { success: false, error: String(error) };
+      }
     },
     'update-browser-view-bounds': async () => {
       const browserView = getBrowserView();
@@ -79,5 +97,40 @@ export function registerBrowserCommands(): void {
       return { success: true };
     },
     'test-ipc': async () => ({ success: true, message: 'IPC bridge is working!' }),
+    
+    // Python browser session management
+    'restart-python-browser-session': async () => {
+      logger.info('Restarting Python browser session...');
+      try {
+        // Send restart signal to Python process
+        const result = await runPythonWorkflow({
+          workflowData: JSON.stringify({
+            action: 'restart_browser_session',
+            metadata: { name: 'Browser Session Restart' }
+          })
+        });
+        return { success: true, message: 'Python browser session restarted successfully' };
+      } catch (error) {
+        logger.error('Failed to restart Python browser session:', error);
+        return { success: false, error: String(error) };
+      }
+    },
+    
+    'check-python-session-health': async () => {
+      logger.info('Checking Python browser session health...');
+      try {
+        // Send health check signal to Python process
+        const result = await runPythonWorkflow({
+          workflowData: JSON.stringify({
+            action: 'check_session_health',
+            metadata: { name: 'Session Health Check' }
+          })
+        });
+        return { success: true, health: result };
+      } catch (error) {
+        logger.error('Failed to check Python session health:', error);
+        return { success: false, error: String(error) };
+      }
+    },
   });
 }

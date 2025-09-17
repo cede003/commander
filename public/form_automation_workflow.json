@@ -1,0 +1,438 @@
+{
+  "metadata": {
+    "name": "Form Automation Workflow",
+    "description": "Demonstrates comprehensive form automation using Playwright operations including form filling, validation, and submission",
+    "author": "Commander",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "form_url": "https://httpbin.org/forms/post",
+    "user_name": "John Doe",
+    "user_email": "john.doe@example.com",
+    "user_phone": "+1-555-0123",
+    "user_message": "This is a test message for form automation"
+  },
+  "nodes": {
+    "start_notification": {
+      "id": "start_notification",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Starting form automation workflow",
+        "level": "info"
+      }
+    },
+    "navigate_to_form": {
+      "id": "navigate_to_form",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$form_url"
+      }
+    },
+    "wait_for_form_load": {
+      "id": "wait_for_form_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "domcontentloaded"
+      }
+    },
+    "wait_for_form_elements": {
+      "id": "wait_for_form_elements",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "check_form_elements_exist": {
+      "id": "check_form_elements_exist",
+      "domain": "browser",
+      "operation": "query_selector_all",
+      "arguments": {
+        "selector": "form input, form select, form textarea"
+      }
+    },
+    "get_page_title": {
+      "id": "get_page_title",
+      "domain": "browser",
+      "operation": "title"
+    },
+    "get_current_url": {
+      "id": "get_current_url",
+      "domain": "browser",
+      "operation": "url"
+    },
+    "check_form_visibility": {
+      "id": "check_form_visibility",
+      "domain": "browser",
+      "operation": "is_visible",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "fill_name_field": {
+      "id": "fill_name_field",
+      "domain": "browser",
+      "operation": "fill",
+      "arguments": {
+        "selector": "input[name='custname']",
+        "value": "$user_name"
+      }
+    },
+    "type_additional_name": {
+      "id": "type_additional_name",
+      "domain": "browser",
+      "operation": "type",
+      "arguments": {
+        "selector": "input[name='custname']",
+        "text": " (Automated)"
+      }
+    },
+    "fill_email_field": {
+      "id": "fill_email_field",
+      "domain": "browser",
+      "operation": "fill",
+      "arguments": {
+        "selector": "input[name='custemail']",
+        "value": "$user_email"
+      }
+    },
+    "fill_phone_field": {
+      "id": "fill_phone_field",
+      "domain": "browser",
+      "operation": "fill",
+      "arguments": {
+        "selector": "input[name='custtel']",
+        "value": "$user_phone"
+      }
+    },
+    "select_size_option": {
+      "id": "select_size_option",
+      "domain": "browser",
+      "operation": "select_option",
+      "arguments": {
+        "selector": "select",
+        "value": "1"
+      }
+    },
+    "check_if_checkbox_exists": {
+      "id": "check_if_checkbox_exists",
+      "domain": "browser",
+      "operation": "query_selector",
+      "arguments": {
+        "selector": "input[type='checkbox']"
+      }
+    },
+    "check_delivery_option": {
+      "id": "check_delivery_option",
+      "domain": "browser",
+      "operation": "check",
+      "arguments": {
+        "selector": "input[type='checkbox']"
+      }
+    },
+    "uncheck_delivery_option": {
+      "id": "uncheck_delivery_option",
+      "domain": "browser",
+      "operation": "uncheck",
+      "arguments": {
+        "selector": "input[type='checkbox']"
+      }
+    },
+    "recheck_delivery_option": {
+      "id": "recheck_delivery_option",
+      "domain": "browser",
+      "operation": "check",
+      "arguments": {
+        "selector": "input[type='checkbox']"
+      }
+    },
+    "fill_message_field": {
+      "id": "fill_message_field",
+      "domain": "browser",
+      "operation": "fill",
+      "arguments": {
+        "selector": "textarea",
+        "value": "$user_message"
+      }
+    },
+    "focus_submit_button": {
+      "id": "focus_submit_button",
+      "domain": "browser",
+      "operation": "focus",
+      "arguments": {
+        "selector": "input[type='submit']"
+      }
+    },
+    "hover_over_form": {
+      "id": "hover_over_form",
+      "domain": "browser",
+      "operation": "hover",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "blur_submit_button": {
+      "id": "blur_submit_button",
+      "domain": "browser",
+      "operation": "blur",
+      "arguments": {
+        "selector": "input[type='submit']"
+      }
+    },
+    "get_form_attributes": {
+      "id": "get_form_attributes",
+      "domain": "browser",
+      "operation": "get_attribute",
+      "arguments": {
+        "selector": "form",
+        "attribute": "method"
+      }
+    },
+    "get_form_html": {
+      "id": "get_form_html",
+      "domain": "browser",
+      "operation": "inner_html",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "get_form_outer_html": {
+      "id": "get_form_outer_html",
+      "domain": "browser",
+      "operation": "outer_html",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "get_form_bounding_box": {
+      "id": "get_form_bounding_box",
+      "domain": "browser",
+      "operation": "bounding_box",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "scroll_to_form": {
+      "id": "scroll_to_form",
+      "domain": "browser",
+      "operation": "scroll_to",
+      "arguments": {
+        "selector": "form"
+      }
+    },
+    "take_screenshot": {
+      "id": "take_screenshot",
+      "domain": "browser",
+      "operation": "screenshot",
+      "arguments": {
+        "path": "logs/form_automation_screenshot.png"
+      }
+    },
+    "double_click_submit": {
+      "id": "double_click_submit",
+      "domain": "browser",
+      "operation": "dblclick",
+      "arguments": {
+        "selector": "input[type='submit']"
+      }
+    },
+    "tap_submit_button": {
+      "id": "tap_submit_button",
+      "domain": "browser",
+      "operation": "tap",
+      "arguments": {
+        "selector": "input[type='submit']"
+      }
+    },
+    "press_enter_key": {
+      "id": "press_enter_key",
+      "domain": "browser",
+      "operation": "press",
+      "arguments": {
+        "selector": "input[type='submit']",
+        "key": "Enter"
+      }
+    },
+    "wait_for_submission": {
+      "id": "wait_for_submission",
+      "domain": "browser",
+      "operation": "wait_for_timeout",
+      "arguments": {
+        "timeout": 2000
+      }
+    },
+    "get_final_page_content": {
+      "id": "get_final_page_content",
+      "domain": "browser",
+      "operation": "content"
+    },
+    "log_checkbox_status": {
+      "id": "log_checkbox_status",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Checkbox operations completed. Checkbox exists: $outputs.check_if_checkbox_exists.result !== null",
+        "level": "info"
+      }
+    },
+    "log_form_elements": {
+      "id": "log_form_elements",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Form elements found: $outputs.check_form_elements_exist.result.length",
+        "level": "info"
+      }
+    },
+    "end_notification": {
+      "id": "end_notification",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Form automation workflow completed successfully",
+        "level": "info"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_notification",
+      "to": "navigate_to_form"
+    },
+    {
+      "from": "navigate_to_form",
+      "to": "wait_for_form_load"
+    },
+    {
+      "from": "wait_for_form_load",
+      "to": "wait_for_form_elements"
+    },
+    {
+      "from": "wait_for_form_elements",
+      "to": "check_form_elements_exist"
+    },
+    {
+      "from": "check_form_elements_exist",
+      "to": "get_page_title"
+    },
+    {
+      "from": "get_page_title",
+      "to": "get_current_url"
+    },
+    {
+      "from": "get_current_url",
+      "to": "check_form_visibility"
+    },
+    {
+      "from": "check_form_visibility",
+      "to": "fill_name_field"
+    },
+    {
+      "from": "fill_name_field",
+      "to": "type_additional_name"
+    },
+    {
+      "from": "type_additional_name",
+      "to": "fill_email_field"
+    },
+    {
+      "from": "fill_email_field",
+      "to": "fill_phone_field"
+    },
+    {
+      "from": "fill_phone_field",
+      "to": "select_size_option"
+    },
+    {
+      "from": "select_size_option",
+      "to": "check_if_checkbox_exists"
+    },
+    {
+      "from": "check_if_checkbox_exists",
+      "to": "check_delivery_option"
+    },
+    {
+      "from": "check_delivery_option",
+      "to": "uncheck_delivery_option"
+    },
+    {
+      "from": "uncheck_delivery_option",
+      "to": "recheck_delivery_option"
+    },
+    {
+      "from": "recheck_delivery_option",
+      "to": "fill_message_field"
+    },
+    {
+      "from": "fill_message_field",
+      "to": "focus_submit_button"
+    },
+    {
+      "from": "focus_submit_button",
+      "to": "hover_over_form"
+    },
+    {
+      "from": "hover_over_form",
+      "to": "blur_submit_button"
+    },
+    {
+      "from": "blur_submit_button",
+      "to": "get_form_attributes"
+    },
+    {
+      "from": "get_form_attributes",
+      "to": "get_form_html"
+    },
+    {
+      "from": "get_form_html",
+      "to": "get_form_outer_html"
+    },
+    {
+      "from": "get_form_outer_html",
+      "to": "get_form_bounding_box"
+    },
+    {
+      "from": "get_form_bounding_box",
+      "to": "scroll_to_form"
+    },
+    {
+      "from": "scroll_to_form",
+      "to": "take_screenshot"
+    },
+    {
+      "from": "take_screenshot",
+      "to": "double_click_submit"
+    },
+    {
+      "from": "double_click_submit",
+      "to": "tap_submit_button"
+    },
+    {
+      "from": "tap_submit_button",
+      "to": "press_enter_key"
+    },
+    {
+      "from": "press_enter_key",
+      "to": "wait_for_submission"
+    },
+    {
+      "from": "wait_for_submission",
+      "to": "get_final_page_content"
+    },
+    {
+      "from": "get_final_page_content",
+      "to": "log_form_elements"
+    },
+    {
+      "from": "log_form_elements",
+      "to": "log_checkbox_status"
+    },
+    {
+      "from": "log_checkbox_status",
+      "to": "end_notification"
+    }
+  ]
+} 

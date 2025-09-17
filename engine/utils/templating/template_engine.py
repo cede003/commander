@@ -6,7 +6,7 @@ import copy
 import sys
 from typing import Dict, Any
 from jinja2 import Template
-from ..logging.logger import log
+from engine.utils.logging.logger import logger
 
 
 class TemplateEngine:
@@ -41,7 +41,7 @@ class TemplateEngine:
                             node_data["inputs"][key] = template.render(**template_context)
                         except Exception as e:
                             # If templating fails, keep the original value
-                            log.warning(f"Template rendering failed for {key}: {e}")
+                            logger.warning(f"Template rendering failed for {key}: {e}")
                             node_data["inputs"][key] = val
                             print(f"DEBUG: Template rendering failed for {key}: {e}")
         
@@ -79,5 +79,5 @@ class TemplateEngine:
             template = Template(value)
             return template.render(**context)
         except Exception as e:
-            log.warning(f"Template rendering failed for '{value}': {e}")
+            logger.warning(f"Template rendering failed for '{value}': {e}")
             return value 

@@ -2,8 +2,18 @@ import { ipcMain } from 'electron';
 import { runPythonWorkflow } from '../../utils/pythonRunner';
 import logger from '../../utils/logger';
 
+// Global guard to prevent duplicate registration logging
+const globalGuardKey = '__workflowCommandsRegistered';
+if (!(global as any)[globalGuardKey]) {
+  (global as any)[globalGuardKey] = false;
+}
+
 export function registerWorkflowCommands(): void {
-  logger.info('[IPC] Registered workflow command handler(s)');
+  // Only log registration once per process lifecycle
+  if (!(global as any)[globalGuardKey]) {
+    logger.info('[IPC] Registered workflow command handler(s)');
+    (global as any)[globalGuardKey] = true;
+  }
 
   ipcMain.handle('execute-workflow', async (event, workflowData: string) => {
     try {

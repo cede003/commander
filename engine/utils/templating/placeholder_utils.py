@@ -1,5 +1,6 @@
 """
 Utility functions for placeholder interpolation
+Updated to work with modular WorkflowState structure.
 """
 
 import re
@@ -13,8 +14,8 @@ def interpolate_placeholders(s: str, workflow_state: Dict[str, Any]) -> str:
         if var_path.startswith('outputs.'):
             # Handle outputs.path.to.value
             parts = var_path.split('.')
-            current = workflow_state
-            for part in parts:
+            current = workflow_state["data"]["outputs"]
+            for part in parts[1:]:  # Skip 'outputs' part
                 if isinstance(current, dict) and part in current:
                     current = current[part]
                 else:
@@ -22,7 +23,8 @@ def interpolate_placeholders(s: str, workflow_state: Dict[str, Any]) -> str:
             return str(current) if current is not None else ""
         else:
             # Handle regular inputs
-            return str(workflow_state.get("inputs", {}).get(var_path, ""))
+            inputs = workflow_state["data"]["inputs"]
+            return str(inputs.get(var_path, ""))
     
     # Simplified regex to avoid nested capturing group issues
     return re.sub(r"\$([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)", replace_var, s) 

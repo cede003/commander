@@ -4,13 +4,16 @@ import logger from '../utils/logger';
 
 const BrowserPane: React.FC<BrowserPaneProps> = ({ 
   className = '', 
-  isSidebarVisible = true,
   onURLChange,
   onNavigationStateChange,
-  isDarkMode = false
 }) => {
   const [currentURL, setCurrentURL] = useState<string>('');
   const [isBrowserReady, setIsBrowserReady] = useState<boolean>(false);
+  const [browserHealth, setBrowserHealth] = useState<{ isHealthy: boolean; failedChecks: number; isRecovering: boolean }>({ 
+    isHealthy: true, 
+    failedChecks: 0, 
+    isRecovering: false 
+  });
   const browserViewRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
   
@@ -33,44 +36,67 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
   useEffect(() => {
     const initializeBrowser = async () => {
       try {
-        console.log('Starting browser initialization...');
+        logger.info('Starting browser initialization...');
         
         // Initialize BrowserView with default URL
         if (window.electronAPI?.initializeBrowserView) {
-          console.log('Calling initializeBrowserView...');
+          logger.debug('Calling initializeBrowserView...');
           await window.electronAPI.initializeBrowserView();
-          console.log('initializeBrowserView completed');
+          logger.debug('initializeBrowserView completed');
         } else {
-          console.log('initializeBrowserView not available');
+          logger.warn('initializeBrowserView not available');
         }
         
         // Get current URL from main process
         if (window.electronAPI?.getCurrentURL) {
-          console.log('Getting current URL...');
+          logger.debug('Getting current URL...');
           const url = await window.electronAPI.getCurrentURL();
-          console.log('Current URL:', url);
+          logger.debug('Current URL:', url);
           setCurrentURL(url);
         } else {
-          console.log('getCurrentURL not available');
+          logger.warn('getCurrentURL not available');
         }
         
         // Mark browser as ready
-        console.log('Marking browser as ready');
+        logger.info('Browser initialization complete');
         setIsBrowserReady(true);
       } catch (error) {
-        console.error('Failed to initialize browser:', error);
+        logger.error('Failed to initialize browser:', error);
         // Still mark as ready even if there's an error to show the interface
         setIsBrowserReady(true);
       }
     };
 
-    console.log('Browser initialization effect running, hasInitialized:', hasInitialized.current);
-    console.log('electronAPI available:', !!window.electronAPI);
-    
+    // Only log and initialize if this is the first time
     if (!hasInitialized.current) {
+      logger.debug('Browser initialization effect running for the first time');
       hasInitialized.current = true;
       initializeBrowser();
+    } else {
+              logger.debug('Browser already initialized, skipping initialization');
     }
+  }, []); // Empty dependency array - only runs once on mount
+
+  // Monitor BrowserView health
+  useEffect(() => {
+    const checkHealth = async () => {
+      if (window.electronAPI?.getBrowserViewHealth) {
+        try {
+          const health = await window.electronAPI.getBrowserViewHealth();
+          setBrowserHealth(health);
+        } catch (error) {
+          logger.error('Failed to check BrowserView health:', error);
+        }
+      }
+    };
+
+    // Check health immediately
+    checkHealth();
+
+    // Check health every 30 seconds
+    const healthInterval = setInterval(checkHealth, 30000);
+
+    return () => clearInterval(healthInterval);
   }, []);
 
   // Listen for browser navigation events
@@ -97,10 +123,11 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     return () => {
       // Cleanup event listeners
       logger.debug('Cleaning up event listeners');
-      // Note: removeBrowserViewNavigatedListener is not implemented in the current API
-      // The listener will be cleaned up automatically when the component unmounts
+      if (window.electronAPI?.removeBrowserViewNavigatedListener) {
+        window.electronAPI.removeBrowserViewNavigatedListener();
+      }
     };
-  }, [onNavigationStateChange]); // Include onNavigationStateChange in dependencies
+  }, []); // Remove onNavigationStateChange from dependencies to prevent unnecessary re-runs
 
 
 
@@ -127,24 +154,34 @@ const BrowserPane: React.FC<BrowserPaneProps> = ({
     >
       {/* Browser Area */}
       <div 
-        className={`flex-1 relative ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
+        className="flex-1 relative bg-white"
         style={{
           width: '100%',
           height: '100%',
           minHeight: '0', // Prevent flex item from growing beyond container
         }}
       >
+
+        
+        {/* Recovery in Progress Indicator */}
+        {browserHealth.isRecovering && (
+          <div className="absolute top-2 left-2 z-10 bg-blue-100 border border-blue-300 rounded-lg p-3 shadow-lg">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-blue-800">
+                Recovering Browser...
+              </span>
+            </div>
+          </div>
+        )}
+
         {!isBrowserReady ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className={`text-lg font-semibold mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <div className="text-lg font-semibold mb-2 text-gray-700">
                 Initializing Browser...
               </div>
-              <div className={`text-sm ${
-                isDarkMode ? 'text-gray-500' : 'text-gray-500'
-              }`}>
+              <div className="text-sm text-gray-500">
                 Loading WebContentsView
               </div>
             </div>

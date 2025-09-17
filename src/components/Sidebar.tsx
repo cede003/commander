@@ -8,11 +8,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onWorkflowActivate,
   onWorkflowCreate,
   onWorkflowDelete,
-  onWorkflowRename,
   onWorkflowEdit,
   isDarkMode = false
 }) => {
-  const [activeTab, setActiveTab] = useState<'workflows' | 'chatbot'>('workflows');
+  const [activeTab, setActiveTab] = useState<'workflows' | 'chatbot' | 'tests'>('workflows');
   const testElectronAPI = async () => {
     logger.debug('Testing Electron API availability');
     logger.debug('window.electronAPI:', { electronAPI: window.electronAPI });
@@ -70,6 +69,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             AI Assistant
+          </button>
+          <button
+            onClick={() => setActiveTab('tests')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+              activeTab === 'tests'
+                ? isDarkMode
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-blue-600 border-b-2 border-blue-600'
+                : isDarkMode
+                  ? 'text-gray-400 hover:text-gray-300'
+                  : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Tests
           </button>
         </div>
         {activeTab === 'workflows' && (
@@ -208,9 +221,130 @@ const Sidebar: React.FC<SidebarProps> = ({
               ))
             )}
           </div>
-        ) : (
+        ) : activeTab === 'chatbot' ? (
           <div className="flex-1 min-h-0">
             <Chatbot isDarkMode={isDarkMode} />
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 p-4 space-y-4">
+            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+              System Tests & Recovery
+            </h3>
+            
+            {/* Browser Recovery Section */}
+            <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+              <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                Browser Recovery
+              </h4>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    if (window.electronAPI?.manualBrowserViewRecovery) {
+                      const result = await window.electronAPI.manualBrowserViewRecovery();
+                      if (result.success) {
+                        alert('Browser recovery completed successfully!');
+                      } else {
+                        alert(`Browser recovery failed: ${result.error}`);
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Browser recovery failed:', error);
+                    alert('Browser recovery failed');
+                  }
+                }}
+                className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isDarkMode
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                title="Manual coordinated recovery (BrowserView + Python session)"
+              >
+                Recover Browser
+              </button>
+            </div>
+            
+            {/* Python Session Health Section */}
+            <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+              <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                Python Session Health
+              </h4>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    if (window.electronAPI?.checkPythonSessionHealth) {
+                      const result = await window.electronAPI.checkPythonSessionHealth();
+                      if (result.success) {
+                        let output = JSON.parse(result.health.output);
+                        console.log('Python session health:', output);
+
+                        alert(`Python Session Health:\nReady: ${output.health.is_ready}\nHealthy: ${output.health.is_healthy}`);
+                      } else {
+                        alert(`Python session health check failed: ${result.error}`);
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Health check failed:', error);
+                    alert('Health check failed');
+                  }
+                }}
+                className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isDarkMode
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+                title="Check Python session health"
+              >
+                Check Health
+              </button>
+            </div>
+            
+            {/* Python Session Restart Section */}
+            <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+              <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                Python Session Management
+              </h4>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    if (window.electronAPI?.restartPythonBrowserSession) {
+                      const result = await window.electronAPI.restartPythonBrowserSession();
+                      if (result.success) {
+                        alert('Python browser session restarted successfully!');
+                      } else {
+                        alert(`Python session restart failed: ${result.error}`);
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Python session restart failed:', error);
+                    alert('Python session restart failed');
+                  }
+                }}
+                className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isDarkMode
+                    ? 'bg-orange-600 text-white hover:bg-orange-700'
+                    : 'bg-orange-600 text-white hover:bg-orange-700'
+                }`}
+                title="Restart Python browser session"
+              >
+                Restart Python Session
+              </button>
+            </div>
+            
+            {/* System Info Section */}
+            <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+              <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                System Information
+              </h4>
+              
+              <div className={`text-xs space-y-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <div>Platform: {navigator.platform}</div>
+                <div>User Agent: {navigator.userAgent.substring(0, 50)}...</div>
+                <div>Language: {navigator.language}</div>
+              </div>
+            </div>
           </div>
         )}
       </div>

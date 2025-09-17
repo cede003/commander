@@ -5,7 +5,7 @@
     "workflow_version": "1.0.0",
     "schema_version": "1.0.0"
   },
-  "properties": {
+  "arguments": {
     "skip_conditional": false
   },
   "default_error_handling": {
@@ -18,7 +18,7 @@
     "notify_start": {
       "id": "notify_start",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Starting test workflow",
         "level": "info"
       },
@@ -27,7 +27,7 @@
     "go_example": {
       "id": "go_example",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "https://example.com"
       },
       "operation": "goto"
@@ -35,7 +35,7 @@
     "wait_short": {
       "id": "wait_short",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "timeout": 500
       },
       "operation": "wait_for_timeout"
@@ -43,13 +43,13 @@
     "get_title_example": {
       "id": "get_title_example",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "get_title"
     },
     "log_title_if_example": {
       "id": "log_title_if_example",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Title: {{results.get_title_example.result}}"
       },
       "operation": "console_log"
@@ -57,7 +57,7 @@
     "go_wikipedia": {
       "id": "go_wikipedia",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "https://www.wikipedia.org"
       },
       "operation": "goto"
@@ -65,7 +65,7 @@
     "wait_short_2": {
       "id": "wait_short_2",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "timeout": 500
       },
       "operation": "wait_for_timeout"
@@ -73,14 +73,14 @@
     "get_current_url": {
       "id": "get_current_url",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "url"
     },
     "conditional_log": {
       "id": "conditional_log",
       "domain": "browser",
       "conditions": "not inputs.skip_conditional",
-      "properties": {
+      "arguments": {
         "message": "URL: {{results.get_current_url.result}}"
       },
       "operation": "console_log"
@@ -88,7 +88,7 @@
     "notify_end": {
       "id": "notify_end",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Finished test workflow",
         "level": "success"
       },

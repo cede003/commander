@@ -5,13 +5,13 @@
     "description": "Demonstrates node status tracking with different scenarios",
     "version": "1.0.0"
   },
-  "properties": {},
+  "arguments": {},
   "nodes": {
     "success_node": {
       "id": "success_node",
       "domain": "browser",
       "status": "queued",
-      "properties": {
+      "arguments": {
         "message": "This node will complete successfully",
         "level": "success"
       },
@@ -21,7 +21,7 @@
       "id": "error_node",
       "domain": "browser",
       "status": "queued",
-      "properties": {
+      "arguments": {
         "selector": "#non-existent-element",
         "timeout": 1000
       },
@@ -35,7 +35,7 @@
       "id": "skip_node",
       "domain": "browser",
       "status": "queued",
-      "properties": {
+      "arguments": {
         "selector": "#another-non-existent-element",
         "timeout": 1000
       },
@@ -49,7 +49,7 @@
       "id": "final_node",
       "domain": "browser",
       "status": "queued",
-      "properties": {
+      "arguments": {
         "message": "Workflow completed - check node statuses!",
         "level": "info"
       },

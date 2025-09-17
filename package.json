@@ -5,10 +5,9 @@
   "description": "Electron desktop app with React, TypeScript, and Tailwind CSS",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "concurrently -k \"npm:dev:vite\" \"npm:dev:types\" \"npm:dev:electron\" \"npm:dev:public\"",
+    "dev": "concurrently -k \"npm:dev:vite\" \"npm:dev:electron\" \"npm:dev:public\"",
     "dev:vite": "vite",
-    "dev:types": "tsc -w -p electron/tsconfig.json",
-    "dev:electron": "wait-on tcp:5174 && nodemon -q --watch dist/main.js --watch dist/electron --exec \"electron . --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1\"",
+    "dev:electron": "wait-on tcp:5174 && nodemon --config nodemon.json",
     "dev:public": "nodemon -q --watch public --ext json --exec \"rsync -a --delete public/ dist/public/\"",
 
     "clean": "rm -rf dist/ node_modules/.cache/ .vite/ logs/",
@@ -20,7 +19,7 @@
 
     "dist": "npm run build && electron-builder",
     "preview": "vite preview",
-    "kill": "pkill -f 'electron' || true && pkill -f 'vite' || true && pkill -f 'node.*commander' || true && pkill -f 'python.*runner' || true && pkill -f 'nodemon' || true && echo '✅ All commander processes killed'"
+    "kill": "pkill -f 'electron' || true && pkill -f 'vite' || true && pkill -f 'node.*commander' || true && pkill -f 'python.*runner' || true && pkill -f 'nodemon' || true && echo 'All commander processes killed'"
   },
   "keywords": [
     "electron",

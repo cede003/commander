@@ -1,0 +1,362 @@
+{
+  "metadata": {
+    "name": "Web Scraping Workflow",
+    "description": "Demonstrates web scraping and data extraction using Playwright operations including navigation, element selection, and data extraction",
+    "author": "Commander",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "target_url": "https://quotes.toscrape.com",
+    "max_quotes": "5",
+    "output_file": "logs/scraped_quotes.json"
+  },
+  "nodes": {
+    "start_scraping": {
+      "id": "start_scraping",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Starting web scraping workflow",
+        "level": "info"
+      }
+    },
+    "navigate_to_quotes": {
+      "id": "navigate_to_quotes",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$target_url"
+      }
+    },
+    "wait_for_page_load": {
+      "id": "wait_for_page_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "networkidle"
+      }
+    },
+    "wait_for_quotes": {
+      "id": "wait_for_quotes",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "get_page_title": {
+      "id": "get_page_title",
+      "domain": "browser",
+      "operation": "title"
+    },
+    "get_page_url": {
+      "id": "get_page_url",
+      "domain": "browser",
+      "operation": "url"
+    },
+    "check_quotes_visibility": {
+      "id": "check_quotes_visibility",
+      "domain": "browser",
+      "operation": "is_visible",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "get_quotes_count": {
+      "id": "get_quotes_count",
+      "domain": "browser",
+      "operation": "query_selector_all",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "extract_first_quote_text": {
+      "id": "extract_first_quote_text",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": ".quote .text"
+      }
+    },
+    "extract_first_author": {
+      "id": "extract_first_author",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": ".quote .author"
+      }
+    },
+    "extract_first_tags": {
+      "id": "extract_first_tags",
+      "domain": "browser",
+      "operation": "query_selector_all",
+      "arguments": {
+        "selector": ".quote .tag"
+      }
+    },
+    "get_first_quote_html": {
+      "id": "get_first_quote_html",
+      "domain": "browser",
+      "operation": "inner_html",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "get_first_quote_outer_html": {
+      "id": "get_first_quote_outer_html",
+      "domain": "browser",
+      "operation": "outer_html",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "get_first_quote_bounding_box": {
+      "id": "get_first_quote_bounding_box",
+      "domain": "browser",
+      "operation": "bounding_box",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "scroll_to_first_quote": {
+      "id": "scroll_to_first_quote",
+      "domain": "browser",
+      "operation": "scroll_to",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "hover_over_first_quote": {
+      "id": "hover_over_first_quote",
+      "domain": "browser",
+      "operation": "hover",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "focus_first_quote": {
+      "id": "focus_first_quote",
+      "domain": "browser",
+      "operation": "focus",
+      "arguments": {
+        "selector": ".quote"
+      }
+    },
+    "click_next_page": {
+      "id": "click_next_page",
+      "domain": "browser",
+      "operation": "click",
+      "arguments": {
+        "selector": ".next a"
+      }
+    },
+    "wait_for_next_page": {
+      "id": "wait_for_next_page",
+      "domain": "browser",
+      "operation": "wait_for_url",
+      "arguments": {
+        "url": "**/page/**"
+      }
+    },
+    "wait_for_function_check": {
+      "id": "wait_for_function_check",
+      "domain": "browser",
+      "operation": "wait_for_function",
+      "arguments": {
+        "function": "() => document.querySelectorAll('.quote').length > 0"
+      }
+    },
+    "go_back_to_first_page": {
+      "id": "go_back_to_first_page",
+      "domain": "browser",
+      "operation": "go_back"
+    },
+    "reload_page": {
+      "id": "reload_page",
+      "domain": "browser",
+      "operation": "reload"
+    },
+    "wait_for_reload": {
+      "id": "wait_for_reload",
+      "domain": "browser",
+      "operation": "wait_for_timeout",
+      "arguments": {
+        "timeout": 1000
+      }
+    },
+    "take_screenshot": {
+      "id": "take_screenshot",
+      "domain": "browser",
+      "operation": "screenshot",
+      "arguments": {
+        "path": "logs/scraping_screenshot.png"
+      }
+    },
+    "get_page_content": {
+      "id": "get_page_content",
+      "domain": "browser",
+      "operation": "content"
+    },
+    "extract_meta_description": {
+      "id": "extract_meta_description",
+      "domain": "browser",
+      "operation": "get_attribute",
+      "arguments": {
+        "selector": "meta[name='description']",
+        "attribute": "content"
+      }
+    },
+    "extract_canonical_url": {
+      "id": "extract_canonical_url",
+      "domain": "browser",
+      "operation": "get_attribute",
+      "arguments": {
+        "selector": "link[rel='canonical']",
+        "attribute": "href"
+      }
+    },
+    "check_if_quotes_exist": {
+      "id": "check_if_quotes_exist",
+      "domain": "browser",
+      "operation": "is_hidden",
+      "arguments": {
+        "selector": ".quote.nonexistent"
+      }
+    },
+    "check_if_page_loaded": {
+      "id": "check_if_page_loaded",
+      "domain": "browser",
+      "operation": "is_enabled",
+      "arguments": {
+        "selector": "body"
+      }
+    },
+    "end_scraping": {
+      "id": "end_scraping",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Web scraping workflow completed successfully",
+        "level": "info"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_scraping",
+      "to": "navigate_to_quotes"
+    },
+    {
+      "from": "navigate_to_quotes",
+      "to": "wait_for_page_load"
+    },
+    {
+      "from": "wait_for_page_load",
+      "to": "wait_for_quotes"
+    },
+    {
+      "from": "wait_for_quotes",
+      "to": "get_page_title"
+    },
+    {
+      "from": "get_page_title",
+      "to": "get_page_url"
+    },
+    {
+      "from": "get_page_url",
+      "to": "check_quotes_visibility"
+    },
+    {
+      "from": "check_quotes_visibility",
+      "to": "get_quotes_count"
+    },
+    {
+      "from": "get_quotes_count",
+      "to": "extract_first_quote_text"
+    },
+    {
+      "from": "extract_first_quote_text",
+      "to": "extract_first_author"
+    },
+    {
+      "from": "extract_first_author",
+      "to": "extract_first_tags"
+    },
+    {
+      "from": "extract_first_tags",
+      "to": "get_first_quote_html"
+    },
+    {
+      "from": "get_first_quote_html",
+      "to": "get_first_quote_outer_html"
+    },
+    {
+      "from": "get_first_quote_outer_html",
+      "to": "get_first_quote_bounding_box"
+    },
+    {
+      "from": "get_first_quote_bounding_box",
+      "to": "scroll_to_first_quote"
+    },
+    {
+      "from": "scroll_to_first_quote",
+      "to": "hover_over_first_quote"
+    },
+    {
+      "from": "hover_over_first_quote",
+      "to": "focus_first_quote"
+    },
+    {
+      "from": "focus_first_quote",
+      "to": "click_next_page"
+    },
+    {
+      "from": "click_next_page",
+      "to": "wait_for_next_page"
+    },
+    {
+      "from": "wait_for_next_page",
+      "to": "wait_for_function_check"
+    },
+    {
+      "from": "wait_for_function_check",
+      "to": "go_back_to_first_page"
+    },
+    {
+      "from": "go_back_to_first_page",
+      "to": "reload_page"
+    },
+    {
+      "from": "reload_page",
+      "to": "wait_for_reload"
+    },
+    {
+      "from": "wait_for_reload",
+      "to": "take_screenshot"
+    },
+    {
+      "from": "take_screenshot",
+      "to": "get_page_content"
+    },
+    {
+      "from": "get_page_content",
+      "to": "extract_meta_description"
+    },
+    {
+      "from": "extract_meta_description",
+      "to": "extract_canonical_url"
+    },
+    {
+      "from": "extract_canonical_url",
+      "to": "check_if_quotes_exist"
+    },
+    {
+      "from": "check_if_quotes_exist",
+      "to": "check_if_page_loaded"
+    },
+    {
+      "from": "check_if_page_loaded",
+      "to": "end_scraping"
+    }
+  ]
+} 

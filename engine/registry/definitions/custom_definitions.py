@@ -6,7 +6,7 @@ CUSTOM_SPECS = {
     "browser": {
         "console_log": {
             "type": "custom",
-            "required_properties": ["message"],
+            "required_arguments": ["message"],
             "description": "Logs a message to console"
         }
     }

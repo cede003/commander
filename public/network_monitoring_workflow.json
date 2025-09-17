@@ -1,0 +1,367 @@
+{
+  "metadata": {
+    "name": "Network Monitoring Workflow",
+    "description": "Demonstrates network monitoring, event handling, and response tracking using Playwright operations",
+    "author": "Commander",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "main_url": "https://httpbin.org",
+    "api_endpoint": "https://httpbin.org/json",
+    "delay_url": "https://httpbin.org/delay/2",
+    "status_url": "https://httpbin.org/status/200"
+  },
+  "nodes": {
+    "start_monitoring": {
+      "id": "start_monitoring",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Starting network monitoring workflow",
+        "level": "info"
+      }
+    },
+    "navigate_to_main": {
+      "id": "navigate_to_main",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$main_url"
+      }
+    },
+    "wait_for_main_load": {
+      "id": "wait_for_main_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "domcontentloaded"
+      }
+    },
+    "get_main_page_title": {
+      "id": "get_main_page_title",
+      "domain": "browser",
+      "operation": "title"
+    },
+    "get_main_page_url": {
+      "id": "get_main_page_url",
+      "domain": "browser",
+      "operation": "url"
+    },
+    "expect_main_page_response": {
+      "id": "expect_main_page_response",
+      "domain": "browser",
+      "operation": "expect_response",
+      "arguments": {
+        "url_or_predicate": "**httpbin**"
+      }
+    },
+    "expect_main_page_request": {
+      "id": "expect_main_page_request",
+      "domain": "browser",
+      "operation": "expect_request",
+      "arguments": {
+        "url_or_predicate": "**httpbin**"
+      }
+    },
+    "wait_for_main_selector": {
+      "id": "wait_for_main_selector",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": "body"
+      }
+    },
+    "navigate_to_api": {
+      "id": "navigate_to_api",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$api_endpoint"
+      }
+    },
+    "wait_for_api_load": {
+      "id": "wait_for_api_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "networkidle"
+      }
+    },
+    "get_api_content": {
+      "id": "get_api_content",
+      "domain": "browser",
+      "operation": "content"
+    },
+    "wait_for_json_function": {
+      "id": "wait_for_json_function",
+      "domain": "browser",
+      "operation": "wait_for_function",
+      "arguments": {
+        "function": "() => document.body.textContent.includes('slideshow')"
+      }
+    },
+    "navigate_to_delay": {
+      "id": "navigate_to_delay",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$delay_url"
+      }
+    },
+    "wait_for_delay_timeout": {
+      "id": "wait_for_delay_timeout",
+      "domain": "browser",
+      "operation": "wait_for_timeout",
+      "arguments": {
+        "timeout": 3000
+      }
+    },
+    "get_delay_page_title": {
+      "id": "get_delay_page_title",
+      "domain": "browser",
+      "operation": "title"
+    },
+    "navigate_to_status": {
+      "id": "navigate_to_status",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$status_url"
+      }
+    },
+    "wait_for_status_load": {
+      "id": "wait_for_status_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "load"
+      }
+    },
+    "get_status_content": {
+      "id": "get_status_content",
+      "domain": "browser",
+      "operation": "content"
+    },
+    "go_back_to_main": {
+      "id": "go_back_to_main",
+      "domain": "browser",
+      "operation": "go_back"
+    },
+    "go_forward_to_status": {
+      "id": "go_forward_to_status",
+      "domain": "browser",
+      "operation": "go_forward"
+    },
+    "reload_status_page": {
+      "id": "reload_status_page",
+      "domain": "browser",
+      "operation": "reload"
+    },
+    "wait_for_reload": {
+      "id": "wait_for_reload",
+      "domain": "browser",
+      "operation": "wait_for_timeout",
+      "arguments": {
+        "timeout": 1000
+      }
+    },
+    "navigate_to_main_again": {
+      "id": "navigate_to_main_again",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$main_url"
+      }
+    },
+    "wait_for_main_again": {
+      "id": "wait_for_main_again",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "domcontentloaded"
+      }
+    },
+    "wait_for_main_url": {
+      "id": "wait_for_main_url",
+      "domain": "browser",
+      "operation": "wait_for_url",
+      "arguments": {
+        "url": "**httpbin.org**"
+      }
+    },
+    "expect_download_event": {
+      "id": "expect_download_event",
+      "domain": "browser",
+      "operation": "expect_download"
+    },
+    "expect_file_chooser_event": {
+      "id": "expect_file_chooser_event",
+      "domain": "browser",
+      "operation": "expect_file_chooser"
+    },
+    "expect_popup_event": {
+      "id": "expect_popup_event",
+      "domain": "browser",
+      "operation": "expect_popup"
+    },
+    "wait_for_console_event": {
+      "id": "wait_for_console_event",
+      "domain": "browser",
+      "operation": "wait_for_event",
+      "arguments": {
+        "event": "console"
+      }
+    },
+    "take_final_screenshot": {
+      "id": "take_final_screenshot",
+      "domain": "browser",
+      "operation": "screenshot",
+      "arguments": {
+        "path": "logs/network_monitoring_screenshot.png"
+      }
+    },
+    "get_final_page_info": {
+      "id": "get_final_page_info",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "body"
+      }
+    },
+    "end_monitoring": {
+      "id": "end_monitoring",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Network monitoring workflow completed successfully",
+        "level": "info"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_monitoring",
+      "to": "navigate_to_main"
+    },
+    {
+      "from": "navigate_to_main",
+      "to": "wait_for_main_load"
+    },
+    {
+      "from": "wait_for_main_load",
+      "to": "get_main_page_title"
+    },
+    {
+      "from": "get_main_page_title",
+      "to": "get_main_page_url"
+    },
+    {
+      "from": "get_main_page_url",
+      "to": "expect_main_page_response"
+    },
+    {
+      "from": "expect_main_page_response",
+      "to": "expect_main_page_request"
+    },
+    {
+      "from": "expect_main_page_request",
+      "to": "wait_for_main_selector"
+    },
+    {
+      "from": "wait_for_main_selector",
+      "to": "navigate_to_api"
+    },
+    {
+      "from": "navigate_to_api",
+      "to": "wait_for_api_load"
+    },
+    {
+      "from": "wait_for_api_load",
+      "to": "get_api_content"
+    },
+    {
+      "from": "get_api_content",
+      "to": "wait_for_json_function"
+    },
+    {
+      "from": "wait_for_json_function",
+      "to": "navigate_to_delay"
+    },
+    {
+      "from": "navigate_to_delay",
+      "to": "wait_for_delay_timeout"
+    },
+    {
+      "from": "wait_for_delay_timeout",
+      "to": "get_delay_page_title"
+    },
+    {
+      "from": "get_delay_page_title",
+      "to": "navigate_to_status"
+    },
+    {
+      "from": "navigate_to_status",
+      "to": "wait_for_status_load"
+    },
+    {
+      "from": "wait_for_status_load",
+      "to": "get_status_content"
+    },
+    {
+      "from": "get_status_content",
+      "to": "go_back_to_main"
+    },
+    {
+      "from": "go_back_to_main",
+      "to": "go_forward_to_status"
+    },
+    {
+      "from": "go_forward_to_status",
+      "to": "reload_status_page"
+    },
+    {
+      "from": "reload_status_page",
+      "to": "wait_for_reload"
+    },
+    {
+      "from": "wait_for_reload",
+      "to": "navigate_to_main_again"
+    },
+    {
+      "from": "navigate_to_main_again",
+      "to": "wait_for_main_again"
+    },
+    {
+      "from": "wait_for_main_again",
+      "to": "wait_for_main_url"
+    },
+    {
+      "from": "wait_for_main_url",
+      "to": "expect_download_event"
+    },
+    {
+      "from": "expect_download_event",
+      "to": "expect_file_chooser_event"
+    },
+    {
+      "from": "expect_file_chooser_event",
+      "to": "expect_popup_event"
+    },
+    {
+      "from": "expect_popup_event",
+      "to": "wait_for_console_event"
+    },
+    {
+      "from": "wait_for_console_event",
+      "to": "take_final_screenshot"
+    },
+    {
+      "from": "take_final_screenshot",
+      "to": "get_final_page_info"
+    },
+    {
+      "from": "get_final_page_info",
+      "to": "end_monitoring"
+    }
+  ]
+} 

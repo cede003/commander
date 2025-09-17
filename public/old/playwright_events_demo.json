@@ -5,7 +5,7 @@
     "workflow_version": "1.0.0",
     "schema_version": "1.0.0"
   },
-  "properties": {
+  "arguments": {
     "url": "https://example.com",
     "network_url": "https://www.wikipedia.org"
   },
@@ -18,7 +18,7 @@
     "start_log": {
       "id": "start_log",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Starting Playwright Events Demo"
       },
       "operation": "console_log"
@@ -26,7 +26,7 @@
     "goto_network": {
       "id": "goto_network",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "{{inputs.network_url}}"
       },
       "operation": "goto"
@@ -34,7 +34,7 @@
     "wait_request": {
       "id": "wait_request",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url_or_predicate": "**wikipedia**"
       },
       "operation": "expect_request"
@@ -42,7 +42,7 @@
     "wait_response": {
       "id": "wait_response",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url_or_predicate": "**wikipedia**"
       },
       "operation": "expect_response"
@@ -50,7 +50,7 @@
     "wait_console_event": {
       "id": "wait_console_event",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "event": "console"
       },
       "operation": "wait_for_event"
@@ -58,7 +58,7 @@
     "goto": {
       "id": "goto",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "{{inputs.url}}"
       },
       "operation": "goto"
@@ -66,7 +66,7 @@
     "wait_load_dom": {
       "id": "wait_load_dom",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "state": "domcontentloaded"
       },
       "operation": "wait_for_load_state"
@@ -74,7 +74,7 @@
     "wait_h1": {
       "id": "wait_h1",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "h1"
       },
       "operation": "wait_for_selector"
@@ -82,7 +82,7 @@
     "wait_fn": {
       "id": "wait_fn",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "function": "() => document.title.length > 0"
       },
       "operation": "wait_for_function"
@@ -90,7 +90,7 @@
     "wait_url": {
       "id": "wait_url",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "url": "**example**"
       },
       "operation": "wait_for_url"
@@ -98,7 +98,7 @@
     "wait_timeout": {
       "id": "wait_timeout",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "timeout": 250
       },
       "operation": "wait_for_timeout"
@@ -106,25 +106,25 @@
     "try_wait_download": {
       "id": "try_wait_download",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "expect_download"
     },
     "try_wait_file_chooser": {
       "id": "try_wait_file_chooser",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "expect_file_chooser"
     },
     "try_wait_popup": {
       "id": "try_wait_popup",
       "domain": "browser",
-      "properties": {},
+      "arguments": {},
       "operation": "expect_popup"
     },
     "end_log": {
       "id": "end_log",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Finished Playwright Events Demo"
       },
       "operation": "console_log"

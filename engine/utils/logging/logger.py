@@ -1,57 +1,48 @@
 import logging
+from mimetypes import init
 import os
 import sys
 import json
 
-def _get_console_level() -> int:
-    level = (os.environ.get("LOG_LEVEL", "") or "").strip().lower()
-    return {
-        "debug": logging.DEBUG,
-        "verbose": logging.DEBUG,
-        "error": logging.ERROR,
-        "warn": logging.WARNING,
-        "warning": logging.WARNING,
-    }.get(level, logging.INFO)
 
+class MainLogger():
+    def __init__(self, logger_name) -> None:
+        self.logger = self._init_root_logger(logger_name)
 
-class JsonFormatter(logging.Formatter):
-    def format(self, record):
-        log_record = {
-            "level": record.levelname.lower(),
-            "message": record.getMessage(),
-            "logger": record.name,
-            "time": self.formatTime(record, self.datefmt or "%Y-%m-%d %H:%M:%S"),
-        }
-        return json.dumps(log_record)
+    def _init_root_logger(self, logger_name) -> logging.Logger:
+        logger = logging.getLogger(logger_name)
 
+        if getattr(logger, "_initialized", False):
+            return logger
 
-def _init_root_logger() -> logging.Logger:
-    logger = logging.getLogger("commander")
+        logger.setLevel(logging.DEBUG)
+        logger.handlers.clear()
+        logger.propagate = False
 
-    if getattr(logger, "_initialized", False):
-        return logger
-
-    logger.setLevel(logging.DEBUG)
-    logger.handlers.clear()
-    logger.propagate = False
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(_get_console_level())
-
-    # Use JSON logs only when explicitly requested
-    if os.environ.get("LOG_JSON") == "1":
-        handler.setFormatter(JsonFormatter())
-    else:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(self._get_console_level())
         handler.setFormatter(logging.Formatter("%(message)s"))
 
-    logger.addHandler(handler)
-    logger._initialized = True  # type: ignore[attr-defined]
-    return logger
+        logger.addHandler(handler)
+        logger._initialized = True
+        return logger
+
+    def _get_console_level(self) -> int:
+        level = (os.environ.get("LOG_LEVEL", "") or "").strip().lower()
+        return {
+            "debug": logging.DEBUG,
+            "verbose": logging.DEBUG,
+            "error": logging.ERROR,
+            "warn": logging.WARNING,
+            "warning": logging.WARNING,
+        }.get(level, logging.INFO)
+
+
+
 
 
 # Initialize singleton logger
-logger = _init_root_logger()
-log = logger  # Optional alias
+logger = MainLogger("commander").logger
 
 
 class WorkflowLogger:
@@ -105,62 +96,3 @@ class WorkflowLogger:
     def log_workflow_done(self):
         logger.info("[workflow] Workflow completed")
 
-
-# -----------------------------------------------------------------------------
-# Backward/compatibility helpers so existing imports continue to work
-# -----------------------------------------------------------------------------
-
-def setup_logger(name: str = "commander") -> logging.Logger:
-    """Return the singleton stdout-only logger regardless of name.
-
-    Kept for backward compatibility with existing calls like
-    `setup_logger("commander.runner")`.
-    """
-    return logger
-
-
-def get_shared_logger(name: str = "commander") -> logging.Logger:
-    """Alias to retrieve the shared stdout-only logger."""
-    return logger
-
-
-def create_workflow_logger_instance(workflow_id, workflow_name="Unknown", run_id=None) -> WorkflowLogger:
-    """Factory retained for compatibility to construct WorkflowLogger."""
-    return WorkflowLogger(workflow_id, workflow_name, run_id)
-
-
-def safe_log(message) -> None:
-    """Best-effort debug logging that never raises."""
-    try:
-        logger.debug(message)
-    except Exception:
-        pass
-
-
-# -----------------------------------------------------------------------------
-# Protocol emitters (stdout-only, no log envelope) for IPC with Electron.
-# These are NOT logs; they are part of the Python<->Electron protocol.
-# -----------------------------------------------------------------------------
-
-def emit_protocol_line(text: str) -> None:
-    try:
-        sys.stdout.write(f"{text}\n")
-        sys.stdout.flush()
-    except Exception:
-        # As a last resort try logging the line
-        try:
-            logger.info(text)
-        except Exception:
-            pass
-
-
-def emit_protocol_json(data: dict) -> None:
-    try:
-        sys.stdout.write(json.dumps(data) + "\n")
-        sys.stdout.flush()
-    except Exception:
-        # Fallback: log as info; Electron will still display it
-        try:
-            logger.info(json.dumps(data))
-        except Exception:
-            pass 

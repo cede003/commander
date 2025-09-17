@@ -5,12 +5,12 @@
     "description": "Clicks Easy Apply and checks form field completeness",
     "version": "1.0.0"
   },
-  "properties": {},
+  "arguments": {},
   "nodes": {
     "click_easy_apply": {
       "id": "click_easy_apply",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "selector": "#jobs-apply-button-id",
         "timeout": 5000
       },
@@ -19,7 +19,7 @@
     "log_click_result": {
       "id": "log_click_result",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Click successful: {{results.click_easy_apply.success}}",
         "level": "success"
       },
@@ -28,7 +28,7 @@
     "log_node_status": {
       "id": "log_node_status",
       "domain": "browser",
-      "properties": {
+      "arguments": {
         "message": "Node status will be available after execution",
         "level": "info"
       },

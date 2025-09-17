@@ -6,45 +6,29 @@
       "description": "Use an online calculator to perform mathematical calculations"
     },
     {
-      "filename": "custom_actions_demo.json",
-      "name": "Custom Actions Demo",
-      "description": "Demonstrates custom action functions and their usage"
+      "filename": "form_automation_workflow.json",
+      "name": "Form Automation Workflow",
+      "description": "Demonstrates comprehensive form automation using Playwright operations including form filling, validation, and submission"
     },
     {
-      "filename": "linkedIn_easy_apply_workflow.json",
-      "name": "LinkedIn Easy Apply Workflow",
-      "description": "Clicks Easy Apply and checks form field completeness"
+      "filename": "web_scraping_workflow.json",
+      "name": "Web Scraping Workflow",
+      "description": "Demonstrates web scraping and data extraction using Playwright operations including navigation, element selection, and data extraction"
     },
     {
-      "filename": "linkedIn_easy_apply_2.json",
-      "name": "LinkedIn Easy Apply 2",
-      "description": "Clicks Next repeatedly until it no longer exists"
+      "filename": "network_monitoring_workflow.json",
+      "name": "Network Monitoring Workflow",
+      "description": "Demonstrates network monitoring, event handling, and response tracking using Playwright operations"
     },
     {
-      "filename": "status_demo_workflow.json",
-      "name": "Status Demo Workflow",
-      "description": "Demonstrates workflow status tracking and logging"
+      "filename": "drag_drop_workflow.json",
+      "name": "Drag and Drop Workflow",
+      "description": "Demonstrates drag and drop interactions, element manipulation, and advanced Playwright operations"
     },
     {
-      "filename": "test_workflow_execution.json",
-      "name": "Test Workflow Execution",
-      "description": "Sequential browser steps to validate execution engine"
-    }
-    ,
-    {
-      "filename": "playwright_actions_demo.json",
-      "name": "Playwright Actions Demo",
-      "description": "Covers most Playwright action functions"
-    },
-    {
-      "filename": "playwright_observations_demo.json",
-      "name": "Playwright Observations Demo",
-      "description": "Covers Playwright observation functions with simple pages"
-    },
-    {
-      "filename": "playwright_events_demo.json",
-      "name": "Playwright Events Demo",
-      "description": "Covers Playwright wait/event functions with short timeouts"
+      "filename": "comprehensive_testing_workflow.json",
+      "name": "Comprehensive Testing Workflow",
+      "description": "Demonstrates comprehensive testing and validation using all Playwright operations in a real-world testing scenario"
     }
   ]
 } 

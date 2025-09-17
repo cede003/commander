@@ -1,0 +1,507 @@
+{
+  "metadata": {
+    "name": "Drag and Drop Workflow",
+    "description": "Demonstrates drag and drop interactions, element manipulation, and advanced Playwright operations",
+    "author": "Commander",
+    "schema_version": "1.0.0"
+  },
+  "inputs": {
+    "drag_drop_url": "https://jqueryui.com/droppable",
+    "sortable_url": "https://jqueryui.com/sortable",
+    "resizable_url": "https://jqueryui.com/resizable"
+  },
+  "nodes": {
+    "start_drag_drop": {
+      "id": "start_drag_drop",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Starting drag and drop workflow",
+        "level": "info"
+      }
+    },
+    "navigate_to_droppable": {
+      "id": "navigate_to_droppable",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$drag_drop_url"
+      }
+    },
+    "wait_for_droppable_load": {
+      "id": "wait_for_droppable_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "domcontentloaded"
+      }
+    },
+    "wait_for_iframe": {
+      "id": "wait_for_iframe",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": ".demo-frame"
+      }
+    },
+    "get_iframe_element": {
+      "id": "get_iframe_element",
+      "domain": "browser",
+      "operation": "query_selector",
+      "arguments": {
+        "selector": ".demo-frame"
+      }
+    },
+    "get_iframe_bounding_box": {
+      "id": "get_iframe_bounding_box",
+      "domain": "browser",
+      "operation": "bounding_box",
+      "arguments": {
+        "selector": ".demo-frame"
+      }
+    },
+    "scroll_to_iframe": {
+      "id": "scroll_to_iframe",
+      "domain": "browser",
+      "operation": "scroll_to",
+      "arguments": {
+        "selector": ".demo-frame"
+      }
+    },
+    "wait_for_draggable": {
+      "id": "wait_for_draggable",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "check_draggable_visibility": {
+      "id": "check_draggable_visibility",
+      "domain": "browser",
+      "operation": "is_visible",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "check_draggable_enabled": {
+      "id": "check_draggable_enabled",
+      "domain": "browser",
+      "operation": "is_enabled",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "get_draggable_text": {
+      "id": "get_draggable_text",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "get_draggable_html": {
+      "id": "get_draggable_html",
+      "domain": "browser",
+      "operation": "inner_html",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "hover_over_draggable": {
+      "id": "hover_over_draggable",
+      "domain": "browser",
+      "operation": "hover",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "focus_draggable": {
+      "id": "focus_draggable",
+      "domain": "browser",
+      "operation": "focus",
+      "arguments": {
+        "selector": "#draggable"
+      }
+    },
+    "wait_for_droppable_target": {
+      "id": "wait_for_droppable_target",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": "#droppable"
+      }
+    },
+    "get_droppable_text": {
+      "id": "get_droppable_text",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "#droppable"
+      }
+    },
+    "perform_drag_drop": {
+      "id": "perform_drag_drop",
+      "domain": "browser",
+      "operation": "drag_to",
+      "arguments": {
+        "source": "#draggable",
+        "target": "#droppable"
+      }
+    },
+    "wait_for_drop_animation": {
+      "id": "wait_for_drop_animation",
+      "domain": "browser",
+      "operation": "wait_for_timeout",
+      "arguments": {
+        "timeout": 1000
+      }
+    },
+    "get_droppable_after_drop": {
+      "id": "get_droppable_after_drop",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "#droppable"
+      }
+    },
+    "take_drop_screenshot": {
+      "id": "take_drop_screenshot",
+      "domain": "browser",
+      "operation": "screenshot",
+      "arguments": {
+        "path": "logs/drag_drop_screenshot.png"
+      }
+    },
+    "navigate_to_sortable": {
+      "id": "navigate_to_sortable",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$sortable_url"
+      }
+    },
+    "wait_for_sortable_load": {
+      "id": "wait_for_sortable_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "domcontentloaded"
+      }
+    },
+    "wait_for_sortable_list": {
+      "id": "wait_for_sortable_list",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": "#sortable"
+      }
+    },
+    "get_sortable_items": {
+      "id": "get_sortable_items",
+      "domain": "browser",
+      "operation": "query_selector_all",
+      "arguments": {
+        "selector": "#sortable li"
+      }
+    },
+    "get_first_item_text": {
+      "id": "get_first_item_text",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "#sortable li:first-child"
+      }
+    },
+    "get_last_item_text": {
+      "id": "get_last_item_text",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "#sortable li:last-child"
+      }
+    },
+    "drag_first_to_last": {
+      "id": "drag_first_to_last",
+      "domain": "browser",
+      "operation": "drag_to",
+      "arguments": {
+        "source": "#sortable li:first-child",
+        "target": "#sortable li:last-child"
+      }
+    },
+    "wait_for_sort_animation": {
+      "id": "wait_for_sort_animation",
+      "domain": "browser",
+      "operation": "wait_for_timeout",
+      "arguments": {
+        "timeout": 1000
+      }
+    },
+    "get_reordered_first_item": {
+      "id": "get_reordered_first_item",
+      "domain": "browser",
+      "operation": "text_content",
+      "arguments": {
+        "selector": "#sortable li:first-child"
+      }
+    },
+    "navigate_to_resizable": {
+      "id": "navigate_to_resizable",
+      "domain": "browser",
+      "operation": "goto",
+      "arguments": {
+        "url": "$resizable_url"
+      }
+    },
+    "wait_for_resizable_load": {
+      "id": "wait_for_resizable_load",
+      "domain": "browser",
+      "operation": "wait_for_load_state",
+      "arguments": {
+        "state": "domcontentloaded"
+      }
+    },
+    "wait_for_resizable_element": {
+      "id": "wait_for_resizable_element",
+      "domain": "browser",
+      "operation": "wait_for_selector",
+      "arguments": {
+        "selector": "#resizable"
+      }
+    },
+    "get_resizable_dimensions": {
+      "id": "get_resizable_dimensions",
+      "domain": "browser",
+      "operation": "bounding_box",
+      "arguments": {
+        "selector": "#resizable"
+      }
+    },
+    "click_resizable": {
+      "id": "click_resizable",
+      "domain": "browser",
+      "operation": "click",
+      "arguments": {
+        "selector": "#resizable"
+      }
+    },
+    "double_click_resizable": {
+      "id": "double_click_resizable",
+      "domain": "browser",
+      "operation": "dblclick",
+      "arguments": {
+        "selector": "#resizable"
+      }
+    },
+    "tap_resizable": {
+      "id": "tap_resizable",
+      "domain": "browser",
+      "operation": "tap",
+      "arguments": {
+        "selector": "#resizable"
+      }
+    },
+    "press_escape_key": {
+      "id": "press_escape_key",
+      "domain": "browser",
+      "operation": "press",
+      "arguments": {
+        "selector": "#resizable",
+        "key": "Escape"
+      }
+    },
+    "blur_resizable": {
+      "id": "blur_resizable",
+      "domain": "browser",
+      "operation": "blur",
+      "arguments": {
+        "selector": "#resizable"
+      }
+    },
+    "take_final_screenshot": {
+      "id": "take_final_screenshot",
+      "domain": "browser",
+      "operation": "screenshot",
+      "arguments": {
+        "path": "logs/drag_drop_final_screenshot.png"
+      }
+    },
+    "get_final_page_content": {
+      "id": "get_final_page_content",
+      "domain": "browser",
+      "operation": "content"
+    },
+    "end_drag_drop": {
+      "id": "end_drag_drop",
+      "domain": "browser",
+      "operation": "console_log",
+      "arguments": {
+        "message": "Drag and drop workflow completed successfully",
+        "level": "info"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "start_drag_drop",
+      "to": "navigate_to_droppable"
+    },
+    {
+      "from": "navigate_to_droppable",
+      "to": "wait_for_droppable_load"
+    },
+    {
+      "from": "wait_for_droppable_load",
+      "to": "wait_for_iframe"
+    },
+    {
+      "from": "wait_for_iframe",
+      "to": "get_iframe_element"
+    },
+    {
+      "from": "get_iframe_element",
+      "to": "get_iframe_bounding_box"
+    },
+    {
+      "from": "get_iframe_bounding_box",
+      "to": "scroll_to_iframe"
+    },
+    {
+      "from": "scroll_to_iframe",
+      "to": "wait_for_draggable"
+    },
+    {
+      "from": "wait_for_draggable",
+      "to": "check_draggable_visibility"
+    },
+    {
+      "from": "check_draggable_visibility",
+      "to": "check_draggable_enabled"
+    },
+    {
+      "from": "check_draggable_enabled",
+      "to": "get_draggable_text"
+    },
+    {
+      "from": "get_draggable_text",
+      "to": "get_draggable_html"
+    },
+    {
+      "from": "get_draggable_html",
+      "to": "hover_over_draggable"
+    },
+    {
+      "from": "hover_over_draggable",
+      "to": "focus_draggable"
+    },
+    {
+      "from": "focus_draggable",
+      "to": "wait_for_droppable_target"
+    },
+    {
+      "from": "wait_for_droppable_target",
+      "to": "get_droppable_text"
+    },
+    {
+      "from": "get_droppable_text",
+      "to": "perform_drag_drop"
+    },
+    {
+      "from": "perform_drag_drop",
+      "to": "wait_for_drop_animation"
+    },
+    {
+      "from": "wait_for_drop_animation",
+      "to": "get_droppable_after_drop"
+    },
+    {
+      "from": "get_droppable_after_drop",
+      "to": "take_drop_screenshot"
+    },
+    {
+      "from": "take_drop_screenshot",
+      "to": "navigate_to_sortable"
+    },
+    {
+      "from": "navigate_to_sortable",
+      "to": "wait_for_sortable_load"
+    },
+    {
+      "from": "wait_for_sortable_load",
+      "to": "wait_for_sortable_list"
+    },
+    {
+      "from": "wait_for_sortable_list",
+      "to": "get_sortable_items"
+    },
+    {
+      "from": "get_sortable_items",
+      "to": "get_first_item_text"
+    },
+    {
+      "from": "get_first_item_text",
+      "to": "get_last_item_text"
+    },
+    {
+      "from": "get_last_item_text",
+      "to": "drag_first_to_last"
+    },
+    {
+      "from": "drag_first_to_last",
+      "to": "wait_for_sort_animation"
+    },
+    {
+      "from": "wait_for_sort_animation",
+      "to": "get_reordered_first_item"
+    },
+    {
+      "from": "get_reordered_first_item",
+      "to": "navigate_to_resizable"
+    },
+    {
+      "from": "navigate_to_resizable",
+      "to": "wait_for_resizable_load"
+    },
+    {
+      "from": "wait_for_resizable_load",
+      "to": "wait_for_resizable_element"
+    },
+    {
+      "from": "wait_for_resizable_element",
+      "to": "get_resizable_dimensions"
+    },
+    {
+      "from": "get_resizable_dimensions",
+      "to": "click_resizable"
+    },
+    {
+      "from": "click_resizable",
+      "to": "double_click_resizable"
+    },
+    {
+      "from": "double_click_resizable",
+      "to": "tap_resizable"
+    },
+    {
+      "from": "tap_resizable",
+      "to": "press_escape_key"
+    },
+    {
+      "from": "press_escape_key",
+      "to": "blur_resizable"
+    },
+    {
+      "from": "blur_resizable",
+      "to": "take_final_screenshot"
+    },
+    {
+      "from": "take_final_screenshot",
+      "to": "get_final_page_content"
+    },
+    {
+      "from": "get_final_page_content",
+      "to": "end_drag_drop"
+    }
+  ]
+} 
